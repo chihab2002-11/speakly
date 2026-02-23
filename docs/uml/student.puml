@@ -1,0 +1,35 @@
+@startuml Student Use Case Diagram
+
+left to right direction
+
+actor Student
+
+rectangle "Language School Management System" {
+    usecase "Register Account" as UC1
+    usecase "Log In" as UC2
+    usecase "Browse Available Courses" as UC3
+    usecase "Enroll in a Course" as UC4
+    usecase "View Course Schedule" as UC5
+    usecase "Access Course Materials" as UC6
+    usecase "Attend Online Lesson" as UC7
+    usecase "Submit Assignment" as UC8
+    usecase "Take Quiz" as UC9
+    usecase "View Grades" as UC10
+    usecase "Make Payment" as UC11
+    usecase "Update Profile" as UC12
+}
+
+Student --> UC1
+Student --> UC2
+Student --> UC3
+Student --> UC4
+Student --> UC5
+Student --> UC6
+Student --> UC7
+Student --> UC8
+Student --> UC9
+Student --> UC10
+Student --> UC11
+Student --> UC12
+
+@enduml

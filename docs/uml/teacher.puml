@@ -1,0 +1,35 @@
+@startuml Teacher Use Case Diagram
+
+left to right direction
+
+actor Teacher
+
+rectangle "Language School Management System" {
+    usecase "Log In" as UC1
+    usecase "Create Course" as UC2
+    usecase "Update Course Content" as UC3
+    usecase "Upload Course Materials" as UC4
+    usecase "Schedule Lessons" as UC5
+    usecase "Conduct Online Lesson" as UC6
+    usecase "Create Quiz" as UC7
+    usecase "Grade Assignment" as UC8
+    usecase "Mark Attendance" as UC9
+    usecase "View Student Progress" as UC10
+    usecase "Send Announcement" as UC11
+    usecase "Update Profile" as UC12
+}
+
+Teacher --> UC1
+Teacher --> UC2
+Teacher --> UC3
+Teacher --> UC4
+Teacher --> UC5
+Teacher --> UC6
+Teacher --> UC7
+Teacher --> UC8
+Teacher --> UC9
+Teacher --> UC10
+Teacher --> UC11
+Teacher --> UC12
+
+@enduml

@@ -1,0 +1,31 @@
+@startuml Admin Use Case Diagram
+
+left to right direction
+
+actor Admin
+
+rectangle "Language School Management System" {
+    usecase "Log In" as UC1
+    usecase "Manage Student Accounts" as UC2
+    usecase "Manage Teacher Accounts" as UC3
+    usecase "Manage Courses" as UC4
+    usecase "Manage Enrollments" as UC5
+    usecase "Manage Course Schedule" as UC6
+    usecase "Process Payments" as UC7
+    usecase "Generate Reports" as UC8
+    usecase "Send System Announcements" as UC9
+    usecase "Manage System Settings" as UC10
+}
+
+Admin --> UC1
+Admin --> UC2
+Admin --> UC3
+Admin --> UC4
+Admin --> UC5
+Admin --> UC6
+Admin --> UC7
+Admin --> UC8
+Admin --> UC9
+Admin --> UC10
+
+@enduml
