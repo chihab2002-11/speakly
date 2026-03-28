@@ -1,1 +1,5 @@
 *.sqlite*
+.cursor/
+.junie/
+AGENTS.md
+boost.json
