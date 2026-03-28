@@ -21,3 +21,10 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Editor/agent metadata
+.cursor/
+.junie/
+AGENTS.md
+boost.json
+
