@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -13,11 +12,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        // Seed roles + permissions first
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            PermissionSeeder::class,
+            RoleSeeder::class,
         ]);
+        // Create default admin user
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@speakly.com'],
+            [
+                'name' => 'Admin',
+                'password' => bcrypt('password'), // hashed even if User casts are not set
+                'email_verified_at' => now(),
+            ]
+        );
+
+        // Ensure admin role is set (idempotent)
+        $admin->syncRoles(['admin']);
     }
 }
