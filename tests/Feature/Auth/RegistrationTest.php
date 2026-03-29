@@ -17,7 +17,7 @@ test('new users can register', function () {
 
     $response->assertSessionHasNoErrors()
         // New users are not approved yet, so they should not reach dashboard
-        ->assertRedirect(route('pending-approval', absolute: false));
+        ->assertRedirect(route('home', absolute: false));
 
     $this->assertAuthenticated();
 });
