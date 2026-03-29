@@ -12,10 +12,12 @@ test('new users can register', function () {
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
+        'requested_role' => 'student',
     ]);
 
     $response->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        // New users are not approved yet, so they should not reach dashboard
+        ->assertRedirect(route('pending-approval', absolute: false));
 
     $this->assertAuthenticated();
 });
