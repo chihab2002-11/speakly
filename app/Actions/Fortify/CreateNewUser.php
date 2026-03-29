@@ -21,13 +21,16 @@ class CreateNewUser implements CreatesNewUsers
     {
         Validator::make($input, [
             ...$this->profileRules(),
+            'requested_role' => ['required', 'string', 'in:student,teacher,secretary,parent'],
             'password' => $this->passwordRules(),
         ])->validate();
 
         return User::create([
             'name' => $input['name'],
             'email' => $input['email'],
-            'password' => $input['password'],
+            'requested_role' => $input['requested_role'],
+            'password' => bcrypt($input['password']),
+            // approved_at / approved_by stay null until approval
         ]);
     }
 }

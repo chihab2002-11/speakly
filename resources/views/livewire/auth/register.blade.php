@@ -18,7 +18,38 @@
                 autocomplete="name"
                 :placeholder="__('Full name')"
             />
+            <!-- Requested Role -->
+            <div>
+                <label class="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+                    {{ __('Register as') }}
+                </label>
 
+                <select
+                    name="requested_role"
+                    required
+                    class="mt-1 w-full rounded-md border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900"
+                >
+                    <option value="" disabled {{ old('requested_role') ? '' : 'selected' }}>
+                        {{ __('Choose a role') }}
+                    </option>
+                    <option value="student" {{ old('requested_role') === 'student' ? 'selected' : '' }}>
+                        {{ __('Student') }}
+                    </option>
+                    <option value="parent" {{ old('requested_role') === 'parent' ? 'selected' : '' }}>
+                        {{ __('parent') }}
+                    </option>
+                    <option value="teacher" {{ old('requested_role') === 'teacher' ? 'selected' : '' }}>
+                        {{ __('Teacher') }}
+                    </option>
+                    <option value="secretary" {{ old('requested_role') === 'secretary' ? 'selected' : '' }}>
+                        {{ __('Secretary') }}
+                    </option>
+                </select>
+
+                @error('requested_role')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
             <!-- Email Address -->
             <flux:input
                 name="email"
