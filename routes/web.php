@@ -11,11 +11,9 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified', \App\Http\Middleware\EnsureApproved::class])
     ->name('dashboard');
 
-Route::view('/pending-approval', 'livewire.pending-approval')
+Route::view('/pending-approval', 'pending-approval')
     ->middleware('auth')
     ->name('pending-approval');
-
-// Approvals (NO 'role:' middleware here, Laravel 12 doesn't have Kernel aliases by default)
 Route::middleware([
     'auth',
     'verified',
@@ -27,8 +25,23 @@ Route::middleware([
     Route::post('/approvals/{user}/approve', [ApprovalController::class, 'approve'])
         ->whereNumber('user')
         ->name('approvals.approve');
+
+    Route::post('/approvals/{user}/reject', [ApprovalController::class, 'reject'])
+        ->whereNumber('user')
+        ->name('approvals.reject');
 });
-Route::post('/approvals/{user}/reject', [ApprovalController::class, 'reject'])
-    ->name('approvals.reject');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', function () {
+        $notifications = auth()->user()->notifications()->latest()->get();
+        return view('notifications.index', compact('notifications'));
+    })->name('notifications.index');
+
+    Route::post('/notifications/{id}/read', function ($id) {
+        $n = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+        $n->markAsRead();
+        return back();
+    })->name('notifications.read');
+});
 
 require __DIR__.'/settings.php';

@@ -4,17 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Notifications\AccountApprovedNotification;
+use App\Notifications\AccountRejectedNotification;
 
 class ApprovalController extends Controller
 {
     public function index(Request $request)
     {
-        // Only admin/secretary can access approvals page
         abort_unless($request->user()->hasAnyRole(['admin', 'secretary']), 403);
 
         $pendingUsers = User::query()
             ->whereNull('approved_at')
-            ->whereNull('rejected_at') // exclude rejected users
+            ->whereNull('rejected_at')
             ->whereNotNull('requested_role')
             ->orderBy('created_at')
             ->get();
@@ -24,15 +25,12 @@ class ApprovalController extends Controller
 
     public function approve(Request $request, User $user)
     {
-        // Only admin/secretary can approve
         abort_unless($request->user()->hasAnyRole(['admin', 'secretary']), 403);
 
-        // already approved -> nothing
         if ($user->approved_at !== null) {
             return redirect()->route('approvals.index');
         }
 
-        // rejected users should not be approved directly
         if ($user->rejected_at !== null) {
             return back()->with('error', 'User is already rejected.');
         }
@@ -43,11 +41,8 @@ class ApprovalController extends Controller
             return back()->with('error', 'User has no requested role.');
         }
 
-        // Authorization rules:
-        // - admin can approve anyone
-        // - secretary can approve only student + parent
         if ($request->user()->hasRole('admin')) {
-            // allowed for any requested_role
+            // allowed
         } elseif ($request->user()->hasRole('secretary')) {
             abort_unless(in_array($requestedRole, ['student', 'parent'], true), 403);
         }
@@ -57,8 +52,10 @@ class ApprovalController extends Controller
             'approved_by' => $request->user()->id,
         ])->save();
 
-        // Assign the real role now (Spatie)
         $user->syncRoles([$requestedRole]);
+
+        // ✅ notify approved user
+        $user->notify(new AccountApprovedNotification());
 
         return redirect()
             ->route('approvals.index')
@@ -67,15 +64,12 @@ class ApprovalController extends Controller
 
     public function reject(Request $request, User $user)
     {
-        // Only admin/secretary can reject
         abort_unless($request->user()->hasAnyRole(['admin', 'secretary']), 403);
 
-        // already approved -> cannot reject
         if ($user->approved_at !== null) {
             return back()->with('error', 'User is already approved.');
         }
 
-        // already rejected -> nothing
         if ($user->rejected_at !== null) {
             return back()->with('error', 'User is already rejected.');
         }
@@ -86,11 +80,8 @@ class ApprovalController extends Controller
             return back()->with('error', 'User has no requested role.');
         }
 
-        // Authorization rules:
-        // - admin can reject anyone
-        // - secretary can reject only student + parent
         if ($request->user()->hasRole('admin')) {
-            // allowed for any requested_role
+            // allowed
         } elseif ($request->user()->hasRole('secretary')) {
             abort_unless(in_array($requestedRole, ['student', 'parent'], true), 403);
         }
@@ -100,6 +91,9 @@ class ApprovalController extends Controller
             'rejected_by' => $request->user()->id,
             'rejection_reason' => $request->input('reason'),
         ])->save();
+
+        // ✅ notify rejected user
+        $user->notify(new AccountRejectedNotification($request->input('reason')));
 
         return redirect()
             ->route('approvals.index')
