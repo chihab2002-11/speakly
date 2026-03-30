@@ -27,6 +27,9 @@ class User extends Authenticatable
         'requested_role',
         'approved_at',
         'approved_by',
+        'rejected_at',
+        'rejected_by',
+        'rejection_reason',
     ];
 
     /**
@@ -50,6 +53,8 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

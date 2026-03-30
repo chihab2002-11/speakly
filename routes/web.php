@@ -28,5 +28,7 @@ Route::middleware([
         ->whereNumber('user')
         ->name('approvals.approve');
 });
+Route::post('/approvals/{user}/reject', [ApprovalController::class, 'reject'])
+    ->name('approvals.reject');
 
 require __DIR__.'/settings.php';

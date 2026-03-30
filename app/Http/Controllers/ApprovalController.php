@@ -14,6 +14,8 @@ class ApprovalController extends Controller
 
         $pendingUsers = User::query()
             ->whereNull('approved_at')
+            ->whereNull('rejected_at') // exclude rejected users
+            ->whereNotNull('requested_role')
             ->orderBy('created_at')
             ->get();
 
@@ -28,6 +30,11 @@ class ApprovalController extends Controller
         // already approved -> nothing
         if ($user->approved_at !== null) {
             return redirect()->route('approvals.index');
+        }
+
+        // rejected users should not be approved directly
+        if ($user->rejected_at !== null) {
+            return back()->with('error', 'User is already rejected.');
         }
 
         $requestedRole = $user->requested_role;
@@ -56,5 +63,46 @@ class ApprovalController extends Controller
         return redirect()
             ->route('approvals.index')
             ->with('success', 'User approved.');
+    }
+
+    public function reject(Request $request, User $user)
+    {
+        // Only admin/secretary can reject
+        abort_unless($request->user()->hasAnyRole(['admin', 'secretary']), 403);
+
+        // already approved -> cannot reject
+        if ($user->approved_at !== null) {
+            return back()->with('error', 'User is already approved.');
+        }
+
+        // already rejected -> nothing
+        if ($user->rejected_at !== null) {
+            return back()->with('error', 'User is already rejected.');
+        }
+
+        $requestedRole = $user->requested_role;
+
+        if (! $requestedRole) {
+            return back()->with('error', 'User has no requested role.');
+        }
+
+        // Authorization rules:
+        // - admin can reject anyone
+        // - secretary can reject only student + parent
+        if ($request->user()->hasRole('admin')) {
+            // allowed for any requested_role
+        } elseif ($request->user()->hasRole('secretary')) {
+            abort_unless(in_array($requestedRole, ['student', 'parent'], true), 403);
+        }
+
+        $user->forceFill([
+            'rejected_at' => now(),
+            'rejected_by' => $request->user()->id,
+            'rejection_reason' => $request->input('reason'),
+        ])->save();
+
+        return redirect()
+            ->route('approvals.index')
+            ->with('success', 'User rejected.');
     }
 }
