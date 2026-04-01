@@ -29,9 +29,13 @@ class MessageController extends Controller
         return view('messages.sent', compact('messages'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $users = User::query()->select('id', 'name', 'email')->orderBy('name')->get();
+        $users = User::query()
+            ->whereKeyNot($request->user()->id)
+            ->select('id', 'name', 'email')
+            ->orderBy('name')
+            ->get();
 
         return view('messages.create', compact('users'));
     }

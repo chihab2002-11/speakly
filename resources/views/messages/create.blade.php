@@ -1,47 +1,63 @@
-<x-layouts::app :title="'New Message'">
-    <div class="max-w-3xl mx-auto p-6">
-        <h1 class="text-2xl font-bold mb-4">New Message</h1>
+<x-layouts::app :title="__('New message')">
+    <div class="mx-auto max-w-2xl space-y-6 p-4 sm:p-6">
+        @include('messages.partials.nav', ['active' => 'create'])
+
+        <div>
+            <flux:heading size="xl">{{ __('New message') }}</flux:heading>
+            <flux:text class="mt-1">{{ __('Choose a recipient and write your message.') }}</flux:text>
+        </div>
 
         @if ($errors->any())
-            <div class="mb-4 p-3 rounded bg-red-100 text-red-800">
-                <ul class="list-disc ml-5">
+            <flux:callout variant="danger" icon="exclamation-circle" heading="{{ __('Please fix the errors below.') }}">
+                <ul class="mt-2 list-inside list-disc text-sm">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
                     @endforeach
                 </ul>
-            </div>
+            </flux:callout>
         @endif
 
-        <form action="{{ route('messages.store') }}" method="POST" class="space-y-4">
+        <form
+            action="{{ route('messages.store') }}"
+            method="POST"
+            class="space-y-6 rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900"
+        >
             @csrf
 
-            <div>
-                <label class="block text-sm font-medium mb-1">To</label>
-                <select name="receiver_id" class="w-full border rounded p-2" required>
-                    <option value="">Select user</option>
+            <flux:field>
+                <flux:label>{{ __('To') }}</flux:label>
+                <flux:select name="receiver_id" required :placeholder="__('Select a user')">
                     @foreach ($users as $user)
-                        @if ($user->id !== auth()->id())
-                            <option value="{{ $user->id }}" @selected(old('receiver_id') == $user->id)>
-                                {{ $user->name }} ({{ $user->email }})
-                            </option>
-                        @endif
+                        <flux:select.option
+                            value="{{ $user->id }}"
+                            :selected="(string) old('receiver_id') === (string) $user->id"
+                        >
+                            {{ $user->name }} ({{ $user->email }})
+                        </flux:select.option>
                     @endforeach
-                </select>
-            </div>
+                </flux:select>
+                <flux:error name="receiver_id" />
+            </flux:field>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">Subject (optional)</label>
-                <input type="text" name="subject" value="{{ old('subject') }}" class="w-full border rounded p-2">
-            </div>
+            <flux:field>
+                <flux:label>{{ __('Subject') }} ({{ __('optional') }})</flux:label>
+                <flux:input name="subject" value="{{ old('subject') }}" />
+                <flux:error name="subject" />
+            </flux:field>
 
-            <div>
-                <label class="block text-sm font-medium mb-1">Message</label>
-                <textarea name="body" rows="6" class="w-full border rounded p-2" required>{{ old('body') }}</textarea>
-            </div>
+            <flux:field>
+                <flux:label>{{ __('Message') }}</flux:label>
+                <flux:textarea name="body" rows="8" required>{{ old('body') }}</flux:textarea>
+                <flux:error name="body" />
+            </flux:field>
 
-            <div class="flex items-center gap-2">
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Send</button>
-                <a href="{{ route('messages.inbox') }}" class="px-4 py-2 bg-gray-200 rounded">Cancel</a>
+            <div class="flex flex-wrap gap-3">
+                <flux:button type="submit" variant="primary">
+                    {{ __('Send message') }}
+                </flux:button>
+                <flux:button :href="route('messages.inbox')" variant="ghost" wire:navigate>
+                    {{ __('Cancel') }}
+                </flux:button>
             </div>
         </form>
     </div>
