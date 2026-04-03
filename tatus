@@ -1,0 +1,208 @@
+[1mdiff --git a/CODE_EXAMPLES.md b/CODE_EXAMPLES.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..5477ec4[m
+[1m--- /dev/null[m
+[1m+++ b/CODE_EXAMPLES.md[m
+[36m@@ -0,0 +1,449 @@[m
+[32m+[m[32m# Code Examples & Reference[m
+[32m+[m
+[32m+[m[32m## 🔑 Key Implementation Files[m
+[32m+[m
+[32m+[m[32m### TeacherTimetableController.php[m
+[32m+[m
+[32m+[m[32m```php[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace App\Http\Controllers;[m
+[32m+[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Collection;[m
+[32m+[m[32muse Illuminate\Http\Request;[m
+[32m+[m
+[32m+[m[32mclass TeacherTimetableController extends Controller[m
+[32m+[m[32m{[m
+[32m+[m[32m    public function index(Request $request)[m
+[32m+[m[32m    {[m
+[32m+[m[32m        // ✅ Only teachers can view their timetable[m
+[32m+[m[32m        abort_unless($request->user()->hasRole('teacher'), 403);[m
+[32m+[m
+[32m+[m[32m        $teacher = $request->user();[m
+[32m+[m
+[32m+[m[32m        // ✅ Get all classes the teacher teaches with relationships[m
+[32m+[m[32m        $taughtClasses = $teacher->taughtClasses()[m
+[32m+[m[32m            ->with([[m
+[32m+[m[32m                'course',[m
+[32m+[m[32m                'schedules.room',[m
+[32m+[m[32m            ])[m
+[32m+[m[32m            ->orderBy('created_at')[m
+[32m+[m[32m            ->get();[m
+[32m+[m
+[32m+[m[32m        // ✅ Build timetable grouped by day of week[m
+[32m+[m[32m        $timetable = $this->buildTimetable($taughtClasses);[m
+[32m+[m
+[32m+[m[32m        return view('timetable.teacher', [[m
+[32m+[m[32m            'taughtClasses' => $taughtClasses,[m
+[32m+[m[32m            'timetable' => $timetable,[m
+[32m+[m[32m        ]);[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    /**[m
+[32m+[m[32m     * Build timetable grouped by day of week for a teacher[m
+[32m+[m[32m     *[m
+[32m+[m[32m     * @param  Collection  $taughtClasses[m
+[32m+[m[32m     * @return array<string, array>[m
+[32m+[m[32m     */[m
+[32m+[m[32m    private function buildTimetable($taughtClasses): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];[m
+[32m+[m[32m        $timetable = array_fill_keys($days, []);[m
+[32m+[m
+[32m+[m[32m        foreach ($taughtClasses as $class) {[m
+[32m+[m[32m            foreach ($class->schedules as $schedule) {[m
+[32m+[m[32m                $timetable[$schedule->day_of_week][] = [[m
+[32m+[m[32m                    'course_name' => $class->course->name,[m
+[32m+[m[32m                    'course_code' => $class->course->code,[m
+[32m+[m[32m                    'class_id' => $class->id,[m
+[32m+[m[32m                    'room_name' => $schedule->room?->name ?? 'TBA',[m
+[32m+[m[32m                    'room_capacity' => $schedule->room?->capacity ?? 'N/A',[m
+[32m+[m[32m                    'start_time' => $schedule->start_time,[m
+[32m+[m[32m                    'end_time' => $schedule->end_time,[m
+[32m+[m[32m                    'student_count' => $class->students()->count(),[m
+[32m+[m[32m                ];[m
+[32m+[m[32m            }[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        // Sort each day's schedule by start time[m
+[32m+[m[32m        foreach ($timetable as &$daySchedules) {[m
+[32m+[m[32m            usort($daySchedules, function ($a, $b) {[m
+[32m+[m[32m                return strtotime($a['start_time']) <=> strtotime($b['start_time']);[m
+[32m+[m[32m            });[m
+[32m+[m[32m        }[m
+[32m+[m
+[32m+[m[32m        return $timetable;[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### Room Model[m
+[32m+[m
+[32m+[m[32m```php[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace App\Models;[m
+[32m+[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Factories\HasFactory;[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Model;[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Relations\HasMany;[m
+[32m+[m
+[32m+[m[32mclass Room extends Model[m
+[32m+[m[32m{[m
+[32m+[m[32m    use HasFactory;[m
+[32m+[m
+[32m+[m[32m    protected $fillable = ['name', 'capacity', 'location'];[m
+[32m+[m
+[32m+[m[32m    public function schedules(): HasMany[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return $this->hasMany(Schedule::class);[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### Schedule Model (Updated)[m
+[32m+[m
+[32m+[m[32m```php[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace App\Models;[m
+[32m+[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Factories\HasFactory;[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Model;[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Relations\BelongsTo;[m
+[32m+[m
+[32m+[m[32mclass Schedule extends Model[m
+[32m+[m[32m{[m
+[32m+[m[32m    use HasFactory;[m
+[32m+[m
+[32m+[m[32m    protected $fillable = ['class_id', 'day_of_week', 'start_time', 'end_time', 'room_id'];[m
+[32m+[m
+[32m+[m[32m    protected $casts = [[m
+[32m+[m[32m        'start_time' => 'datetime:H:i',[m
+[32m+[m[32m        'end_time' => 'datetime:H:i',[m
+[32m+[m[32m    ];[m
+[32m+[m
+[32m+[m[32m    public function class(): BelongsTo[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return $this->belongsTo(CourseClass::class, 'class_id');[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    public function room(): BelongsTo[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return $this->belongsTo(Room::class);[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### Routes Registration[m
+[32m+[m
+[32m+[m[32m```php[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32muse App\Http\Controllers\TeacherTimetableController;[m
+[32m+[m[32muse App\Http\Controllers\TimetableController;[m
+[32m+[m
+[32m+[m[32mRoute::middleware([[m
+[32m+[m[32m    'auth',[m
+[32m+[m[32m    'verified',[m
+[32m+[m[32m    EnsureApproved::class,[m
+[32m+[m[32m])->group(function () {[m
+[32m+[m[32m    // ✅ Timetable route for students[m
+[32m+[m[32m    Route::get('/timetable', [TimetableController::class, 'index'])->name('timetable.index');[m
+[32m+[m
+[32m+[m[32m    // ✅ Timetable route for teachers[m
+[32m+[m[32m    Route::get('/teacher-timetable', [TeacherTimetableController::class, 'index'])->name('timetable.teacher');[m
+[32m+[m[32m});[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## 📊 Factory Examples[m
+[32m+[m
+[32m+[m[32m### RoomFactory[m
+[32m+[m
+[32m+[m[32m```php[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace Database\Factories;[m
+[32m+[m
+[32m+[m[32muse App\Models\Room;[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Factories\Factory;[m
+[32m+[m
+[32m+[m[32mclass RoomFactory extends Factory[m
+[32m+[m[32m{[m
+[32m+[m[32m    public function definition(): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        return [[m
+[32m+[m[32m            'name' => fake()->bothify('Room ###'),[m
+[32m+[m[32m            'capacity' => fake()->randomElement([20, 25, 30, 35, 40, 50]),[m
+[32m+[m[32m            'location' => fake()->secondaryAddress(),[m
+[32m+[m[32m        ];[m
+[32m+[m[32m    }[m
+[32m+[m[32m}[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### ScheduleFactory[m
+[32m+[m
+[32m+[m[32m```php[m
+[32m+[m[32m<?php[m
+[32m+[m
+[32m+[m[32mnamespace Database\Factories;[m
+[32m+[m
+[32m+[m[32muse App\Models\CourseClass;[m
+[32m+[m[32muse App\Models\Room;[m
+[32m+[m[32muse App\Models\Schedule;[m
+[32m+[m[32muse Illuminate\Database\Eloquent\Factories\Factory;[m
+[32m+[m
+[32m+[m[32mclass ScheduleFactory extends Factory[m
+[32m+[m[32m{[m
+[32m+[m[32m    public function definition(): array[m
+[32m+[m[32m    {[m
+[32m+[m[32m        $startHour = fake()->randomElement([8, 9, 10, 11, 13, 14, 15, 16]);[m
+[32m+[m[32m        $startTime = sprintf('%02d:00', $startHour);[m
+[32m+[m[32m        $endTime = sprintf('%02d:3
