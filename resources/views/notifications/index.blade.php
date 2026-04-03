@@ -5,8 +5,8 @@
         <strong>{{ $n->data['title'] ?? 'Notification' }}</strong>
         <p>{{ $n->data['message'] ?? '' }}</p>
 
-        @if(!empty($n->data['reason']))
-            <p><b>Reason:</b> {{ $n->data['reason'] }}</p>
+        @if(!empty($n->data['url']))
+            <p><a href="{{ $n->data['url'] }}">Open message</a></p>
         @endif
 
         <small>{{ $n->created_at->diffForHumans() }}</small>

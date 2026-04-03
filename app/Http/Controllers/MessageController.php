@@ -6,6 +6,7 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Notifications\NewMessageNotification;
 
 class MessageController extends Controller
 {
@@ -52,12 +53,15 @@ class MessageController extends Controller
             'body' => ['required', 'string', 'max:5000'],
         ]);
 
-        Message::create([
+        $message = Message::create([
             'sender_id' => $request->user()->id,
             'receiver_id' => $data['receiver_id'],
             'subject' => $data['subject'] ?? null,
             'body' => $data['body'],
         ]);
+
+        $message->load(['sender', 'receiver']);
+        $message->receiver->notify(new NewMessageNotification($message));
 
         return redirect()->route('messages.sent')->with('success', 'Message sent successfully.');
     }
