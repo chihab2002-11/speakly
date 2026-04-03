@@ -1,8 +1,13 @@
 <?php
 
 test('registration screen can be rendered', function () {
+    // /register now redirects to the custom /register-login page
     $response = $this->get(route('register'));
 
+    $response->assertRedirect(route('register-login', ['tab' => 'register']));
+
+    // Verify the custom register-login page loads correctly
+    $response = $this->get(route('register-login'));
     $response->assertOk();
 });
 

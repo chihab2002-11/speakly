@@ -1,0 +1,137 @@
+/* --- Base Reset & General Styles --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #FFFFFF;
+    color: #1A1B22;
+    /* Maintained from your Figma export */
+    min-height: 3598px; 
+    overflow-x: hidden;
+}
+
+/* --- New Academy Utility Classes --- */
+
+/* Extra Bold Typography */
+.font-black-900 { 
+    font-weight: 900; 
+}
+
+/* Background Patterns */
+.bg-grid { 
+    background-image: radial-gradient(#000 1px, transparent 0); 
+    background-size: 40px 40px; 
+}
+
+/* Navigation Blur Effect */
+.glass-nav { 
+    background: rgba(255, 255, 255, 0.85); 
+    backdrop-filter: blur(12px); 
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Interactive Hover Animations */
+.hover-lift { 
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease; 
+}
+
+.hover-lift:hover { 
+    transform: translateY(-4px); 
+}
+
+/* --- Figma Derived Layouts --- */
+.visitor-page {
+    position: relative;
+    width: 100%;
+}
+
+.hero-placeholder {
+    height: 1006px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fcfcfc;
+}
+
+/* Programs Section */
+.programs-section {
+    position: relative;
+    width: 100%;
+    height: 975px;
+    background: #E8F9F1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 128px 32px;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+/* Subtle Flowing Shape Background */
+.background-shape {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0.5px;
+    right: 0%;
+    opacity: 0.03;
+    z-index: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    pointer-events: none;
+}
+
+.content-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1200px; 
+    margin: 0 auto;
+}
+
+/* Text and Link Styles */
+.program-link-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.label-text {
+    width: 93.81px;
+    height: 20px;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    display: flex;
+    align-items: center;
+    color: #1A1B22;
+}
+
+.program-link {
+    width: 113.86px;
+    height: 20px;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 20px;
+    text-decoration: none;
+    color: #1A1B22;
+    display: flex;
+    align-items: center;
+    transition: opacity 0.2s ease;
+}
+
+.program-link:hover {
+    opacity: 0.7;
+}

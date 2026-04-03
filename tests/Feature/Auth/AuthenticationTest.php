@@ -4,8 +4,13 @@ use App\Models\User;
 use Laravel\Fortify\Features;
 
 test('login screen can be rendered', function () {
+    // /login now redirects to the custom /register-login page
     $response = $this->get(route('login'));
 
+    $response->assertRedirect(route('register-login'));
+
+    // Verify the custom register-login page loads correctly
+    $response = $this->get(route('register-login'));
     $response->assertOk();
 });
 

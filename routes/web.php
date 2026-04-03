@@ -6,16 +6,50 @@ use App\Http\Middleware\EnsureApproved;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    // If user is logged in, redirect to appropriate page
+    if (auth()->check()) {
+        $user = auth()->user();
+        // If not approved yet, go to pending-approval
+        if (is_null($user->approved_at)) {
+            return redirect()->route('pending-approval');
+        }
+
+        // If approved, go to dashboard
+        return redirect()->route('dashboard');
+    }
+
+    return view('visitor');
 })->name('home');
+
+Route::get('/register-login', function () {
+    // If user is logged in, redirect to appropriate page
+    if (auth()->check()) {
+        $user = auth()->user();
+        // If not approved yet, go to pending-approval
+        if (is_null($user->approved_at)) {
+            return redirect()->route('pending-approval');
+        }
+
+        // If approved, go to dashboard
+        return redirect()->route('dashboard');
+    }
+
+    return view('register-login-page');
+})->name('register-login');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified', EnsureApproved::class])
     ->name('dashboard');
 
-Route::view('/pending-approval', 'pending-approval')
-    ->middleware('auth')
-    ->name('pending-approval');
+Route::get('/pending-approval', function () {
+    // If user is already approved, redirect to dashboard
+    $user = auth()->user();
+    if (! is_null($user->approved_at)) {
+        return redirect()->route('dashboard');
+    }
+
+    return view('pending-approval');
+})->middleware('auth')->name('pending-approval');
 Route::middleware([
     'auth',
     'verified',

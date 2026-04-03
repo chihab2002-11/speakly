@@ -29,7 +29,7 @@ class CreateNewUser implements CreatesNewUsers
             'name' => $input['name'],
             'email' => $input['email'],
             'requested_role' => $input['requested_role'],
-            'password' => bcrypt($input['password']),
+            'password' => $input['password'], // User model has 'hashed' cast
             // approved_at / approved_by stay null until approval
         ]);
     }
