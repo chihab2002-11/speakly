@@ -1,0 +1,15 @@
+parameters:
+    level: 5
+    paths:
+        - app
+        - tests
+    excludePaths:
+        - vendor
+    ignoreErrors:
+        # Pest framework uses dynamic method binding in closures
+        # These are not real errors - $this gets bound to TestCase at runtime
+        -
+            identifier: method.notFound
+            paths:
+                - tests/Feature/*
+                - tests/Unit/*
