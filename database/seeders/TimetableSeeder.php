@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Course;
 use App\Models\CourseClass;
+use App\Models\Room;
 use App\Models\Schedule;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -30,9 +31,18 @@ class TimetableSeeder extends Seeder
             ]
         );
 
+        // Create or get a room
+        $room = Room::firstOrCreate(
+            ['name' => 'A101'],
+            [
+                'capacity' => 30,
+                'location' => 'Main Building',
+            ]
+        );
+
         // Create or get a class
         $class = CourseClass::firstOrCreate(
-            ['course_id' => $course->id, 'room' => 'A101'],
+            ['course_id' => $course->id],
             [
                 'teacher_id' => $teacher?->id,
                 'capacity' => 30,
@@ -41,29 +51,26 @@ class TimetableSeeder extends Seeder
 
         // Create schedules
         Schedule::firstOrCreate(
-            ['class_id' => $class->id, 'day_of_week' => 'monday'],
+            ['class_id' => $class->id, 'day_of_week' => 'monday', 'room_id' => $room->id],
             [
                 'start_time' => '09:00:00',
                 'end_time' => '10:30:00',
-                'room' => 'A101',
             ]
         );
 
         Schedule::firstOrCreate(
-            ['class_id' => $class->id, 'day_of_week' => 'wednesday'],
+            ['class_id' => $class->id, 'day_of_week' => 'wednesday', 'room_id' => $room->id],
             [
                 'start_time' => '09:00:00',
                 'end_time' => '10:30:00',
-                'room' => 'A101',
             ]
         );
 
         Schedule::firstOrCreate(
-            ['class_id' => $class->id, 'day_of_week' => 'friday'],
+            ['class_id' => $class->id, 'day_of_week' => 'friday', 'room_id' => $room->id],
             [
                 'start_time' => '09:00:00',
                 'end_time' => '10:30:00',
-                'room' => 'A101',
             ]
         );
 
@@ -85,7 +92,7 @@ class TimetableSeeder extends Seeder
 
         $this->command->info('✅ Timetable sample data ready!');
         $this->command->info("Course: {$course->name} ({$course->code})");
-        $this->command->info("Class: Room {$class->room}");
+        $this->command->info("Room: {$room->name}");
         $this->command->info("Student: {$student->name} (password: password)");
         $this->command->info('Schedules: Mon, Wed, Fri 09:00-10:30');
     }

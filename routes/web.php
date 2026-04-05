@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\SecretaryTimetableController;
 use App\Http\Middleware\EnsureApproved;
 use Illuminate\Support\Facades\Route;
 
@@ -65,6 +66,9 @@ Route::middleware([
     Route::post('/approvals/{user}/reject', [ApprovalController::class, 'reject'])
         ->whereNumber('user')
         ->name('approvals.reject');
+
+    Route::get('/secretary/timetable', [SecretaryTimetableController::class, 'index'])
+        ->name('secretary.timetable.index');
 });
 
 Route::middleware([
@@ -72,12 +76,16 @@ Route::middleware([
     'verified',
     EnsureApproved::class,
 ])->group(function () {
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::patch('/messages/{message}/read', [MessageController::class, 'markAsRead'])->name('messages.read');
+
+    // Legacy routes (redirect to new unified view)
     Route::get('/messages/inbox', [MessageController::class, 'inbox'])->name('messages.inbox');
     Route::get('/messages/sent', [MessageController::class, 'sent'])->name('messages.sent');
     Route::get('/messages/create', [MessageController::class, 'create'])->name('messages.create');
-    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
     Route::get('/messages/{message}', [MessageController::class, 'show'])->name('messages.show');
-    Route::patch('/messages/{message}/read', [MessageController::class, 'markAsRead'])->name('messages.read');
+    Route::get('/messages/conversation/{user}', [MessageController::class, 'conversation'])->name('messages.conversation');
 });
 
 Route::middleware('auth')->group(function () {

@@ -22,7 +22,6 @@ class CourseClassFactory extends Factory
         return [
             'course_id' => Course::factory(),
             'teacher_id' => User::factory(),
-            'room' => fake()->bothify('Room ###'),
             'capacity' => fake()->randomElement([25, 30, 35, 40, 50]),
         ];
     }

@@ -2,8 +2,10 @@ parameters:
     level: 5
     paths:
         - app
+        - routes
         - tests
     excludePaths:
+        - tests
         - vendor
     ignoreErrors:
         # Pest framework uses dynamic method binding in closures

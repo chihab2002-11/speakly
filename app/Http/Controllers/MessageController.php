@@ -4,43 +4,106 @@ namespace App\Http\Controllers;
 
 use App\Models\Message;
 use App\Models\User;
+use App\Notifications\NewMessageNotification;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use App\Notifications\NewMessageNotification;
 
 class MessageController extends Controller
 {
-    public function inbox(Request $request)
+    /**
+     * Display unified messages interface with conversations list and thread.
+     * Optionally show a specific conversation via ?user_id=X query parameter.
+     */
+    public function index(Request $request)
     {
-        $messages = Message::with('sender')
-            ->where('receiver_id', $request->user()->id)
-            ->latest()
-            ->paginate(10);
+        $currentUserId = $request->user()->id;
+        $search = $request->query('search', '');
+        $selectedUserId = $request->query('user_id');
 
-        return view('messages.inbox', compact('messages'));
-    }
-
-    public function sent(Request $request)
-    {
-        $messages = Message::with('receiver')
-            ->where('sender_id', $request->user()->id)
-            ->latest()
-            ->paginate(10);
-
-        return view('messages.sent', compact('messages'));
-    }
-
-    public function create(Request $request)
-    {
-        $users = User::query()
-            ->whereKeyNot($request->user()->id)
-            ->select('id', 'name', 'email')
+        // Get all unique users the current user has messaged with (sorted by most recent message)
+        $conversationPartners = User::whereIn('id', function ($query) use ($currentUserId) {
+            $query->selectRaw('DISTINCT CASE
+                    WHEN sender_id = ? THEN receiver_id
+                    ELSE sender_id
+                END as user_id', [$currentUserId])
+                ->from('messages')
+                ->where(function ($q) use ($currentUserId) {
+                    $q->where('sender_id', $currentUserId)
+                        ->orWhere('receiver_id', $currentUserId);
+                });
+        })
+            ->when($search, function ($query) use ($search) {
+                return $query->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($search).'%']);
+            })
             ->orderBy('name')
             ->get();
 
-        return view('messages.create', compact('users'));
+        // Get conversation threads with last message for each partner
+        $conversations = [];
+        foreach ($conversationPartners as $partner) {
+            $lastMessage = Message::whereRaw(
+                '(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)',
+                [$currentUserId, $partner->id, $partner->id, $currentUserId]
+            )
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $unreadCount = Message::where('sender_id', $partner->id)
+                ->where('receiver_id', $currentUserId)
+                ->whereNull('read_at')
+                ->count();
+
+            $conversations[] = [
+                'user' => $partner,
+                'lastMessage' => $lastMessage,
+                'unreadCount' => $unreadCount,
+            ];
+        }
+
+        // Sort conversations by most recent message
+        usort($conversations, function ($a, $b) {
+            $timeA = $a['lastMessage']?->created_at ?? now()->subYears(1);
+            $timeB = $b['lastMessage']?->created_at ?? now()->subYears(1);
+
+            return $timeB <=> $timeA;
+        });
+
+        // If a user is selected, get the full conversation and mark messages as read
+        $selectedUser = null;
+        $selectedConversation = [];
+
+        if ($selectedUserId) {
+            $selectedUser = User::find($selectedUserId);
+
+            if ($selectedUser && $selectedUser->id !== $currentUserId) {
+                // Get all messages in the conversation
+                $selectedConversation = Message::whereRaw(
+                    '(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)',
+                    [$currentUserId, $selectedUser->id, $selectedUser->id, $currentUserId]
+                )
+                    ->with(['sender', 'receiver'])
+                    ->orderBy('created_at', 'asc')
+                    ->get();
+
+                // Mark unread messages from selectedUser as read
+                Message::where('sender_id', $selectedUser->id)
+                    ->where('receiver_id', $currentUserId)
+                    ->whereNull('read_at')
+                    ->update(['read_at' => now()]);
+            }
+        }
+
+        return view('messages.index', [
+            'conversations' => $conversations,
+            'selectedUser' => $selectedUser,
+            'selectedConversation' => $selectedConversation,
+            'search' => $search,
+        ]);
     }
 
+    /**
+     * Store a new message and redirect to messages page with selected user.
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -63,22 +126,29 @@ class MessageController extends Controller
         $message->load(['sender', 'receiver']);
         $message->receiver->notify(new NewMessageNotification($message));
 
-        return redirect()->route('messages.sent')->with('success', 'Message sent successfully.');
+        return redirect()->route('messages.index', ['user_id' => $data['receiver_id']])
+            ->with('success', 'Message sent successfully.');
+    }
+
+    // Keep legacy methods for backward compatibility (deprecated but functional)
+    public function inbox(Request $request)
+    {
+        return redirect()->route('messages.index');
+    }
+
+    public function sent(Request $request)
+    {
+        return redirect()->route('messages.index');
+    }
+
+    public function create(Request $request)
+    {
+        return redirect()->route('messages.index');
     }
 
     public function show(Request $request, Message $message)
     {
-        if ($request->user()->id !== $message->sender_id && $request->user()->id !== $message->receiver_id) {
-            abort(403);
-        }
-
-        if ($request->user()->id === $message->receiver_id && is_null($message->read_at)) {
-            $message->update(['read_at' => now()]);
-        }
-
-        $message->load(['sender', 'receiver']);
-
-        return view('messages.show', compact('message'));
+        return redirect()->route('messages.index', ['user_id' => $message->sender_id === $request->user()->id ? $message->receiver_id : $message->sender_id]);
     }
 
     public function markAsRead(Request $request, Message $message)
@@ -92,5 +162,10 @@ class MessageController extends Controller
         }
 
         return back()->with('success', 'Message marked as read.');
+    }
+
+    public function conversation(Request $request, User $otherUser)
+    {
+        return redirect()->route('messages.index', ['user_id' => $otherUser->id]);
     }
 }

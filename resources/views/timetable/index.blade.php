@@ -59,7 +59,7 @@
                                 {{ $class->course->name }}
                             </p>
                             <p class="text-xs text-zinc-600 dark:text-zinc-400">
-                                {{ $class->course->code }} • Room {{ $class->room }}
+                                {{ $class->course->code }}
                             </p>
                             <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                                 👨‍🏫 {{ $class->teacher?->name ?? 'No teacher assigned' }}
