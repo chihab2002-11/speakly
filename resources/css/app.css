@@ -10,6 +10,25 @@
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-inter: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-calibri: 'Calibri', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+    
+    /* Lumina Academy Color Palette */
+    --color-lumina-primary: #006A41;
+    --color-lumina-primary-dark: #034C3C;
+    --color-lumina-primary-darker: #1E3A2F;
+    --color-lumina-primary-light: #2D8C5E;
+    --color-lumina-bg-main: #F6FBF5;
+    --color-lumina-bg-section: #F3F8F5;
+    --color-lumina-bg-card: #F0F5EE;
+    --color-lumina-sidebar-bg: #BDD9CE;
+    --color-lumina-text-primary: #181D19;
+    --color-lumina-text-secondary: #3F4941;
+    --color-lumina-text-muted: #64748B;
+    --color-lumina-text-heading: #446651;
+    --color-lumina-accent-green: #99F6BF;
+    --color-lumina-accent-red: #BA1A1A;
+    --color-lumina-border: #E2E8F0;
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -59,6 +78,57 @@ input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+/* Lumina Academy - Student Dashboard Utilities */
+.font-inter {
+    font-family: var(--font-inter);
+}
+
+.font-calibri {
+    font-family: var(--font-calibri);
+}
+
+/* Lumina themed background colors */
+.bg-lumina-main {
+    background-color: var(--color-lumina-bg-main);
+}
+
+.bg-lumina-section {
+    background-color: var(--color-lumina-bg-section);
+}
+
+.bg-lumina-card {
+    background-color: var(--color-lumina-bg-card);
+}
+
+.bg-lumina-sidebar {
+    background-color: var(--color-lumina-sidebar-bg);
+}
+
+.bg-lumina-primary {
+    background-color: var(--color-lumina-primary);
+}
+
+/* Lumina text colors */
+.text-lumina-primary {
+    color: var(--color-lumina-text-primary);
+}
+
+.text-lumina-secondary {
+    color: var(--color-lumina-text-secondary);
+}
+
+.text-lumina-muted {
+    color: var(--color-lumina-text-muted);
+}
+
+.text-lumina-heading {
+    color: var(--color-lumina-text-heading);
+}
+
+.text-lumina-green {
+    color: var(--color-lumina-primary);
 }
 
 /* \[:where(&)\]:size-4 {
