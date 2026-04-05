@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Message;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
+use App\Support\DashboardRedirector;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -18,7 +19,7 @@ class MessageController extends Controller
     {
         $currentUserId = $request->user()->id;
         $search = $request->query('search', '');
-        $selectedUserId = $request->query('user_id', $request->route('user'));
+        $selectedUserId = $request->query('user_id', $request->route('conversation'));
 
         // Get all unique users the current user has messaged with (sorted by most recent message)
         $conversationPartners = User::whereIn('id', function ($query) use ($currentUserId) {
@@ -126,37 +127,45 @@ class MessageController extends Controller
         $message->load(['sender', 'receiver']);
         $message->receiver->notify(new NewMessageNotification($message));
 
-        return redirect()->route('messages.conversation', ['user' => $data['receiver_id']])
+        return redirect()->route('role.messages.conversation', $this->routeParameters($request, [
+            'conversation' => $data['receiver_id'],
+        ]))
             ->with('success', 'Message sent successfully.');
     }
 
     // Keep legacy methods for backward compatibility (deprecated but functional)
     public function inbox(Request $request)
     {
-        return redirect()->route('messages.index');
+        return redirect()->route('role.messages.index', $this->routeParameters($request));
     }
 
     public function sent(Request $request)
     {
-        return redirect()->route('messages.index');
+        return redirect()->route('role.messages.index', $this->routeParameters($request));
     }
 
     public function create(Request $request)
     {
-        return redirect()->route('messages.index');
+        return redirect()->route('role.messages.index', $this->routeParameters($request));
     }
 
-    public function show(Request $request, Message $message)
+    public function show(Request $request, string $role, string $message)
     {
+        $message = Message::query()->findOrFail($this->extractId($message));
+
         if (! in_array($request->user()->id, [$message->sender_id, $message->receiver_id], true)) {
             abort(403);
         }
 
-        return redirect()->route('messages.conversation', ['user' => $message->sender_id === $request->user()->id ? $message->receiver_id : $message->sender_id]);
+        return redirect()->route('role.messages.conversation', $this->routeParameters($request, [
+            'conversation' => $message->sender_id === $request->user()->id ? $message->receiver_id : $message->sender_id,
+        ]));
     }
 
-    public function markAsRead(Request $request, Message $message)
+    public function markAsRead(Request $request, string $role, string $message)
     {
+        $message = Message::query()->findOrFail($this->extractId($message));
+
         if ($request->user()->id !== $message->receiver_id) {
             abort(403);
         }
@@ -168,12 +177,40 @@ class MessageController extends Controller
         return back()->with('success', 'Message marked as read.');
     }
 
-    public function conversation(Request $request, User $otherUser)
+    public function conversation(Request $request, string $role, string $conversation)
     {
-        if ((int) $request->route('user') === (int) $request->user()->id) {
-            return redirect()->route('messages.index');
+        if ((int) $conversation === (int) $request->user()->id) {
+            return redirect()->route('role.messages.index', $this->routeParameters($request));
         }
 
         return $this->index($request);
+    }
+
+    private function extractId(string $value): int
+    {
+        if (ctype_digit($value)) {
+            return (int) $value;
+        }
+
+        if (preg_match('/"id"\s*:\s*(\d+)/', $value, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        if (preg_match('/\d+/', $value, $matches) === 1) {
+            return (int) $matches[0];
+        }
+
+        abort(404);
+    }
+
+    /**
+     * @param  array<string, mixed>  $parameters
+     * @return array<string, mixed>
+     */
+    private function routeParameters(Request $request, array $parameters = []): array
+    {
+        $role = (string) ($request->route('role') ?: DashboardRedirector::roleFor($request->user()));
+
+        return ['role' => $role, ...$parameters];
     }
 }

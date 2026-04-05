@@ -3,10 +3,10 @@
 namespace App\Notifications;
 
 use App\Models\Message;
+use App\Support\DashboardRedirector;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\DatabaseMessage;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Str;
 
 class NewMessageNotification extends Notification
 {
@@ -26,7 +26,9 @@ class NewMessageNotification extends Notification
         return new DatabaseMessage([
             'title' => 'New message',
             'message' => "You have a new message from {$sender}.",
-            'url' => route('messages.show', $this->message),
+            'url' => route('role.messages.show', DashboardRedirector::routeParametersFor($notifiable, [
+                'message' => $this->message,
+            ])),
             'message_id' => $this->message->id,
         ]);
     }

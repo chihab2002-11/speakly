@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -28,6 +29,8 @@ class User extends Authenticatable
         'email',
         'password',
         'requested_role',
+        'date_of_birth',
+        'parent_id',
         'approved_at',
         'approved_by',
         'rejected_at',
@@ -56,6 +59,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'date_of_birth' => 'date',
             'approved_at' => 'datetime',
             'rejected_at' => 'datetime',
             'password' => 'hashed',
@@ -84,5 +88,15 @@ class User extends Authenticatable
     public function taughtClasses(): HasMany
     {
         return $this->hasMany(CourseClass::class, 'teacher_id');
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_id');
     }
 }

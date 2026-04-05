@@ -3,20 +3,33 @@
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-it('allows authenticated user to send a message', function () {
-    $sender = User::factory()->create(['approved_at' => now()]);
-    $receiver = User::factory()->create(['approved_at' => now()]);
+beforeEach(function () {
+    Role::findOrCreate('student', 'web');
+});
 
-    $response = $this->actingAs($sender)->post(route('messages.store'), [
+function createApprovedStudent(): User
+{
+    $user = User::factory()->create(['approved_at' => now()]);
+    $user->assignRole('student');
+
+    return $user;
+}
+
+it('allows authenticated user to send a message', function () {
+    $sender = createApprovedStudent();
+    $receiver = createApprovedStudent();
+
+    $response = $this->actingAs($sender)->post(route('role.messages.store', ['role' => 'student']), [
         'receiver_id' => $receiver->id,
         'subject' => 'Hello',
         'body' => 'Test message body',
     ]);
 
-    $response->assertRedirect(route('messages.conversation', ['user' => $receiver->id]));
+    $response->assertRedirect(route('role.messages.conversation', ['role' => 'student', 'conversation' => $receiver->id]));
 
     $this->assertDatabaseHas('messages', [
         'sender_id' => $sender->id,
@@ -27,8 +40,8 @@ it('allows authenticated user to send a message', function () {
 });
 
 it('prevents user from viewing someone elses message', function () {
-    $owner = User::factory()->create(['approved_at' => now()]);
-    $receiver = User::factory()->create(['approved_at' => now()]);
+    $owner = createApprovedStudent();
+    $receiver = createApprovedStudent();
 
     Message::create([
         'sender_id' => $owner->id,
@@ -38,14 +51,14 @@ it('prevents user from viewing someone elses message', function () {
     ]);
 
     // User can access messages page but should not see others' conversations
-    $response = $this->actingAs($receiver)->get(route('messages.index'));
+    $response = $this->actingAs($receiver)->get(route('role.messages.index', ['role' => 'student']));
     $response->assertOk();
 });
 
 it('prevents sending a message to self', function () {
-    $user = User::factory()->create(['approved_at' => now()]);
+    $user = createApprovedStudent();
 
-    $response = $this->actingAs($user)->post(route('messages.store'), [
+    $response = $this->actingAs($user)->post(route('role.messages.store', ['role' => 'student']), [
         'receiver_id' => $user->id,
         'subject' => 'Self',
         'body' => 'Should fail',
@@ -55,9 +68,9 @@ it('prevents sending a message to self', function () {
 });
 
 it('shows only received messages in inbox', function () {
-    $me = User::factory()->create(['approved_at' => now()]);
-    $other = User::factory()->create(['approved_at' => now()]);
-    $third = User::factory()->create(['approved_at' => now()]);
+    $me = createApprovedStudent();
+    $other = createApprovedStudent();
+    $third = createApprovedStudent();
 
     Message::create([
         'sender_id' => $other->id,
@@ -73,16 +86,16 @@ it('shows only received messages in inbox', function () {
         'body' => 'Inbox no',
     ]);
 
-    $response = $this->actingAs($me)->get(route('messages.index'));
+    $response = $this->actingAs($me)->get(route('role.messages.index', ['role' => 'student']));
 
     $response->assertOk();
     $response->assertSee($other->name);
 });
 
 it('shows only sent messages in sent page', function () {
-    $me = User::factory()->create(['approved_at' => now()]);
-    $other = User::factory()->create(['approved_at' => now()]);
-    $third = User::factory()->create(['approved_at' => now()]);
+    $me = createApprovedStudent();
+    $other = createApprovedStudent();
+    $third = createApprovedStudent();
 
     Message::create([
         'sender_id' => $me->id,
@@ -98,14 +111,14 @@ it('shows only sent messages in sent page', function () {
         'body' => 'Sent no',
     ]);
 
-    $response = $this->actingAs($me)->get(route('messages.index'));
+    $response = $this->actingAs($me)->get(route('role.messages.index', ['role' => 'student']));
 
     $response->assertOk();
 });
 
 it('opens selected conversation from clean conversation route', function () {
-    $me = User::factory()->create(['approved_at' => now()]);
-    $other = User::factory()->create(['approved_at' => now()]);
+    $me = createApprovedStudent();
+    $other = createApprovedStudent();
 
     Message::create([
         'sender_id' => $other->id,
@@ -114,7 +127,7 @@ it('opens selected conversation from clean conversation route', function () {
         'body' => 'Conversation body',
     ]);
 
-    $response = $this->actingAs($me)->get(route('messages.conversation', ['user' => $other->id]));
+    $response = $this->actingAs($me)->get(route('role.messages.conversation', ['role' => 'student', 'conversation' => $other->id]));
 
     $response->assertOk();
     $response->assertViewHas('selectedUser', fn ($selectedUser) => $selectedUser && $selectedUser->id === $other->id);
@@ -122,9 +135,9 @@ it('opens selected conversation from clean conversation route', function () {
 });
 
 it('only receiver can mark message as read', function () {
-    $sender = User::factory()->create(['approved_at' => now()]);
-    $receiver = User::factory()->create(['approved_at' => now()]);
-    $intruder = User::factory()->create(['approved_at' => now()]);
+    $sender = createApprovedStudent();
+    $receiver = createApprovedStudent();
+    $intruder = createApprovedStudent();
 
     $message = Message::create([
         'sender_id' => $sender->id,
@@ -134,11 +147,11 @@ it('only receiver can mark message as read', function () {
     ]);
 
     $this->actingAs($intruder)
-        ->patch(route('messages.read', $message))
+        ->patch(route('role.messages.read', ['role' => 'student', 'message' => $message->id]))
         ->assertForbidden();
 
     $this->actingAs($receiver)
-        ->patch(route('messages.read', $message))
+        ->patch(route('role.messages.read', ['role' => 'student', 'message' => $message->id]))
         ->assertRedirect();
 
     expect($message->fresh()->read_at)->not()->toBeNull();

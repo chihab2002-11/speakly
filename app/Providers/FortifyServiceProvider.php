@@ -6,6 +6,7 @@ use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\RegisterResponse;
+use App\Support\DashboardRedirector;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -60,7 +61,10 @@ class FortifyServiceProvider extends ServiceProvider
                     return redirect()->route('pending-approval');
                 }
 
-                return redirect()->route('dashboard');
+                return redirect()->route(
+                    DashboardRedirector::routeNameFor($user),
+                    DashboardRedirector::routeParametersFor($user)
+                );
             }
 
             return redirect()->route('register-login');
@@ -73,7 +77,10 @@ class FortifyServiceProvider extends ServiceProvider
                     return redirect()->route('pending-approval');
                 }
 
-                return redirect()->route('dashboard');
+                return redirect()->route(
+                    DashboardRedirector::routeNameFor($user),
+                    DashboardRedirector::routeParametersFor($user)
+                );
             }
 
             return redirect()->route('register-login', ['tab' => 'register']);

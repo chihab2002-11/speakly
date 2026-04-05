@@ -7,7 +7,7 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::findOrCreate('user');
+    Role::findOrCreate('student', 'web');
 });
 
 it('redirects pending users to pending-approval when accessing dashboard', function () {
@@ -16,7 +16,7 @@ it('redirects pending users to pending-approval when accessing dashboard', funct
         'rejected_at' => null,
         'requested_role' => 'student',
     ]);
-    $pendingUser->assignRole('user');
+    $pendingUser->assignRole('student');
 
     $response = $this
         ->actingAs($pendingUser)
@@ -31,11 +31,11 @@ it('allows approved users to access dashboard', function () {
         'rejected_at' => null,
         'requested_role' => null,
     ]);
-    $approvedUser->assignRole('user');
+    $approvedUser->assignRole('student');
 
     $response = $this
         ->actingAs($approvedUser)
         ->get('/dashboard');
 
-    $response->assertOk();
+    $response->assertRedirectToRoute('role.dashboard', ['role' => 'student']);
 });

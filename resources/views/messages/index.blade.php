@@ -1,4 +1,8 @@
 <x-layouts::app :title="__('Messages')">
+    @php
+        $currentRole = \App\Support\DashboardRedirector::roleFor(auth()->user());
+    @endphp
+
     <div class="flex h-screen flex-col overflow-hidden bg-zinc-50 dark:bg-zinc-950 sm:p-4">
         <div class="flex flex-1 gap-4 overflow-hidden rounded-xl bg-white dark:bg-zinc-900">
             <!-- Conversations List (Left Sidebar) -->
@@ -17,7 +21,7 @@
                     </div>
 
                     <!-- Search -->
-                    <form method="GET" action="{{ route('messages.index') }}" class="space-y-2">
+                    <form method="GET" action="{{ route('role.messages.index', ['role' => $currentRole]) }}" class="space-y-2">
                         @if ($selectedUser)
                             <input type="hidden" name="user_id" value="{{ $selectedUser->id }}">
                         @endif
@@ -44,7 +48,7 @@
                 <!-- Conversations List -->
                 <div class="flex-1 overflow-y-auto">
                     @forelse ($conversations as $conv)
-                        <a href="{{ route('messages.conversation', ['user' => $conv['user']->id]) }}"
+                        <a href="{{ route('role.messages.conversation', ['role' => $currentRole, 'conversation' => $conv['user']->id]) }}"
                             @class([
                                 'flex items-start gap-3 border-b border-zinc-100 p-3 transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800',
                                 'bg-blue-50 dark:bg-blue-900/20' =>
@@ -118,7 +122,7 @@
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <!-- Back button for mobile -->
-                                <a href="{{ route('messages.index') }}"
+                                <a href="{{ route('role.messages.index', ['role' => $currentRole]) }}"
                                     class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 sm:hidden">
                                     <svg class="h-5 w-5 text-zinc-600 dark:text-zinc-400" fill="none"
                                         stroke="currentColor" viewBox="0 0 24 24">
@@ -187,7 +191,7 @@
 
                     <!-- Reply Form -->
                     <div class="border-t border-zinc-200 p-4 dark:border-zinc-800">
-                        <form action="{{ route('messages.store') }}" method="POST" class="space-y-3">
+                        <form action="{{ route('role.messages.store', ['role' => $currentRole]) }}" method="POST" class="space-y-3">
                             @csrf
 
                             <input type="hidden" name="receiver_id" value="{{ $selectedUser->id }}">

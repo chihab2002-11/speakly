@@ -2,6 +2,7 @@
 
 namespace App\Http\Responses;
 
+use App\Support\DashboardRedirector;
 use Illuminate\Http\Request;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,7 +24,9 @@ class LoginResponse implements LoginResponseContract
             return redirect()->route('pending-approval');
         }
 
-        // Approved users go to dashboard
-        return redirect()->route('dashboard');
+        return redirect()->route(
+            DashboardRedirector::routeNameFor($user),
+            DashboardRedirector::routeParametersFor($user)
+        );
     }
 }

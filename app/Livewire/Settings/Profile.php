@@ -3,6 +3,7 @@
 namespace App\Livewire\Settings;
 
 use App\Concerns\ProfileValidationRules;
+use App\Support\DashboardRedirector;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -54,7 +55,9 @@ class Profile extends Component
         $user = Auth::user();
 
         if ($user->hasVerifiedEmail()) {
-            $this->redirectIntended(default: route('dashboard', absolute: false));
+            $this->redirectIntended(
+                default: route('role.dashboard', DashboardRedirector::routeParametersFor($user), absolute: false)
+            );
 
             return;
         }

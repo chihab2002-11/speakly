@@ -61,6 +61,21 @@
                 placeholder="email@example.com"
             />
 
+            <flux:input
+                name="date_of_birth"
+                :label="__('Date of birth')"
+                :value="old('date_of_birth')"
+                type="date"
+            />
+
+            <flux:input
+                name="parent_email"
+                :label="__('Parent email (under 18 students)')"
+                :value="old('parent_email')"
+                type="email"
+                placeholder="parent@example.com"
+            />
+
             <!-- Password -->
             <flux:input
                 name="password"

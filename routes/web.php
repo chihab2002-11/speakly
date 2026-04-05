@@ -1,12 +1,22 @@
 <?php
 
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ParentDashboardController;
+use App\Http\Controllers\SecretaryDashboardController;
 use App\Http\Controllers\SecretaryTimetableController;
+use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\TeacherDashboardController;
 use App\Http\Controllers\TeacherTimetableController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Middleware\EnsureApproved;
+use App\Support\DashboardRedirector;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+$supportedRoles = ['student', 'teacher', 'secretary', 'parent', 'admin'];
+$supportedRolesMiddleware = 'role:student|teacher|secretary|parent|admin';
 
 Route::get('/', function () {
     // If user is logged in, redirect to appropriate page
@@ -17,8 +27,10 @@ Route::get('/', function () {
             return redirect()->route('pending-approval');
         }
 
-        // If approved, go to dashboard
-        return redirect()->route('dashboard');
+        return redirect()->route(
+            DashboardRedirector::routeNameFor($user),
+            DashboardRedirector::routeParametersFor($user)
+        );
     }
 
     return view('visitor');
@@ -33,22 +45,61 @@ Route::get('/register-login', function () {
             return redirect()->route('pending-approval');
         }
 
-        // If approved, go to dashboard
-        return redirect()->route('dashboard');
+        return redirect()->route(
+            DashboardRedirector::routeNameFor($user),
+            DashboardRedirector::routeParametersFor($user)
+        );
     }
 
     return view('register-login-page');
 })->name('register-login');
 
-Route::view('dashboard', 'dashboard')
+Route::get('/dashboard', function (Request $request) {
+    return redirect()->route('role.dashboard', DashboardRedirector::routeParametersFor($request->user()));
+})
     ->middleware(['auth', 'verified', EnsureApproved::class])
     ->name('dashboard');
+
+Route::middleware(['auth', 'verified', EnsureApproved::class, $supportedRolesMiddleware, 'route.role'])
+    ->prefix('{role}')
+    ->whereIn('role', $supportedRoles)
+    ->group(function () {
+        Route::get('/dashboard', function (Request $request, string $role) {
+            return match ($role) {
+                'student' => app(StudentDashboardController::class)->index($request),
+                'teacher' => app(TeacherDashboardController::class)->index($request),
+                'secretary' => app(SecretaryDashboardController::class)->index($request),
+                'parent' => app(ParentDashboardController::class)->index($request),
+                'admin' => app(AdminDashboardController::class)->index($request),
+                default => abort(404),
+            };
+        })->name('role.dashboard');
+
+        Route::get('/messages', [MessageController::class, 'index'])->name('role.messages.index');
+        Route::post('/messages', [MessageController::class, 'store'])->name('role.messages.store');
+        Route::patch('/messages/{message}/read', [MessageController::class, 'markAsRead'])
+            ->whereNumber('message')
+            ->name('role.messages.read');
+
+        Route::get('/messages/inbox', [MessageController::class, 'inbox'])->name('role.messages.inbox');
+        Route::get('/messages/sent', [MessageController::class, 'sent'])->name('role.messages.sent');
+        Route::get('/messages/create', [MessageController::class, 'create'])->name('role.messages.create');
+        Route::get('/messages/message/{message}', [MessageController::class, 'show'])
+            ->whereNumber('message')
+            ->name('role.messages.show');
+        Route::get('/messages/{conversation}', [MessageController::class, 'conversation'])
+            ->whereNumber('conversation')
+            ->name('role.messages.conversation');
+    });
 
 Route::get('/pending-approval', function () {
     // If user is already approved, redirect to dashboard
     $user = auth()->user();
     if (! is_null($user->approved_at)) {
-        return redirect()->route('dashboard');
+        return redirect()->route(
+            DashboardRedirector::routeNameFor($user),
+            DashboardRedirector::routeParametersFor($user)
+        );
     }
 
     return view('pending-approval');
@@ -84,16 +135,35 @@ Route::middleware([
     'verified',
     EnsureApproved::class,
 ])->group(function () {
-    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
-    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
-    Route::patch('/messages/{message}/read', [MessageController::class, 'markAsRead'])->name('messages.read');
+    Route::get('/messages', function (Request $request) {
+        return redirect()->route('role.messages.index', DashboardRedirector::routeParametersFor($request->user()));
+    });
 
-    // Legacy routes (redirect to new unified view)
-    Route::get('/messages/inbox', [MessageController::class, 'inbox'])->name('messages.inbox');
-    Route::get('/messages/sent', [MessageController::class, 'sent'])->name('messages.sent');
-    Route::get('/messages/create', [MessageController::class, 'create'])->name('messages.create');
-    Route::get('/messages/{message}', [MessageController::class, 'show'])->whereNumber('message')->name('messages.show');
-    Route::get('/messages/conversation/{user}', [MessageController::class, 'conversation'])->name('messages.conversation');
+    Route::get('/messages/inbox', function (Request $request) {
+        return redirect()->route('role.messages.inbox', DashboardRedirector::routeParametersFor($request->user()));
+    })->name('messages.inbox');
+
+    Route::get('/messages/sent', function (Request $request) {
+        return redirect()->route('role.messages.sent', DashboardRedirector::routeParametersFor($request->user()));
+    })->name('messages.sent');
+
+    Route::get('/messages/create', function (Request $request) {
+        return redirect()->route('role.messages.create', DashboardRedirector::routeParametersFor($request->user()));
+    })->name('messages.create');
+
+    Route::get('/messages/{message}', function (Request $request, string $message) {
+        return redirect()->route(
+            'role.messages.show',
+            DashboardRedirector::routeParametersFor($request->user(), ['message' => $message])
+        );
+    })->whereNumber('message')->name('messages.show');
+
+    Route::get('/messages/conversation/{user}', function (Request $request, string $user) {
+        return redirect()->route(
+            'role.messages.conversation',
+            DashboardRedirector::routeParametersFor($request->user(), ['conversation' => $user])
+        );
+    })->whereNumber('user')->name('messages.conversation');
 });
 
 Route::middleware('auth')->group(function () {

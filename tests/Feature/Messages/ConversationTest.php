@@ -35,7 +35,7 @@ test('user can view conversation with another user', function () {
         'read_at' => null,
     ]);
 
-    $response = $this->actingAs($user1)->get(route('messages.index', ['user_id' => $user2->id]));
+    $response = $this->actingAs($user1)->get(route('role.messages.index', ['role' => 'student', 'user_id' => $user2->id]));
 
     $response->assertStatus(200);
     $response->assertViewIs('messages.index');
@@ -61,7 +61,7 @@ test('unread messages are marked as read when opening conversation', function ()
 
     expect($unreadMessage->refresh()->read_at)->toBeNull();
 
-    $this->actingAs($user1)->get(route('messages.index', ['user_id' => $user2->id]));
+    $this->actingAs($user1)->get(route('role.messages.index', ['role' => 'student', 'user_id' => $user2->id]));
 
     expect($unreadMessage->refresh()->read_at)->not->toBeNull();
 });
@@ -93,7 +93,7 @@ test('messages are ordered by created_at ascending', function () {
         'body' => 'Third message',
     ]);
 
-    $response = $this->actingAs($user1)->get(route('messages.index', ['user_id' => $user2->id]));
+    $response = $this->actingAs($user1)->get(route('role.messages.index', ['role' => 'student', 'user_id' => $user2->id]));
 
     $response->assertStatus(200);
     // Verify the view has the selected user messages
@@ -106,7 +106,7 @@ test('cannot view conversation with self', function () {
     $user = User::factory()->create(['approved_at' => now()]);
     $user->assignRole('student');
 
-    $response = $this->actingAs($user)->get(route('messages.index', ['user_id' => $user->id]));
+    $response = $this->actingAs($user)->get(route('role.messages.index', ['role' => 'student', 'user_id' => $user->id]));
 
     // Should redirect or show empty state
     expect($response->status())->toBeIn([200, 302]);
@@ -146,7 +146,7 @@ test('latest conversation appears first in the list', function () {
         'updated_at' => now(),
     ]);
 
-    $response = $this->actingAs($me)->get(route('messages.index'));
+    $response = $this->actingAs($me)->get(route('role.messages.index', ['role' => 'student']));
 
     $response->assertOk();
 
@@ -183,7 +183,7 @@ test('user can search conversations by username', function () {
         'body' => 'Message from Alice',
     ]);
 
-    $response = $this->actingAs($me)->get(route('messages.index', ['search' => 'john']));
+    $response = $this->actingAs($me)->get(route('role.messages.index', ['role' => 'student', 'search' => 'john']));
 
     $response->assertOk();
     $response->assertSee('John Carter');
