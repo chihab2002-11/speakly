@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>{{ $title ?? 'Student Dashboard' }} - {{ config('app.name', 'Lumina Academy') }}</title>
+
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    {{-- Google Fonts: Inter, Young Serif & Calibri fallback --}}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Young+Serif&display=swap" rel="stylesheet">
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Lumina Academy Custom Styles --}}
+    <style>
+        :root {
+            /* Primary Colors */
+            --lumina-primary: #006A41;
+            --lumina-primary-dark: #034C3C;
+            --lumina-primary-darker: #1E3A2F;
+            --lumina-primary-light: #2D8C5E;
+            
+            /* Background Colors */
+            --lumina-bg-main: #F6FBF5;
+            --lumina-bg-section: #F3F8F5;
+            --lumina-bg-card: #F0F5EE;
+            --lumina-sidebar-bg: #BDD9CE;
+            
+            /* Text Colors */
+            --lumina-text-primary: #181D19;
+            --lumina-text-secondary: #3F4941;
+            --lumina-text-muted: #64748B;
+            --lumina-text-heading: #446651;
+            
+            /* Accent Colors */
+            --lumina-accent-green: #99F6BF;
+            --lumina-accent-red: #BA1A1A;
+            
+            /* Border Colors */
+            --lumina-border: #E2E8F0;
+            --lumina-border-light: rgba(190, 201, 191, 0.15);
+        }
+    </style>
+</head>
+<body class="min-h-screen font-inter" style="background-color: var(--lumina-bg-main);">
+    <div class="flex min-h-screen">
+        {{-- Sidebar --}}
+        <x-student.sidebar :user="$user ?? auth()->user()" :currentRoute="$currentRoute ?? 'dashboard'" />
+
+        {{-- Main Content Area --}}
+        <div class="flex flex-1 flex-col lg:ml-0">
+            {{-- Top Navigation Header --}}
+            <x-student.header :user="$user ?? auth()->user()" />
+
+            {{-- Main Scrollable Content --}}
+            <main class="flex-1 overflow-y-auto p-4 md:p-8" style="background-color: var(--lumina-bg-section);">
+                {{ $slot }}
+            </main>
+        </div>
+    </div>
+
+    {{-- Mobile Sidebar Overlay --}}
+    <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/50 lg:hidden" onclick="toggleSidebar()"></div>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('student-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
