@@ -24,6 +24,9 @@
         // Fallback to requested_role
         $userRole = ucfirst($user->requested_role ?? 'Parent');
     }
+    
+    // Get unread notifications count
+    $unreadNotificationsCount = $user ? $user->unreadNotifications()->count() : 0;
 @endphp
 
 {{-- Top Navigation Header --}}
@@ -57,16 +60,18 @@
         {{-- Action Icons --}}
         <div class="flex items-center gap-4">
             {{-- Notifications --}}
-            <button class="relative opacity-80 transition-opacity hover:opacity-100">
+            <a href="{{ route('parent.notifications') }}" class="relative opacity-80 transition-opacity hover:opacity-100">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #475569;">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                 </svg>
-                {{-- Notification Badge --}}
-                <span class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                    3
-                </span>
-            </button>
+                {{-- Notification Badge (only show if unread) --}}
+                @if($unreadNotificationsCount > 0)
+                    <span class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                        {{ $unreadNotificationsCount > 9 ? '9+' : $unreadNotificationsCount }}
+                    </span>
+                @endif
+            </a>
 
             {{-- Settings --}}
             <a href="{{ route('parent.settings') }}" class="opacity-80 transition-opacity hover:opacity-100" title="Settings">

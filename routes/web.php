@@ -96,7 +96,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, $supportedRolesMid
 // ============================================================
 // Student-specific routes (academic, financial, materials, settings, password)
 // ============================================================
-Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student', 'route.role'])
+Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
     ->prefix('student')
     ->name('student.')
     ->group(function () {
@@ -283,12 +283,38 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student', 'r
                 'user' => $user,
             ]);
         })->name('password');
+
+        // Student Notifications page
+        Route::get('/notifications', function () {
+            $user = auth()->user();
+            $notifications = $user->notifications()->latest()->get();
+
+            return view('student.notifications', [
+                'user' => $user,
+                'notifications' => $notifications,
+            ]);
+        })->name('notifications');
+
+        // Mark notification as read
+        Route::post('/notifications/{id}/read', function ($id) {
+            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification->markAsRead();
+
+            return back()->with('success', 'Notification marked as read');
+        })->name('notifications.read');
+
+        // Mark all notifications as read
+        Route::post('/notifications/read-all', function () {
+            auth()->user()->unreadNotifications->markAsRead();
+
+            return back()->with('success', 'All notifications marked as read');
+        })->name('notifications.read-all');
     });
 
 // ============================================================
 // Parent-specific routes (financial, messages, calendar, settings, password)
 // ============================================================
-Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent', 'route.role'])
+Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
     ->prefix('parent')
     ->name('parent.')
     ->group(function () {
@@ -425,6 +451,87 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent', 'ro
                 'children' => $children,
             ]);
         })->name('password');
+
+        // Parent Notifications page
+        Route::get('/notifications', function () use ($getChildren) {
+            $user = auth()->user();
+            $children = $getChildren();
+            $notifications = $user->notifications()->latest()->get();
+
+            return view('parent.notifications', [
+                'user' => $user,
+                'children' => $children,
+                'notifications' => $notifications,
+            ]);
+        })->name('notifications');
+
+        // Mark notification as read
+        Route::post('/notifications/{id}/read', function ($id) {
+            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification->markAsRead();
+
+            return back()->with('success', 'Notification marked as read');
+        })->name('notifications.read');
+
+        // Mark all notifications as read
+        Route::post('/notifications/read-all', function () {
+            auth()->user()->unreadNotifications->markAsRead();
+
+            return back()->with('success', 'All notifications marked as read');
+        })->name('notifications.read-all');
+    });
+
+// ============================================================
+// Admin-specific routes (notifications)
+// ============================================================
+Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        // Admin Notifications page
+        Route::get('/notifications', function () {
+            $user = auth()->user();
+            $notifications = $user->notifications()->latest()->get();
+
+            return view('admin.notifications', [
+                'user' => $user,
+                'notifications' => $notifications,
+            ]);
+        })->name('notifications');
+
+        // Mark notification as read
+        Route::post('/notifications/{id}/read', function ($id) {
+            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification->markAsRead();
+
+            return back()->with('success', 'Notification marked as read');
+        })->name('notifications.read');
+
+        // Mark all notifications as read
+        Route::post('/notifications/read-all', function () {
+            auth()->user()->unreadNotifications->markAsRead();
+
+            return back()->with('success', 'All notifications marked as read');
+        })->name('notifications.read-all');
+
+        // Admin can access a page to start new conversations with anyone
+        Route::get('/messages/new', function () {
+            $user = auth()->user();
+
+            // Get all users except current admin (students, parents, teachers, secretaries)
+            $users = User::whereHas('roles', function ($query) {
+                $query->whereIn('name', ['student', 'parent', 'teacher', 'secretary']);
+            })
+                ->where('id', '!=', $user->id)
+                ->whereNotNull('approved_at')
+                ->orderBy('name')
+                ->get();
+
+            return view('admin.messages-new', [
+                'user' => $user,
+                'users' => $users,
+            ]);
+        })->name('messages.new');
     });
 
 Route::get('/pending-approval', function () {

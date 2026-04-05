@@ -1,21 +1,30 @@
-<x-layouts.parent 
-    :title="'Messages'"
-    :pageTitle="'Messages'"
-    :currentRoute="'messages'"
-    :user="$user ?? null"
->
+<x-layouts.admin :title="__('Messages')">
     @php
         $currentRole = \App\Support\DashboardRedirector::roleFor(auth()->user());
     @endphp
 
     {{-- Page Header --}}
-    <div class="mb-6">
-        <h1 class="font-inter text-3xl font-extrabold tracking-tight md:text-4xl" style="color: var(--lumina-text-primary); letter-spacing: -0.9px;">
-            Messages
-        </h1>
-        <p class="mt-2 text-base" style="color: var(--lumina-text-secondary);">
-            Communicate with your children's teachers and school administration.
-        </p>
+    <div class="mb-6 flex items-center justify-between">
+        <div>
+            <h1 class="font-inter text-3xl font-extrabold tracking-tight md:text-4xl" style="color: var(--lumina-text-primary); letter-spacing: -0.9px;">
+                Messages
+            </h1>
+            <p class="mt-2 text-base" style="color: var(--lumina-text-secondary);">
+                Communicate with students, parents, and staff.
+            </p>
+        </div>
+        
+        {{-- New Message Button --}}
+        <a 
+            href="{{ route('admin.messages.new') }}"
+            class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all hover:opacity-90"
+            style="background-color: var(--lumina-primary);"
+        >
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New Message
+        </a>
     </div>
 
     {{-- Messages Container --}}
@@ -96,6 +105,9 @@
                             </div>
                             <p class="text-xs" style="color: var(--lumina-text-muted);">
                                 {{ $conv['user']->email }}
+                                @if($conv['user']->roles->isNotEmpty())
+                                    • {{ ucfirst($conv['user']->roles->first()->name) }}
+                                @endif
                             </p>
                             @if($conv['lastMessage'])
                                 <p class="mt-1 truncate text-xs {{ $conv['unreadCount'] > 0 ? 'font-semibold' : '' }}" style="color: var(--lumina-text-secondary);">
@@ -153,6 +165,9 @@
                             </h4>
                             <p class="text-xs" style="color: var(--lumina-text-muted);">
                                 {{ $selectedUser->email }}
+                                @if($selectedUser->roles->isNotEmpty())
+                                    • {{ ucfirst($selectedUser->roles->first()->name) }}
+                                @endif
                             </p>
                         </div>
                     </div>
@@ -161,7 +176,7 @@
                 {{-- Messages Container --}}
                 <div class="flex-1 overflow-y-auto p-6" id="messages-container">
                     <div class="mx-auto max-w-2xl space-y-4">
-                        @forelse($selectedConversation ?? [] as $message)
+                        @forelse($selectedConversation as $message)
                             @if($message->sender_id === auth()->id())
                                 {{-- My Message (Right) --}}
                                 <div class="flex justify-end">
@@ -217,39 +232,32 @@
 
                 {{-- Message Input --}}
                 <div class="border-t p-4" style="border-color: var(--lumina-border);">
-                    <form action="{{ route('role.messages.store', ['role' => $currentRole]) }}" method="POST">
+                    <form method="POST" action="{{ route('role.messages.store', ['role' => $currentRole]) }}">
                         @csrf
                         <input type="hidden" name="receiver_id" value="{{ $selectedUser->id }}">
                         
                         {{-- Subject (optional) --}}
                         <div class="mb-3">
                             <input 
-                                type="text"
-                                name="subject"
+                                type="text" 
+                                name="subject" 
                                 placeholder="Subject (optional)"
-                                value="{{ old('subject') }}"
                                 class="w-full rounded-xl border px-4 py-2 text-sm outline-none transition-all focus:ring-2"
                                 style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
                             >
-                            @error('subject')
-                                <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                            @enderror
                         </div>
 
                         <div class="flex items-end gap-3">
                             {{-- Text Input --}}
                             <div class="flex-1">
                                 <textarea 
-                                    name="body"
+                                    name="body" 
                                     rows="2"
-                                    placeholder="Type your message..."
                                     required
+                                    placeholder="Type your message..."
                                     class="w-full resize-none rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                                     style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
-                                >{{ old('body') }}</textarea>
-                                @error('body')
-                                    <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
-                                @enderror
+                                ></textarea>
                             </div>
 
                             {{-- Send Button --}}
@@ -288,7 +296,7 @@
     </div>
 
     {{-- Auto-scroll to bottom of messages --}}
-    @if($selectedUser && count($selectedConversation ?? []) > 0)
+    @if($selectedUser)
         <script>
             document.addEventListener('DOMContentLoaded', function() {
                 const container = document.getElementById('messages-container');
@@ -298,4 +306,4 @@
             });
         </script>
     @endif
-</x-layouts.parent>
+</x-layouts.admin>

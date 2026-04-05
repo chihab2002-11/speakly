@@ -94,7 +94,12 @@ class MessageController extends Controller
             }
         }
 
-        return view('messages.index', [
+        // Determine view based on user role
+        $role = DashboardRedirector::roleFor($request->user());
+        $viewName = in_array($role, ['student', 'parent', 'admin']) ? "{$role}.messages" : 'messages.index';
+
+        return view($viewName, [
+            'user' => $request->user(),
             'conversations' => $conversations,
             'selectedUser' => $selectedUser,
             'selectedConversation' => $selectedConversation,
