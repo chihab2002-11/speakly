@@ -7,7 +7,7 @@ test('login screen can be rendered', function () {
     // /login now redirects to the custom /register-login page
     $response = $this->get(route('login'));
 
-    $response->assertRedirect(route('register-login'));
+    $response->assertRedirectToRoute('register-login');
 
     // Verify the custom register-login page loads correctly
     $response = $this->get(route('register-login'));
@@ -24,7 +24,7 @@ test('users can authenticate using the login screen', function () {
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('home', absolute: false));
+        ->assertRedirectToRoute('pending-approval');
 
     $this->assertAuthenticated();
 });
@@ -58,7 +58,7 @@ test('users with two factor enabled are redirected to two factor challenge', fun
         'password' => 'password',
     ]);
 
-    $response->assertRedirect(route('two-factor.login'));
+    $response->assertRedirectToRoute('two-factor.login');
     $this->assertGuest();
 });
 
@@ -67,6 +67,6 @@ test('users can logout', function () {
 
     $response = $this->actingAs($user)->post(route('logout'));
 
-    $response->assertRedirect(route('home'));
+    $response->assertRedirectToRoute('home');
     $this->assertGuest();
 });

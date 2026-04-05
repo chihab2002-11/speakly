@@ -3,6 +3,8 @@
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\SecretaryTimetableController;
+use App\Http\Controllers\TeacherTimetableController;
+use App\Http\Controllers\TimetableController;
 use App\Http\Middleware\EnsureApproved;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +58,12 @@ Route::middleware([
     'verified',
     EnsureApproved::class,
 ])->group(function () {
+    Route::get('/timetable', [TimetableController::class, 'index'])
+        ->name('timetable.index');
+
+    Route::get('/teacher/timetable', [TeacherTimetableController::class, 'index'])
+        ->name('timetable.teacher');
+
     Route::get('/approvals', [ApprovalController::class, 'index'])
         ->name('approvals.index');
 
