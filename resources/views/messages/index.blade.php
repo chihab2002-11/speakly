@@ -18,8 +18,8 @@
 
                     <!-- Search -->
                     <form method="GET" action="{{ route('messages.index') }}" class="space-y-2">
-                        @if (request('user_id'))
-                            <input type="hidden" name="user_id" value="{{ request('user_id') }}">
+                        @if ($selectedUser)
+                            <input type="hidden" name="user_id" value="{{ $selectedUser->id }}">
                         @endif
 
                         <div class="relative">
@@ -44,7 +44,7 @@
                 <!-- Conversations List -->
                 <div class="flex-1 overflow-y-auto">
                     @forelse ($conversations as $conv)
-                        <a href="{{ route('messages.index', ['user_id' => $conv['user']->id, 'search' => $search]) }}"
+                        <a href="{{ route('messages.conversation', ['user' => $conv['user']->id]) }}"
                             @class([
                                 'flex items-start gap-3 border-b border-zinc-100 p-3 transition hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800',
                                 'bg-blue-50 dark:bg-blue-900/20' =>

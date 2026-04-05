@@ -16,7 +16,7 @@ it('allows authenticated user to send a message', function () {
         'body' => 'Test message body',
     ]);
 
-    $response->assertRedirect(route('messages.index', ['user_id' => $receiver->id]));
+    $response->assertRedirect(route('messages.conversation', ['user' => $receiver->id]));
 
     $this->assertDatabaseHas('messages', [
         'sender_id' => $sender->id,
@@ -101,6 +101,24 @@ it('shows only sent messages in sent page', function () {
     $response = $this->actingAs($me)->get(route('messages.index'));
 
     $response->assertOk();
+});
+
+it('opens selected conversation from clean conversation route', function () {
+    $me = User::factory()->create(['approved_at' => now()]);
+    $other = User::factory()->create(['approved_at' => now()]);
+
+    Message::create([
+        'sender_id' => $other->id,
+        'receiver_id' => $me->id,
+        'subject' => 'Hello',
+        'body' => 'Conversation body',
+    ]);
+
+    $response = $this->actingAs($me)->get(route('messages.conversation', ['user' => $other->id]));
+
+    $response->assertOk();
+    $response->assertViewHas('selectedUser', fn ($selectedUser) => $selectedUser && $selectedUser->id === $other->id);
+    $response->assertSee($other->name);
 });
 
 it('only receiver can mark message as read', function () {

@@ -92,7 +92,7 @@ Route::middleware([
     Route::get('/messages/inbox', [MessageController::class, 'inbox'])->name('messages.inbox');
     Route::get('/messages/sent', [MessageController::class, 'sent'])->name('messages.sent');
     Route::get('/messages/create', [MessageController::class, 'create'])->name('messages.create');
-    Route::get('/messages/{message}', [MessageController::class, 'show'])->name('messages.show');
+    Route::get('/messages/{message}', [MessageController::class, 'show'])->whereNumber('message')->name('messages.show');
     Route::get('/messages/conversation/{user}', [MessageController::class, 'conversation'])->name('messages.conversation');
 });
 

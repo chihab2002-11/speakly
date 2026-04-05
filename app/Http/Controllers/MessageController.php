@@ -18,7 +18,7 @@ class MessageController extends Controller
     {
         $currentUserId = $request->user()->id;
         $search = $request->query('search', '');
-        $selectedUserId = $request->query('user_id');
+        $selectedUserId = $request->query('user_id', $request->route('user'));
 
         // Get all unique users the current user has messaged with (sorted by most recent message)
         $conversationPartners = User::whereIn('id', function ($query) use ($currentUserId) {
@@ -126,7 +126,7 @@ class MessageController extends Controller
         $message->load(['sender', 'receiver']);
         $message->receiver->notify(new NewMessageNotification($message));
 
-        return redirect()->route('messages.index', ['user_id' => $data['receiver_id']])
+        return redirect()->route('messages.conversation', ['user' => $data['receiver_id']])
             ->with('success', 'Message sent successfully.');
     }
 
@@ -148,7 +148,11 @@ class MessageController extends Controller
 
     public function show(Request $request, Message $message)
     {
-        return redirect()->route('messages.index', ['user_id' => $message->sender_id === $request->user()->id ? $message->receiver_id : $message->sender_id]);
+        if (! in_array($request->user()->id, [$message->sender_id, $message->receiver_id], true)) {
+            abort(403);
+        }
+
+        return redirect()->route('messages.conversation', ['user' => $message->sender_id === $request->user()->id ? $message->receiver_id : $message->sender_id]);
     }
 
     public function markAsRead(Request $request, Message $message)
@@ -166,6 +170,10 @@ class MessageController extends Controller
 
     public function conversation(Request $request, User $otherUser)
     {
-        return redirect()->route('messages.index', ['user_id' => $otherUser->id]);
+        if ((int) $request->route('user') === (int) $request->user()->id) {
+            return redirect()->route('messages.index');
+        }
+
+        return $this->index($request);
     }
 }
