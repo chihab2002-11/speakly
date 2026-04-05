@@ -11,6 +11,7 @@ use App\Http\Controllers\TeacherDashboardController;
 use App\Http\Controllers\TeacherTimetableController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Middleware\EnsureApproved;
+use App\Models\User;
 use App\Support\DashboardRedirector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -90,6 +91,447 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, $supportedRolesMid
         Route::get('/messages/{conversation}', [MessageController::class, 'conversation'])
             ->whereNumber('conversation')
             ->name('role.messages.conversation');
+    });
+
+// ============================================================
+// Student-specific routes (academic, financial, materials, settings, password)
+// ============================================================
+Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
+    ->prefix('student')
+    ->name('student.')
+    ->group(function () {
+        // Academic Information page
+        Route::get('/academic', function () {
+            $user = auth()->user();
+
+            // Placeholder attendance data (4 weeks)
+            // 1 = present, 0 = absent, null = no class
+            $attendance = [
+                ['week' => 'W1', 'days' => [1, 1, 1, 1, 1, null, null]],
+                ['week' => 'W2', 'days' => [1, 1, 0, 1, 1, null, null]],
+                ['week' => 'W3', 'days' => [1, 1, 1, 1, 1, null, null]],
+                ['week' => 'W4', 'days' => [1, 1, 1, 1, null, null, null]],
+            ];
+
+            // Placeholder evaluations data
+            $evaluations = [
+                [
+                    'subject' => 'French B2',
+                    'assessment' => 'Oral Presentation',
+                    'score' => 92,
+                    'feedback' => 'Excellent pronunciation and fluency. Continue practicing complex grammar structures.',
+                ],
+                [
+                    'subject' => 'French B2',
+                    'assessment' => 'Written Essay',
+                    'score' => 88,
+                    'feedback' => 'Strong vocabulary usage. Work on paragraph transitions.',
+                ],
+                [
+                    'subject' => 'Spanish A2',
+                    'assessment' => 'Listening Comprehension',
+                    'score' => 85,
+                    'feedback' => 'Good understanding of native speakers. Focus on regional accents.',
+                ],
+                [
+                    'subject' => 'Spanish A2',
+                    'assessment' => 'Grammar Quiz',
+                    'score' => 78,
+                    'feedback' => 'Review subjunctive mood conjugations.',
+                ],
+            ];
+
+            // Placeholder schedule data
+            $schedule = [
+                'Mon' => [
+                    '09:00' => ['course' => 'French B2', 'color' => '#006A41', 'room' => 'Room 101'],
+                    '14:30' => ['course' => 'Spanish A2', 'color' => '#5E70BB', 'room' => 'Room 203'],
+                ],
+                'Tue' => [
+                    '11:30' => ['course' => 'French B2', 'color' => '#006A41', 'room' => 'Room 101'],
+                ],
+                'Wed' => [
+                    '09:00' => ['course' => 'Spanish A2', 'color' => '#5E70BB', 'room' => 'Room 203'],
+                    '14:30' => ['course' => 'French B2', 'color' => '#006A41', 'room' => 'Room 101'],
+                ],
+                'Thu' => [
+                    '09:00' => ['course' => 'Tutorial', 'color' => '#64748B', 'room' => 'Lab 2'],
+                    '11:30' => ['course' => 'French B2', 'color' => '#006A41', 'room' => 'Room 101'],
+                ],
+                'Fri' => [
+                    '09:00' => ['course' => 'Spanish A2', 'color' => '#5E70BB', 'room' => 'Room 203'],
+                ],
+            ];
+
+            return view('student.academic', [
+                'user' => $user,
+                'currentStreak' => 12, // Placeholder - backend will calculate
+                'attendance' => $attendance,
+                'evaluations' => $evaluations,
+                'schedule' => $schedule,
+                'classesPerWeek' => 8,
+                'hoursPerWeek' => 12,
+            ]);
+        })->name('academic');
+
+        // Financial Information page
+        Route::get('/financial', function () {
+            $user = auth()->user();
+
+            // Placeholder ledger items
+            $ledgerItems = [
+                [
+                    'name' => 'Advanced Business English - Q3',
+                    'type' => 'Course Fee',
+                    'period' => 'Jul - Sep 2024',
+                    'amount' => 1240.00,
+                    'status' => 'outstanding',
+                    'icon' => 'course',
+                ],
+                [
+                    'name' => 'TOEFL Preparation Intensive',
+                    'type' => 'Workshop Fee',
+                    'period' => 'Jun 2024',
+                    'amount' => 450.00,
+                    'status' => 'paid',
+                    'icon' => 'workshop',
+                ],
+                [
+                    'name' => 'Digital Learning Materials Bundle',
+                    'type' => 'License Fee',
+                    'period' => 'Annual',
+                    'amount' => 185.00,
+                    'status' => 'paid',
+                    'icon' => 'materials',
+                ],
+                [
+                    'name' => 'Digital Learning Materials Bundle',
+                    'type' => 'License Fee',
+                    'period' => 'Annual',
+                    'amount' => 254.00,
+                    'status' => 'paid',
+                    'icon' => 'materials',
+                ],
+            ];
+
+            // Placeholder receipts
+            $receipts = [
+                [
+                    'invoice' => 'INV-2024-082',
+                    'amount' => 450.00,
+                    'date' => 'May 12, 2024',
+                    'method' => 'Visa',
+                    'last4' => '4221',
+                ],
+                [
+                    'invoice' => 'INV-2024-045',
+                    'amount' => 1240.00,
+                    'date' => 'Feb 05, 2024',
+                    'method' => 'Bank Transfer',
+                    'last4' => null,
+                ],
+                [
+                    'invoice' => 'INV-2023-911',
+                    'amount' => 185.00,
+                    'date' => 'Nov 28, 2023',
+                    'method' => 'Visa',
+                    'last4' => '4221',
+                ],
+            ];
+
+            return view('student.financial', [
+                'user' => $user,
+                'totalOutstanding' => 1240.00,
+                'academicYear' => '2024',
+                'ledgerItems' => $ledgerItems,
+                'grossTuition' => 1458.82,
+                'scholarshipCredit' => 218.82,
+                'scholarshipDiscount' => 15,
+                'netDue' => 1240.00,
+                'receipts' => $receipts,
+            ]);
+        })->name('financial');
+
+        Route::get('/materials', function () {
+            $user = auth()->user();
+
+            return view('student.materials', [
+                'user' => $user,
+            ]);
+        })->name('materials');
+
+        // Account Settings page
+        Route::get('/settings', function () {
+            $user = auth()->user();
+
+            return view('student.settings', [
+                'user' => $user,
+                'studentId' => 'LUM-2024-'.str_pad($user->id, 4, '0', STR_PAD_LEFT),
+                'proficiencyLevel' => 'C1', // Placeholder - backend will implement
+                'proficiencyPercent' => 84, // Placeholder - backend will implement
+                'proficiencyStatus' => 'Advanced',
+                'passwordLastChanged' => '3 months ago', // Placeholder
+                'twoFactorEnabled' => $user->two_factor_confirmed_at !== null,
+            ]);
+        })->name('settings');
+
+        // Change Password page
+        Route::get('/password', function () {
+            $user = auth()->user();
+
+            return view('student.password', [
+                'user' => $user,
+            ]);
+        })->name('password');
+
+        // Student Notifications page
+        Route::get('/notifications', function () {
+            $user = auth()->user();
+            $notifications = $user->notifications()->latest()->get();
+
+            return view('student.notifications', [
+                'user' => $user,
+                'notifications' => $notifications,
+            ]);
+        })->name('notifications');
+
+        // Mark notification as read
+        Route::post('/notifications/{id}/read', function ($id) {
+            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification->markAsRead();
+
+            return back()->with('success', 'Notification marked as read');
+        })->name('notifications.read');
+
+        // Mark all notifications as read
+        Route::post('/notifications/read-all', function () {
+            auth()->user()->unreadNotifications->markAsRead();
+
+            return back()->with('success', 'All notifications marked as read');
+        })->name('notifications.read-all');
+    });
+
+// ============================================================
+// Parent-specific routes (financial, messages, calendar, settings, password)
+// ============================================================
+Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
+    ->prefix('parent')
+    ->name('parent.')
+    ->group(function () {
+        // Helper function to get placeholder children data
+        $getChildren = function () {
+            return [
+                [
+                    'id' => 1,
+                    'name' => 'Alex Johnson',
+                    'initials' => 'A',
+                    'grade' => 'Grade 10',
+                    'stream' => 'Science Stream',
+                    'gpa' => '3.8',
+                    'status' => 'On Track',
+                    'color' => 'var(--lumina-child-1)',
+                    'textColor' => 'var(--lumina-child-1-text)',
+                ],
+                [
+                    'id' => 2,
+                    'name' => 'Sophie Johnson',
+                    'initials' => 'S',
+                    'grade' => 'Grade 8',
+                    'stream' => 'Arts Stream',
+                    'gpa' => '3.6',
+                    'status' => 'On Track',
+                    'color' => 'var(--lumina-child-2)',
+                    'textColor' => 'var(--lumina-child-2-text)',
+                ],
+            ];
+        };
+
+        // Parent Financial Information
+        Route::get('/financial', function () use ($getChildren) {
+            $user = auth()->user();
+            $children = $getChildren();
+
+            // Placeholder financial data in Algerian Dinars
+            $invoices = [
+                [
+                    'id' => 'INV-2024-001',
+                    'child' => 'Alex Johnson',
+                    'description' => 'Term 3 Tuition Fee',
+                    'amount' => 122500,
+                    'dueDate' => 'April 15, 2024',
+                    'status' => 'pending',
+                ],
+                [
+                    'id' => 'INV-2024-002',
+                    'child' => 'Sophie Johnson',
+                    'description' => 'Term 3 Tuition Fee',
+                    'amount' => 122500,
+                    'dueDate' => 'April 15, 2024',
+                    'status' => 'pending',
+                ],
+                [
+                    'id' => 'INV-2024-003',
+                    'child' => 'Alex Johnson',
+                    'description' => 'Lab Materials Fee',
+                    'amount' => 15000,
+                    'dueDate' => 'April 30, 2024',
+                    'status' => 'pending',
+                ],
+            ];
+
+            $paymentHistory = [
+                [
+                    'id' => 'PAY-2024-001',
+                    'child' => 'Alex Johnson',
+                    'description' => 'Term 2 Tuition Fee',
+                    'amount' => 122500,
+                    'paidDate' => 'January 10, 2024',
+                    'method' => 'Bank Transfer',
+                ],
+                [
+                    'id' => 'PAY-2024-002',
+                    'child' => 'Sophie Johnson',
+                    'description' => 'Term 2 Tuition Fee',
+                    'amount' => 122500,
+                    'paidDate' => 'January 10, 2024',
+                    'method' => 'Bank Transfer',
+                ],
+                [
+                    'id' => 'PAY-2023-015',
+                    'child' => 'Alex Johnson',
+                    'description' => 'Term 1 Tuition Fee',
+                    'amount' => 120000,
+                    'paidDate' => 'September 5, 2023',
+                    'method' => 'Cash',
+                ],
+            ];
+
+            return view('parent.financial', [
+                'user' => $user,
+                'children' => $children,
+                'invoices' => $invoices,
+                'paymentHistory' => $paymentHistory,
+                'totalOutstanding' => 260000,
+                'totalPaid' => 365000,
+            ]);
+        })->name('financial');
+
+        // Parent Calendar (Timetable)
+        Route::get('/calendar', function () use ($getChildren) {
+            $user = auth()->user();
+            $children = $getChildren();
+
+            return view('parent.calendar', [
+                'user' => $user,
+                'children' => $children,
+                'selectedChild' => $children[0],
+                'currentWeek' => 'April 1 - 7, 2024',
+            ]);
+        })->name('calendar');
+
+        // Parent Settings
+        Route::get('/settings', function () use ($getChildren) {
+            $user = auth()->user();
+            $children = $getChildren();
+
+            return view('parent.settings', [
+                'user' => $user,
+                'children' => $children,
+                'twoFactorEnabled' => $user->two_factor_confirmed_at !== null,
+            ]);
+        })->name('settings');
+
+        // Parent Password Change
+        Route::get('/password', function () use ($getChildren) {
+            $user = auth()->user();
+            $children = $getChildren();
+
+            return view('parent.password', [
+                'user' => $user,
+                'children' => $children,
+            ]);
+        })->name('password');
+
+        // Parent Notifications page
+        Route::get('/notifications', function () use ($getChildren) {
+            $user = auth()->user();
+            $children = $getChildren();
+            $notifications = $user->notifications()->latest()->get();
+
+            return view('parent.notifications', [
+                'user' => $user,
+                'children' => $children,
+                'notifications' => $notifications,
+            ]);
+        })->name('notifications');
+
+        // Mark notification as read
+        Route::post('/notifications/{id}/read', function ($id) {
+            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification->markAsRead();
+
+            return back()->with('success', 'Notification marked as read');
+        })->name('notifications.read');
+
+        // Mark all notifications as read
+        Route::post('/notifications/read-all', function () {
+            auth()->user()->unreadNotifications->markAsRead();
+
+            return back()->with('success', 'All notifications marked as read');
+        })->name('notifications.read-all');
+    });
+
+// ============================================================
+// Admin-specific routes (notifications)
+// ============================================================
+Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+        // Admin Notifications page
+        Route::get('/notifications', function () {
+            $user = auth()->user();
+            $notifications = $user->notifications()->latest()->get();
+
+            return view('admin.notifications', [
+                'user' => $user,
+                'notifications' => $notifications,
+            ]);
+        })->name('notifications');
+
+        // Mark notification as read
+        Route::post('/notifications/{id}/read', function ($id) {
+            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification->markAsRead();
+
+            return back()->with('success', 'Notification marked as read');
+        })->name('notifications.read');
+
+        // Mark all notifications as read
+        Route::post('/notifications/read-all', function () {
+            auth()->user()->unreadNotifications->markAsRead();
+
+            return back()->with('success', 'All notifications marked as read');
+        })->name('notifications.read-all');
+
+        // Admin can access a page to start new conversations with anyone
+        Route::get('/messages/new', function () {
+            $user = auth()->user();
+
+            // Get all users except current admin (students, parents, teachers, secretaries)
+            $users = User::whereHas('roles', function ($query) {
+                $query->whereIn('name', ['student', 'parent', 'teacher', 'secretary']);
+            })
+                ->where('id', '!=', $user->id)
+                ->whereNotNull('approved_at')
+                ->orderBy('name')
+                ->get();
+
+            return view('admin.messages-new', [
+                'user' => $user,
+                'users' => $users,
+            ]);
+        })->name('messages.new');
     });
 
 Route::get('/pending-approval', function () {
