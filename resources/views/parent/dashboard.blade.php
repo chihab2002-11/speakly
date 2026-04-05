@@ -323,7 +323,7 @@
             <span class="mt-4 text-3xl font-black" style="color: var(--lumina-accent-red);">
                 {{ $unreadMessagesCount ?? 5 }}
             </span>
-            <a href="{{ route('parent.messages') }}" class="mt-2 text-xs font-semibold hover:underline" style="color: var(--lumina-primary);">
+            <a href="{{ route('role.messages.index', ['role' => 'parent']) }}" class="mt-2 text-xs font-semibold hover:underline" style="color: var(--lumina-primary);">
                 View Inbox
             </a>
         </div>
@@ -341,7 +341,7 @@
             </h3>
             <div class="grid grid-cols-2 gap-3">
                 <a 
-                    href="{{ route('parent.messages') }}"
+                    href="{{ route('role.messages.index', ['role' => 'parent']) }}"
                     class="flex items-center gap-3 rounded-xl p-4 transition-all hover:shadow-md"
                     style="background-color: var(--lumina-bg-card);"
                 >
