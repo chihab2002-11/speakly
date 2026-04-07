@@ -38,22 +38,8 @@ Route::get('/', function () {
 })->name('home');
 
 Route::get('/register-login', function () {
-    // If user is logged in, redirect to appropriate page
-    if (auth()->check()) {
-        $user = auth()->user();
-        // If not approved yet, go to pending-approval
-        if (is_null($user->approved_at)) {
-            return redirect()->route('pending-approval');
-        }
-
-        return redirect()->route(
-            DashboardRedirector::routeNameFor($user),
-            DashboardRedirector::routeParametersFor($user)
-        );
-    }
-
     return view('register-login-page');
-})->name('register-login');
+})->middleware('guest')->name('register-login');
 
 Route::get('/dashboard', function (Request $request) {
     return redirect()->route('role.dashboard', DashboardRedirector::routeParametersFor($request->user()));
