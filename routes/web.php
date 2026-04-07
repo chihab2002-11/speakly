@@ -482,6 +482,149 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
     });
 
 // ============================================================
+// Teacher-specific routes (attendance, resources, settings, notifications)
+// ============================================================
+Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:teacher'])
+    ->prefix('teacher')
+    ->name('teacher.')
+    ->group(function () {
+        // Manage Attendance & Evaluation page
+        Route::get('/attendance', function () {
+            $user = auth()->user();
+
+            // Mock data for classes
+            $classes = [
+                ['id' => 1, 'name' => 'French B2 - Grammar', 'students_count' => 24],
+                ['id' => 2, 'name' => 'French A2 - Conversation', 'students_count' => 18],
+                ['id' => 3, 'name' => 'Spanish B1 - Writing', 'students_count' => 22],
+                ['id' => 4, 'name' => 'French C1 - Advanced', 'students_count' => 15],
+            ];
+
+            // Mock students for attendance
+            $students = [
+                ['id' => 1, 'name' => 'Julian Alvarez', 'avatar' => null, 'attendance' => 'present', 'grade' => 85, 'feedback' => ''],
+                ['id' => 2, 'name' => 'Elena Vance', 'avatar' => null, 'attendance' => 'present', 'grade' => 92, 'feedback' => ''],
+                ['id' => 3, 'name' => 'Marcus Chen', 'avatar' => null, 'attendance' => 'late', 'grade' => 78, 'feedback' => ''],
+                ['id' => 4, 'name' => 'Sophie Martin', 'avatar' => null, 'attendance' => 'present', 'grade' => 88, 'feedback' => ''],
+                ['id' => 5, 'name' => 'Alex Thompson', 'avatar' => null, 'attendance' => 'absent', 'grade' => null, 'feedback' => ''],
+            ];
+
+            // Attendance stats
+            $stats = [
+                'present' => 18,
+                'late' => 3,
+                'absent' => 3,
+                'total' => 24,
+            ];
+
+            return view('teacher.attendance', [
+                'user' => $user,
+                'classes' => $classes,
+                'students' => $students,
+                'stats' => $stats,
+                'selectedClass' => $classes[0],
+                'selectedDate' => now()->format('Y-m-d'),
+            ]);
+        })->name('attendance');
+
+        // Teaching Resources page
+        Route::get('/resources', function () {
+            $user = auth()->user();
+
+            // Mock data for classes (same as attendance)
+            $classes = [
+                ['id' => 1, 'name' => 'French B2 - Grammar', 'students_count' => 24],
+                ['id' => 2, 'name' => 'French A2 - Conversation', 'students_count' => 18],
+                ['id' => 3, 'name' => 'Spanish B1 - Writing', 'students_count' => 22],
+                ['id' => 4, 'name' => 'French C1 - Advanced', 'students_count' => 15],
+            ];
+
+            // Mock resources data (only PDF and document types, no video/audio)
+            $recentResources = [
+                ['id' => 1, 'name' => 'Grammar Worksheet B2', 'type' => 'PDF', 'size' => '2.4 MB', 'uploaded_at' => now()->subDays(2), 'downloads' => 45, 'category' => 'homework'],
+                ['id' => 2, 'name' => 'Vocabulary List A2', 'type' => 'PDF', 'size' => '1.1 MB', 'uploaded_at' => now()->subDays(5), 'downloads' => 32, 'category' => 'course_materials'],
+                ['id' => 3, 'name' => 'French Verb Conjugation Guide', 'type' => 'PDF', 'size' => '3.2 MB', 'uploaded_at' => now()->subWeek(), 'downloads' => 28, 'category' => 'course_materials'],
+                ['id' => 4, 'name' => 'Writing Assignment Week 3', 'type' => 'PDF', 'size' => '0.8 MB', 'uploaded_at' => now()->subWeek(), 'downloads' => 19, 'category' => 'homework'],
+                ['id' => 5, 'name' => 'Chapter 5 Reading Material', 'type' => 'PDF', 'size' => '4.5 MB', 'uploaded_at' => now()->subDays(10), 'downloads' => 56, 'category' => 'course_materials'],
+            ];
+
+            // Only two categories: Homeworks and Course Materials
+            $categories = [
+                ['id' => 1, 'name' => 'Homeworks', 'count' => 18, 'icon' => 'homework'],
+                ['id' => 2, 'name' => 'Course Materials', 'count' => 44, 'icon' => 'course_materials'],
+            ];
+
+            return view('teacher.resources', [
+                'user' => $user,
+                'classes' => $classes,
+                'recentResources' => $recentResources,
+                'categories' => $categories,
+            ]);
+        })->name('resources');
+
+        // Teacher Settings (Profile) page
+        Route::get('/settings', function () {
+            $user = auth()->user();
+
+            return view('teacher.settings', [
+                'user' => $user,
+                'passwordLastChanged' => '3 months ago',
+                'twoFactorEnabled' => $user->two_factor_confirmed_at !== null,
+            ]);
+        })->name('settings');
+
+        // Teacher Notifications page
+        Route::get('/notifications', function () {
+            $user = auth()->user();
+            $notifications = $user->notifications()->latest()->get();
+
+            return view('teacher.notifications', [
+                'user' => $user,
+                'notifications' => $notifications,
+            ]);
+        })->name('notifications');
+
+        // Mark notification as read
+        Route::post('/notifications/{id}/read', function ($id) {
+            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification->markAsRead();
+
+            return back()->with('success', 'Notification marked as read');
+        })->name('notifications.read');
+
+        // Mark all notifications as read
+        Route::post('/notifications/read-all', function () {
+            auth()->user()->unreadNotifications->markAsRead();
+
+            return back()->with('success', 'All notifications marked as read');
+        })->name('notifications.read-all');
+
+        // Get available users for new conversations (API endpoint)
+        Route::get('/messages/recipients', function () {
+            $user = auth()->user();
+
+            // Teachers can message: students, parents, other teachers, admins
+            $users = User::whereHas('roles', function ($query) {
+                $query->whereIn('name', ['student', 'parent', 'teacher', 'admin']);
+            })
+                ->where('id', '!=', $user->id)
+                ->whereNotNull('approved_at')
+                ->orderBy('name')
+                ->get()
+                ->map(function ($u) {
+                    return [
+                        'id' => $u->id,
+                        'name' => $u->name,
+                        'email' => $u->email,
+                        'role' => $u->roles->isNotEmpty() ? $u->roles->first()->name : null,
+                    ];
+                });
+
+            return response()->json(['users' => $users]);
+        })->name('messages.recipients');
+    });
+
+// ============================================================
 // Admin-specific routes (notifications)
 // ============================================================
 Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])

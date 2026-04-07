@@ -25,8 +25,14 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Admin',
                 'password' => bcrypt('password'), // hashed even if User casts are not set
                 'email_verified_at' => now(),
+                'approved_at' => now(), // Admin is pre-approved
             ]
         );
+
+        // Ensure admin is approved (in case user already exists without approval)
+        if (is_null($admin->approved_at)) {
+            $admin->update(['approved_at' => now()]);
+        }
 
         // Ensure admin role is set (idempotent)
         $admin->syncRoles(['admin']);
