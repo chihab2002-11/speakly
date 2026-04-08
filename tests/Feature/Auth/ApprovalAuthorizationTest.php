@@ -30,7 +30,7 @@ it('prevents normal user from approving a pending user', function () {
 
     $response = $this
         ->actingAs($normalUser)
-        ->post(route('approvals.approve', $pendingUser));
+        ->post(route('approvals.approve', ['role' => 'admin', 'user' => $pendingUser]));
 
     $response->assertForbidden();
 });
@@ -50,7 +50,7 @@ it('prevents normal user from rejecting a pending user', function () {
 
     $response = $this
         ->actingAs($normalUser)
-        ->post(route('approvals.reject', $pendingUser), [
+        ->post(route('approvals.reject', ['role' => 'admin', 'user' => $pendingUser]), [
             'reason' => 'Not eligible',
         ]);
 

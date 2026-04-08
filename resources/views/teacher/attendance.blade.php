@@ -1,4 +1,9 @@
 <x-layouts.teacher :title="__('Manage Attendance')" :currentRoute="'teacher.attendance'">
+    @php
+        $hasSelectedClass = ! empty($selectedClass['id'] ?? null);
+        $hasStudents = count($students ?? []) > 0;
+    @endphp
+
     {{-- Page Header --}}
     <div class="mb-8">
         <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -13,22 +18,42 @@
         </div>
     </div>
 
+    @if (session('success'))
+        <div class="mb-4 rounded-xl border p-4" style="background-color: #D1FAE5; border-color: #A7F3D0; color: #065F46;">
+            <p class="text-sm font-semibold">{{ session('success') }}</p>
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mb-4 rounded-xl border p-4" style="background-color: #FEF2F2; border-color: #FECACA; color: #991B1B;">
+            <ul class="list-disc space-y-1 pl-5 text-sm">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     {{-- Controls Bar --}}
     <div class="mb-6 flex flex-col gap-4 rounded-2xl border p-4 md:flex-row md:items-center md:justify-between" style="background: white; border-color: var(--lumina-border-light);">
         {{-- Left Side: Class & Date Selection --}}
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <form id="attendanceFilterForm" method="GET" action="{{ route('teacher.attendance') }}" class="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-3">
             {{-- Class Selector --}}
             <div class="relative">
                 <label class="mb-1 block text-xs font-semibold uppercase tracking-wider" style="color: var(--lumina-text-muted);">Select Class</label>
-                <select 
+                <select
+                    name="class_id"
+                    onchange="this.form.submit()"
                     class="input-focus w-full appearance-none rounded-xl border py-3 pl-4 pr-10 text-sm font-medium transition-all duration-200 sm:w-64"
                     style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border-light); color: var(--lumina-text-primary);"
                 >
-                    @foreach($classes ?? [] as $class)
-                        <option value="{{ $class['id'] }}" {{ ($selectedClass['id'] ?? 1) === $class['id'] ? 'selected' : '' }}>
+                    @forelse ($classes ?? [] as $class)
+                        <option value="{{ $class['id'] }}" @selected(($selectedClass['id'] ?? null) === $class['id'])>
                             {{ $class['name'] }} ({{ $class['students_count'] }} students)
                         </option>
-                    @endforeach
+                    @empty
+                        <option value="">No assigned classes</option>
+                    @endforelse
                 </select>
                 <svg class="pointer-events-none absolute right-3 top-9 h-5 w-5" fill="none" stroke="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -40,27 +65,46 @@
                 <label class="mb-1 block text-xs font-semibold uppercase tracking-wider" style="color: var(--lumina-text-muted);">Date</label>
                 <input 
                     type="date" 
+                    name="date"
                     value="{{ $selectedDate ?? now()->format('Y-m-d') }}"
                     class="input-focus w-full rounded-xl border py-3 px-4 text-sm font-medium transition-all duration-200 sm:w-48"
                     style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border-light); color: var(--lumina-text-primary);"
                 />
             </div>
-        </div>
 
-        {{-- Right Side: Action Buttons --}}
-        <div class="flex items-center gap-3">
             <button 
+                type="submit"
                 class="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:bg-gray-50 active:scale-[0.98]"
                 style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);"
             >
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                </svg>
-                Export
+                Load
             </button>
+        </form>
+
+        {{-- Right Side: Action Buttons --}}
+        <div class="flex items-center gap-3">
+            <form method="GET" action="{{ route('teacher.attendance.export') }}">
+                <input type="hidden" name="class_id" value="{{ $selectedClass['id'] ?? '' }}">
+                <input type="hidden" name="date" value="{{ $selectedDate ?? now()->format('Y-m-d') }}">
+
+                <button
+                    type="submit"
+                    class="flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 hover:bg-gray-50 active:scale-[0.98]"
+                    style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);"
+                    @disabled(! $hasSelectedClass)
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    Export
+                </button>
+            </form>
             <button 
+                type="submit"
+                form="attendanceSaveForm"
                 class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                 style="background: linear-gradient(135deg, #006A41 0%, #2D8C5E 100%);"
+                @disabled(! ($hasSelectedClass && $hasStudents))
             >
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -70,15 +114,20 @@
         </div>
     </div>
 
-    {{-- Student Roster --}}
-    <div class="rounded-3xl border" style="background: white; border-color: var(--lumina-border-light);">
+    <form id="attendanceSaveForm" method="POST" action="{{ route('teacher.attendance.store') }}">
+        @csrf
+        <input type="hidden" name="class_id" value="{{ $selectedClass['id'] ?? '' }}">
+        <input type="hidden" name="date" value="{{ $selectedDate ?? now()->format('Y-m-d') }}">
+
+        {{-- Student Roster --}}
+        <div class="rounded-3xl border" style="background: white; border-color: var(--lumina-border-light);">
         {{-- Table Header --}}
         <div class="border-b px-6 py-4" style="border-color: var(--lumina-border-light);">
             <div class="flex items-center justify-between">
                 <h2 class="text-lg font-bold" style="color: var(--lumina-text-primary);">Student Roster</h2>
                 <div class="flex items-center gap-2">
                     <span class="text-sm" style="color: var(--lumina-text-muted);">
-                        {{ $selectedClass['name'] ?? 'French B2 - Grammar' }}
+                        {{ $selectedClass['name'] ?? 'No class selected' }}
                     </span>
                 </div>
             </div>
@@ -102,21 +151,18 @@
         <div class="max-h-[420px] overflow-y-auto overflow-x-auto" style="scrollbar-width: thin; scrollbar-color: var(--lumina-border) transparent;">
             <table class="w-full">
                 <tbody class="divide-y" style="--tw-divide-opacity: 1; border-color: var(--lumina-border-light);">
-                    @foreach($students ?? [
-                        ['id' => 1, 'name' => 'Julian Alvarez', 'avatar' => null, 'attendance' => 'present', 'grade' => 85, 'feedback' => ''],
-                        ['id' => 2, 'name' => 'Elena Vance', 'avatar' => null, 'attendance' => 'present', 'grade' => 92, 'feedback' => ''],
-                        ['id' => 3, 'name' => 'Marcus Chen', 'avatar' => null, 'attendance' => 'late', 'grade' => 78, 'feedback' => 'Arrived 15 minutes late'],
-                        ['id' => 4, 'name' => 'Sophie Martin', 'avatar' => null, 'attendance' => 'present', 'grade' => 88, 'feedback' => ''],
-                        ['id' => 5, 'name' => 'Alex Thompson', 'avatar' => null, 'attendance' => 'absent', 'grade' => null, 'feedback' => 'Sick leave'],
-                        ['id' => 6, 'name' => 'Olivia Brown', 'avatar' => null, 'attendance' => 'present', 'grade' => 91, 'feedback' => ''],
-                        ['id' => 7, 'name' => 'James Wilson', 'avatar' => null, 'attendance' => 'present', 'grade' => 76, 'feedback' => ''],
-                        ['id' => 8, 'name' => 'Emma Davis', 'avatar' => null, 'attendance' => 'late', 'grade' => 82, 'feedback' => ''],
-                        ['id' => 9, 'name' => 'Liam Johnson', 'avatar' => null, 'attendance' => 'present', 'grade' => 95, 'feedback' => 'Excellent participation'],
-                        ['id' => 10, 'name' => 'Ava Miller', 'avatar' => null, 'attendance' => 'absent', 'grade' => null, 'feedback' => 'Family emergency'],
-                    ] as $student)
+                    @forelse($students ?? [] as $student)
                         <tr class="group transition-colors duration-200 hover:bg-gray-50">
                             {{-- Student Info --}}
                             <td class="w-1/4 px-6 py-4">
+                                <input type="hidden" name="records[{{ $student['id'] }}][student_id]" value="{{ $student['id'] }}">
+                                <input
+                                    type="hidden"
+                                    name="records[{{ $student['id'] }}][status]"
+                                    value="{{ $student['attendance'] }}"
+                                    data-attendance-input
+                                >
+
                                 <div class="flex items-center gap-3">
                                     @if($student['avatar'])
                                         <img src="{{ $student['avatar'] }}" alt="{{ $student['name'] }}" class="h-10 w-10 rounded-full object-cover">
@@ -140,31 +186,37 @@
                                 <div class="flex items-center justify-center gap-1">
                                     {{-- Present --}}
                                     <button 
-                                        class="flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-all duration-200 hover:scale-110 {{ $student['attendance'] === 'present' ? 'shadow-md' : 'opacity-40 hover:opacity-100' }}"
-                                        style="{{ $student['attendance'] === 'present' ? 'background-color: #D1FAE5; border-color: #059669;' : 'background-color: white; border-color: var(--lumina-border);' }}"
+                                        type="button"
+                                        data-attendance-btn
+                                        data-value="present"
+                                        class="flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-all duration-200 hover:scale-110 {{ $student['attendance'] === 'present' ? 'bg-emerald-100 border-emerald-600 shadow-md' : 'bg-white border-zinc-300 opacity-40 hover:opacity-100' }}"
                                         title="Present"
                                     >
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" style="color: {{ $student['attendance'] === 'present' ? '#059669' : 'var(--lumina-text-muted)' }};" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 {{ $student['attendance'] === 'present' ? 'text-emerald-600' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                         </svg>
                                     </button>
                                     {{-- Late --}}
                                     <button 
-                                        class="flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-all duration-200 hover:scale-110 {{ $student['attendance'] === 'late' ? 'shadow-md' : 'opacity-40 hover:opacity-100' }}"
-                                        style="{{ $student['attendance'] === 'late' ? 'background-color: #FEF3C7; border-color: #D97706;' : 'background-color: white; border-color: var(--lumina-border);' }}"
+                                        type="button"
+                                        data-attendance-btn
+                                        data-value="late"
+                                        class="flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-all duration-200 hover:scale-110 {{ $student['attendance'] === 'late' ? 'bg-amber-100 border-amber-600 shadow-md' : 'bg-white border-zinc-300 opacity-40 hover:opacity-100' }}"
                                         title="Late"
                                     >
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" style="color: {{ $student['attendance'] === 'late' ? '#D97706' : 'var(--lumina-text-muted)' }};" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 {{ $student['attendance'] === 'late' ? 'text-amber-600' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                         </svg>
                                     </button>
                                     {{-- Absent --}}
                                     <button 
-                                        class="flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-all duration-200 hover:scale-110 {{ $student['attendance'] === 'absent' ? 'shadow-md' : 'opacity-40 hover:opacity-100' }}"
-                                        style="{{ $student['attendance'] === 'absent' ? 'background-color: #FEE2E2; border-color: #DC2626;' : 'background-color: white; border-color: var(--lumina-border);' }}"
+                                        type="button"
+                                        data-attendance-btn
+                                        data-value="absent"
+                                        class="flex h-10 w-10 items-center justify-center rounded-xl border-2 transition-all duration-200 hover:scale-110 {{ $student['attendance'] === 'absent' ? 'bg-red-100 border-red-600 shadow-md' : 'bg-white border-zinc-300 opacity-40 hover:opacity-100' }}"
                                         title="Absent"
                                     >
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" style="color: {{ $student['attendance'] === 'absent' ? '#DC2626' : 'var(--lumina-text-muted)' }};" viewBox="0 0 24 24">
+                                        <svg class="h-5 w-5 {{ $student['attendance'] === 'absent' ? 'text-red-600' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                         </svg>
                                     </button>
@@ -178,8 +230,10 @@
                                         type="number" 
                                         min="0" 
                                         max="100" 
+                                        name="records[{{ $student['id'] }}][grade]"
                                         value="{{ $student['grade'] }}"
                                         placeholder="—"
+                                        data-grade-input
                                         class="input-focus w-20 rounded-xl border py-2 text-center text-sm font-medium transition-all duration-200 {{ $student['attendance'] === 'absent' ? 'opacity-50' : '' }}"
                                         style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border-light); color: var(--lumina-text-primary);"
                                         {{ $student['attendance'] === 'absent' ? 'disabled' : '' }}
@@ -191,6 +245,7 @@
                             <td class="px-6 py-4">
                                 <input 
                                     type="text" 
+                                    name="records[{{ $student['id'] }}][feedback]"
                                     value="{{ $student['feedback'] }}"
                                     placeholder="Add feedback..."
                                     class="input-focus w-full rounded-xl border py-2 px-3 text-sm transition-all duration-200"
@@ -198,7 +253,13 @@
                                 />
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-sm" style="color: var(--lumina-text-muted);">
+                                No students found for the selected class.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -210,8 +271,10 @@
                     Showing {{ count($students ?? []) }} students
                 </p>
                 <button 
+                    type="submit"
                     class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                     style="background: linear-gradient(135deg, #006A41 0%, #2D8C5E 100%);"
+                    @disabled(! ($hasSelectedClass && $hasStudents))
                 >
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
@@ -220,7 +283,8 @@
                 </button>
             </div>
         </div>
-    </div>
+        </div>
+    </form>
 
     {{-- Stats Cards (Summary) --}}
     <div class="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -233,7 +297,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-2xl font-bold" style="color: #059669;">{{ $stats['present'] ?? 18 }}</p>
+                    <p class="text-2xl font-bold" style="color: #059669;">{{ $stats['present'] ?? 0 }}</p>
                     <p class="text-sm" style="color: var(--lumina-text-muted);">Present</p>
                 </div>
             </div>
@@ -248,7 +312,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-2xl font-bold" style="color: #D97706;">{{ $stats['late'] ?? 3 }}</p>
+                    <p class="text-2xl font-bold" style="color: #D97706;">{{ $stats['late'] ?? 0 }}</p>
                     <p class="text-sm" style="color: var(--lumina-text-muted);">Late</p>
                 </div>
             </div>
@@ -263,7 +327,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-2xl font-bold" style="color: #DC2626;">{{ $stats['absent'] ?? 3 }}</p>
+                    <p class="text-2xl font-bold" style="color: #DC2626;">{{ $stats['absent'] ?? 0 }}</p>
                     <p class="text-sm" style="color: var(--lumina-text-muted);">Absent</p>
                 </div>
             </div>
@@ -278,53 +342,102 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-2xl font-bold" style="color: #4F46E5;">{{ $stats['total'] ?? 24 }}</p>
+                    <p class="text-2xl font-bold" style="color: #4F46E5;">{{ $stats['total'] ?? 0 }}</p>
                     <p class="text-sm" style="color: var(--lumina-text-muted);">Total Students</p>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- Backend Summary Comment --}}
-    {{-- 
-    ============================================================
-    BACKEND SUMMARY - Manage Attendance
-    ============================================================
-    
-    Endpoints Needed:
-    -----------------
-    GET  /api/teacher/classes
-         → Returns list of classes assigned to teacher
-         → Response: { classes: [{ id, name, students_count }] }
-    
-    GET  /api/teacher/classes/{classId}/attendance?date=YYYY-MM-DD
-         → Returns students with attendance for specific date
-         → Response: { 
-             class: { id, name },
-             date: "2024-01-15",
-             stats: { present, late, absent, total },
-             students: [{ id, name, avatar, attendance, grade, feedback }]
-           }
-    
-    POST /api/teacher/attendance
-         → Save attendance records
-         → Body: { 
-             class_id: int,
-             date: "YYYY-MM-DD",
-             records: [{ student_id, attendance: 'present'|'late'|'absent', grade, feedback }]
-           }
-         → Response: { success: true, message: "Attendance saved" }
-    
-    GET  /api/teacher/attendance/export?class_id=X&date=YYYY-MM-DD&format=csv|pdf
-         → Export attendance report
-         → Response: File download
-    
-    Data Types:
-    -----------
-    attendance: enum('present', 'late', 'absent')
-    grade: nullable integer (0-100)
-    feedback: nullable string (max 500 chars)
-    
-    ============================================================
-    --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const statusStyles = {
+                present: {
+                    backgroundColor: '#D1FAE5',
+                    borderColor: '#059669',
+                    iconColor: '#059669',
+                },
+                late: {
+                    backgroundColor: '#FEF3C7',
+                    borderColor: '#D97706',
+                    iconColor: '#D97706',
+                },
+                absent: {
+                    backgroundColor: '#FEE2E2',
+                    borderColor: '#DC2626',
+                    iconColor: '#DC2626',
+                },
+            };
+
+            const defaultButtonStyle = {
+                backgroundColor: 'white',
+                borderColor: 'var(--lumina-border)',
+                iconColor: 'var(--lumina-text-muted)',
+            };
+
+            function applyRowStatus(row, selectedStatus) {
+                const buttons = row.querySelectorAll('[data-attendance-btn]');
+
+                buttons.forEach(function (button) {
+                    const buttonStatus = button.dataset.value;
+                    const icon = button.querySelector('svg');
+                    const isActive = buttonStatus === selectedStatus;
+
+                    if (isActive) {
+                        button.classList.add('shadow-md');
+                        button.classList.remove('opacity-40', 'hover:opacity-100');
+                        button.style.backgroundColor = statusStyles[buttonStatus].backgroundColor;
+                        button.style.borderColor = statusStyles[buttonStatus].borderColor;
+                        if (icon) {
+                            icon.style.color = statusStyles[buttonStatus].iconColor;
+                        }
+                    } else {
+                        button.classList.remove('shadow-md');
+                        button.classList.add('opacity-40', 'hover:opacity-100');
+                        button.style.backgroundColor = defaultButtonStyle.backgroundColor;
+                        button.style.borderColor = defaultButtonStyle.borderColor;
+                        if (icon) {
+                            icon.style.color = defaultButtonStyle.iconColor;
+                        }
+                    }
+                });
+
+                const gradeInput = row.querySelector('[data-grade-input]');
+                if (gradeInput) {
+                    const shouldDisable = selectedStatus === 'absent';
+                    gradeInput.disabled = shouldDisable;
+                    gradeInput.classList.toggle('opacity-50', shouldDisable);
+
+                    if (shouldDisable) {
+                        gradeInput.value = '';
+                    }
+                }
+            }
+
+            document.querySelectorAll('[data-attendance-btn]').forEach(function (button) {
+                button.addEventListener('click', function () {
+                    const row = button.closest('tr');
+                    const statusInput = row?.querySelector('[data-attendance-input]');
+
+                    if (!row || !statusInput) {
+                        return;
+                    }
+
+                    const selectedStatus = button.dataset.value;
+                    statusInput.value = selectedStatus;
+                    applyRowStatus(row, selectedStatus);
+                });
+            });
+
+            document.querySelectorAll('tr').forEach(function (row) {
+                const statusInput = row.querySelector('[data-attendance-input]');
+
+                if (!statusInput) {
+                    return;
+                }
+
+                applyRowStatus(row, statusInput.value);
+            });
+        });
+    </script>
 </x-layouts.teacher>

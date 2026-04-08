@@ -6,6 +6,7 @@ use App\Models\Message;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
 use App\Support\DashboardRedirector;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -112,18 +113,36 @@ class MessageController extends Controller
      */
     public function store(Request $request)
     {
+        $sender = $request->user();
+        $currentRole = (string) ($request->route('role') ?: DashboardRedirector::roleFor($sender));
+
         $data = $request->validate([
             'receiver_id' => [
                 'required',
-                'exists:users,id',
-                Rule::notIn([$request->user()->id]),
+                Rule::exists('users', 'id')->where(fn ($query) => $query->whereNotNull('approved_at')),
+                Rule::notIn([$sender->id]),
+                function (string $attribute, mixed $value, Closure $fail) use ($currentRole): void {
+                    if ($currentRole !== 'teacher') {
+                        return;
+                    }
+
+                    $recipient = User::query()->find($value);
+
+                    if (! $recipient) {
+                        return;
+                    }
+
+                    if (! $recipient->hasAnyRole(['student', 'parent', 'teacher', 'admin'])) {
+                        $fail('Teachers can only message approved students, parents, teachers, or admins.');
+                    }
+                },
             ],
             'subject' => ['nullable', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:5000'],
         ]);
 
         $message = Message::create([
-            'sender_id' => $request->user()->id,
+            'sender_id' => $sender->id,
             'receiver_id' => $data['receiver_id'],
             'subject' => $data['subject'] ?? null,
             'body' => $data['body'],

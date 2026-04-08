@@ -12,29 +12,35 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed roles + permissions first
-
         $this->call([
             PermissionSeeder::class,
             RoleSeeder::class,
         ]);
-        // Create default admin user
+
         $admin = User::firstOrCreate(
             ['email' => 'admin@speakly.com'],
             [
                 'name' => 'Admin',
-                'password' => bcrypt('password'), // hashed even if User casts are not set
+                'password' => 'password',
                 'email_verified_at' => now(),
-                'approved_at' => now(), // Admin is pre-approved
             ]
         );
 
-        // Ensure admin is approved (in case user already exists without approval)
-        if (is_null($admin->approved_at)) {
-            $admin->update(['approved_at' => now()]);
-        }
+        $admin->forceFill([
+            'approved_at' => now(),
+            'approved_by' => null,
+            'requested_role' => null,
+            'rejected_at' => null,
+            'rejected_by' => null,
+            'rejection_reason' => null,
+        ])->save();
 
-        // Ensure admin role is set (idempotent)
         $admin->syncRoles(['admin']);
+
+        if (app()->environment(['local', 'development'])) {
+            $this->call([
+                TeacherWorkflowSeeder::class,
+            ]);
+        }
     }
 }

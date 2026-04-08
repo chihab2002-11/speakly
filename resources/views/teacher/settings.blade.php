@@ -64,6 +64,22 @@
         </p>
     </div>
 
+    @if (session('success'))
+        <div class="mb-4 rounded-xl border p-4" style="background-color: #D1FAE5; border-color: #A7F3D0; color: #065F46;">
+            <p class="text-sm font-semibold">{{ session('success') }}</p>
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mb-4 rounded-xl border p-4" style="background-color: #FEF2F2; border-color: #FECACA; color: #991B1B;">
+            <ul class="list-disc space-y-1 pl-5 text-sm">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     {{-- Main Grid Layout --}}
     <div class="grid gap-6 lg:grid-cols-2">
         {{-- Left Column --}}
@@ -150,7 +166,7 @@
                     >
                         <div>
                             <p class="text-xs" style="color: var(--lumina-text-muted);">Subjects</p>
-                            <p class="text-sm font-semibold" style="color: var(--lumina-text-primary);">French, Spanish</p>
+                            <p class="text-sm font-semibold" style="color: var(--lumina-text-primary);">{{ $teachingSubjects ?? 'No assigned subjects yet' }}</p>
                         </div>
                         <div 
                             class="flex h-10 w-10 items-center justify-center rounded-full"
@@ -168,7 +184,7 @@
                     >
                         <div>
                             <p class="text-xs" style="color: var(--lumina-text-muted);">Years of Experience</p>
-                            <p class="text-sm font-semibold" style="color: var(--lumina-text-primary);">8 Years</p>
+                            <p class="text-sm font-semibold" style="color: var(--lumina-text-primary);">{{ $yearsOfExperience ?? 0 }} Years</p>
                         </div>
                         <div 
                             class="flex h-10 w-10 items-center justify-center rounded-full"
@@ -201,14 +217,17 @@
                 </div>
 
                 {{-- Form Fields --}}
-                <form class="flex flex-col gap-5">
+                <form method="POST" action="{{ route('teacher.settings.update') }}" class="flex flex-col gap-5">
+                    @csrf
+                    @method('PATCH')
                     <div class="grid gap-5 sm:grid-cols-2">
                         {{-- Full Name --}}
                         <div class="flex flex-col gap-2">
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Full Name</label>
                             <input 
                                 type="text" 
-                                value="{{ $user->name ?? 'Dr. Jane Doe' }}"
+                                name="name"
+                                value="{{ old('name', $user->name) }}"
                                 class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                                 style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
                             >
@@ -219,7 +238,8 @@
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Email Address</label>
                             <input 
                                 type="email" 
-                                value="{{ $user->email ?? 'jane.doe@speakly.edu' }}"
+                                name="email"
+                                value="{{ old('email', $user->email) }}"
                                 class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                                 style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
                             >
@@ -232,7 +252,8 @@
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Phone Number</label>
                             <input 
                                 type="tel" 
-                                value="{{ $user->phone ?? '+213 555 012 345' }}"
+                                name="phone"
+                                value="{{ old('phone', $user->phone) }}"
                                 class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                                 style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
                             >
@@ -243,14 +264,15 @@
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Primary Language</label>
                             <div class="relative">
                                 <select 
+                                    name="preferred_language"
                                     class="w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2 cursor-pointer"
                                     style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
                                 >
-                                    <option value="english" selected>English</option>
-                                    <option value="french">French</option>
-                                    <option value="spanish">Spanish</option>
-                                    <option value="german">German</option>
-                                    <option value="arabic">Arabic</option>
+                                    <option value="english" @selected(old('preferred_language', $user->preferred_language) === 'english')>English</option>
+                                    <option value="french" @selected(old('preferred_language', $user->preferred_language) === 'french')>French</option>
+                                    <option value="spanish" @selected(old('preferred_language', $user->preferred_language) === 'spanish')>Spanish</option>
+                                    <option value="german" @selected(old('preferred_language', $user->preferred_language) === 'german')>German</option>
+                                    <option value="arabic" @selected(old('preferred_language', $user->preferred_language) === 'arabic')>Arabic</option>
                                 </select>
                                 <svg class="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2" fill="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
                                     <path d="M7 10l5 5 5-5z"/>
@@ -263,11 +285,12 @@
                     <div class="flex flex-col gap-2">
                         <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Bio</label>
                         <textarea 
+                            name="bio"
                             rows="3"
                             placeholder="Tell us a bit about yourself..."
                             class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2 resize-none"
                             style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
-                        >Passionate language educator with 8 years of experience teaching French and Spanish. Specialized in conversational fluency and cultural immersion techniques.</textarea>
+                        >{{ old('bio', $user->bio) }}</textarea>
                     </div>
 
                     {{-- Save Button --}}
@@ -315,12 +338,13 @@
                             <p class="text-xs" style="color: var(--lumina-text-muted);">Last changed {{ $passwordLastChanged ?? '3 months ago' }}</p>
                         </div>
                     </div>
-                    <button 
+                    <a
+                        href="{{ route('user-password.edit') }}"
                         class="text-sm font-bold cursor-pointer transition-opacity hover:opacity-80"
                         style="color: var(--lumina-primary);"
                     >
                         Change Password
-                    </button>
+                    </a>
                 </div>
 
                 {{-- Two-Factor Authentication --}}
@@ -342,11 +366,13 @@
                             <p class="text-xs" style="color: var(--lumina-text-muted);">Add an extra layer of security to your account</p>
                         </div>
                     </div>
-                    {{-- Toggle Switch --}}
-                    <label class="relative inline-flex cursor-pointer items-center">
-                        <input type="checkbox" class="peer sr-only" {{ ($twoFactorEnabled ?? false) ? 'checked' : '' }}>
-                        <div class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--lumina-primary)] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
-                    </label>
+                    <a
+                        href="{{ route('two-factor.show') }}"
+                        class="text-sm font-bold cursor-pointer transition-opacity hover:opacity-80"
+                        style="color: var(--lumina-primary);"
+                    >
+                        {{ ($twoFactorEnabled ?? false) ? 'Manage' : 'Enable' }}
+                    </a>
                 </div>
 
                 {{-- Active Sessions & Login History --}}

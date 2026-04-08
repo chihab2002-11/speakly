@@ -24,6 +24,7 @@ class NewMessageNotification extends Notification
         $sender = $this->message->sender?->name ?? 'Someone';
 
         return new DatabaseMessage([
+            'type' => 'message',
             'title' => 'New message',
             'message' => "You have a new message from {$sender}.",
             'url' => route('role.messages.show', DashboardRedirector::routeParametersFor($notifiable, [

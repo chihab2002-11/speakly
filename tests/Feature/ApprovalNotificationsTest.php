@@ -30,9 +30,9 @@ it('sends approved notification when admin approves a pending user', function ()
 
     $response = $this
         ->actingAs($admin)
-        ->post(route('approvals.approve', $pendingUser));
+        ->post(route('approvals.approve', ['role' => 'admin', 'user' => $pendingUser]));
 
-    $response->assertRedirect(route('approvals.index'));
+    $response->assertRedirect(route('approvals.index', ['role' => 'admin']));
 
     Notification::assertSentTo($pendingUser, AccountApprovedNotification::class);
 });
@@ -53,11 +53,11 @@ it('sends rejected notification when admin rejects a pending user', function () 
 
     $response = $this
         ->actingAs($admin)
-        ->post(route('approvals.reject', $pendingUser), [
+        ->post(route('approvals.reject', ['role' => 'admin', 'user' => $pendingUser]), [
             'reason' => 'Incomplete profile',
         ]);
 
-    $response->assertRedirect(route('approvals.index'));
+    $response->assertRedirect(route('approvals.index', ['role' => 'admin']));
 
     Notification::assertSentTo($pendingUser, AccountRejectedNotification::class);
 });

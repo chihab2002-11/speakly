@@ -54,6 +54,22 @@
     ================================================================================
     --}}
 
+    @php
+        $hasClasses = ! empty($classes);
+        $search = $activeFilters['search'] ?? '';
+        $selectedCategory = $activeFilters['category_id'] ?? '';
+        $selectedFileType = $activeFilters['file_type'] ?? '';
+        $selectedSort = $activeFilters['sort_by'] ?? 'recent';
+        $selectedClassId = $activeFilters['class_id'] ?? '';
+
+        $baseFilterQuery = array_filter([
+            'search' => $search,
+            'class_id' => $selectedClassId,
+            'file_type' => $selectedFileType,
+            'sort_by' => $selectedSort !== 'recent' ? $selectedSort : '',
+        ], fn (mixed $value): bool => $value !== '' && $value !== null);
+    @endphp
+
     {{-- Page Header --}}
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -66,10 +82,14 @@
         </div>
 
         {{-- Upload Button --}}
-        <button 
-            onclick="document.getElementById('uploadModal').classList.remove('hidden')"
-            class="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+        <button
+            @if($hasClasses)
+                onclick="document.getElementById('uploadModal').classList.remove('hidden')"
+            @endif
+            class="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] {{ $hasClasses ? 'cursor-pointer' : 'cursor-not-allowed opacity-60' }}"
             style="background-color: var(--lumina-primary);"
+            @disabled(! $hasClasses)
+            title="{{ $hasClasses ? 'Upload a new resource' : 'No assigned classes available for upload' }}"
         >
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -77,6 +97,28 @@
             Upload Resource
         </button>
     </div>
+
+    @if(session('success'))
+        <div class="mb-4 rounded-xl border p-4" style="background-color: #D1FAE5; border-color: #A7F3D0; color: #065F46;">
+            <p class="text-sm font-semibold">{{ session('success') }}</p>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-4 rounded-xl border p-4" style="background-color: #FEF2F2; border-color: #FECACA; color: #991B1B;">
+            <ul class="list-disc space-y-1 pl-5 text-sm">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @unless($hasClasses)
+        <div class="mb-4 rounded-xl border p-4" style="background-color: #FFFBEB; border-color: #FDE68A; color: #92400E;">
+            <p class="text-sm font-semibold">You cannot upload resources yet because no classes are assigned to your account.</p>
+        </div>
+    @endunless
 
     {{-- Stats Cards --}}
     <div class="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -90,7 +132,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                 </svg>
             </div>
-            <p class="text-2xl font-bold" style="color: var(--lumina-text-primary);">62</p>
+            <p class="text-2xl font-bold" style="color: var(--lumina-text-primary);">{{ $resourceStats['total'] ?? 0 }}</p>
             <p class="text-xs" style="color: var(--lumina-text-muted);">Total Resources</p>
         </div>
 
@@ -104,7 +146,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                 </svg>
             </div>
-            <p class="text-2xl font-bold" style="color: var(--lumina-text-primary);">248</p>
+            <p class="text-2xl font-bold" style="color: var(--lumina-text-primary);">{{ $resourceStats['downloads'] ?? 0 }}</p>
             <p class="text-xs" style="color: var(--lumina-text-muted);">Downloads This Month</p>
         </div>
 
@@ -118,7 +160,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
                 </svg>
             </div>
-            <p class="text-2xl font-bold" style="color: var(--lumina-text-primary);">1.2 GB</p>
+            <p class="text-2xl font-bold" style="color: var(--lumina-text-primary);">{{ $resourceStats['storage'] ?? '0 B' }}</p>
             <p class="text-xs" style="color: var(--lumina-text-muted);">Storage Used</p>
         </div>
 
@@ -152,9 +194,15 @@
                 </div>
                 <div class="divide-y" style="border-color: var(--lumina-border);">
                     @foreach($categories as $category)
+                        @php
+                            $isSelectedCategory = $selectedCategory === $category['id'];
+                            $categoryFilterQuery = $isSelectedCategory
+                                ? $baseFilterQuery
+                                : array_merge($baseFilterQuery, ['category_id' => $category['id']]);
+                        @endphp
                         <a 
-                            href="#" 
-                            class="flex items-center gap-3 p-4 transition-all hover:bg-gray-50"
+                            href="{{ route('teacher.resources', $categoryFilterQuery) }}"
+                            class="flex items-center gap-3 p-4 transition-all hover:bg-gray-50 {{ $isSelectedCategory ? 'bg-gray-50' : '' }}"
                         >
                             {{-- Category Icon --}}
                             <div 
@@ -202,13 +250,19 @@
         {{-- Resources List --}}
         <div class="lg:col-span-2">
             {{-- Search and Filter Bar --}}
-            <div 
-                class="mb-4 flex flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between"
+            <form
+                method="GET"
+                action="{{ route('teacher.resources') }}"
+                class="mb-4 flex flex-col gap-3 rounded-2xl border p-4"
                 style="background-color: #FFFFFF; border-color: var(--lumina-border-light);"
             >
+                @if($selectedCategory !== '')
+                    <input type="hidden" name="category_id" value="{{ $selectedCategory }}">
+                @endif
+
                 {{-- Search Input --}}
                 <div 
-                    class="flex flex-1 items-center gap-2 rounded-xl px-4 py-2"
+                    class="flex items-center gap-2 rounded-xl px-4 py-2"
                     style="background-color: var(--lumina-bg-card);"
                 >
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-muted);">
@@ -217,33 +271,70 @@
                     </svg>
                     <input 
                         type="text" 
+                        name="search"
+                        value="{{ $search }}"
                         placeholder="Search resources..." 
                         class="flex-1 border-none bg-transparent text-sm outline-none placeholder:text-gray-400"
                     >
                 </div>
 
                 {{-- Filter/Sort --}}
-                <div class="flex gap-2">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex flex-col gap-2 sm:flex-row">
+                        <select
+                            name="class_id"
+                            class="rounded-xl border px-4 py-2 text-sm outline-none cursor-pointer"
+                            style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
+                        >
+                            <option value="">All Classes</option>
+                            @foreach($classes ?? [] as $class)
+                                <option value="{{ $class['id'] }}" @selected((string) $class['id'] === $selectedClassId)>
+                                    {{ $class['name'] }}
+                                </option>
+                            @endforeach
+                        </select>
+
                     <select 
+                        name="file_type"
                         class="rounded-xl border px-4 py-2 text-sm outline-none cursor-pointer"
                         style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
                     >
-                        <option>All Types</option>
-                        <option>PDF</option>
-                        <option>DOC</option>
-                        <option>ZIP</option>
+                        <option value="" @selected($selectedFileType === '')>All Types</option>
+                        <option value="pdf" @selected($selectedFileType === 'pdf')>PDF</option>
+                        <option value="doc" @selected($selectedFileType === 'doc')>DOC</option>
+                        <option value="docx" @selected($selectedFileType === 'docx')>DOCX</option>
+                        <option value="zip" @selected($selectedFileType === 'zip')>ZIP</option>
                     </select>
                     <select 
+                        name="sort_by"
                         class="rounded-xl border px-4 py-2 text-sm outline-none cursor-pointer"
                         style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
                     >
-                        <option>Most Recent</option>
-                        <option>Most Downloads</option>
-                        <option>Name A-Z</option>
-                        <option>Size</option>
+                        <option value="recent" @selected($selectedSort === 'recent')>Most Recent</option>
+                        <option value="downloads" @selected($selectedSort === 'downloads')>Most Downloads</option>
+                        <option value="name" @selected($selectedSort === 'name')>Name A-Z</option>
+                        <option value="size" @selected($selectedSort === 'size')>Size</option>
                     </select>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button
+                            type="submit"
+                            class="rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all hover:opacity-90 cursor-pointer"
+                            style="background-color: var(--lumina-primary);"
+                        >
+                            Apply
+                        </button>
+                        <a
+                            href="{{ route('teacher.resources') }}"
+                            class="rounded-xl border px-4 py-2 text-sm font-semibold transition-all hover:bg-gray-50"
+                            style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);"
+                        >
+                            Reset
+                        </a>
+                    </div>
                 </div>
-            </div>
+            </form>
 
             {{-- Recent Resources Section --}}
             <div 
@@ -291,17 +382,25 @@
                             {{-- Actions --}}
                             <div class="flex items-center gap-2">
                                 {{-- Download Button --}}
-                                <button 
+                                <a
+                                    href="{{ route('teacher.resources.download', $resource['id']) }}"
                                     class="flex h-9 w-9 items-center justify-center rounded-lg transition-all hover:bg-gray-100 cursor-pointer"
                                     title="Download"
                                 >
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-muted);">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                                     </svg>
-                                </button>
+                                </a>
 
                                 {{-- Edit Button --}}
-                                <button 
+                                <button
+                                    type="button"
+                                    data-resource-id="{{ $resource['id'] }}"
+                                    data-resource-name="{{ $resource['name'] }}"
+                                    data-resource-description="{{ $resource['description'] ?? '' }}"
+                                    data-resource-category-id="{{ $resource['category_id'] ?? '' }}"
+                                    data-resource-class-id="{{ $resource['class_id'] ?? '' }}"
+                                    onclick="openEditResourceModal(this)"
                                     class="flex h-9 w-9 items-center justify-center rounded-lg transition-all hover:bg-gray-100 cursor-pointer"
                                     title="Edit"
                                 >
@@ -311,14 +410,19 @@
                                 </button>
 
                                 {{-- Delete Button --}}
-                                <button 
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg transition-all hover:bg-red-50 cursor-pointer"
-                                    title="Delete"
-                                >
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #EF4444;">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                    </svg>
-                                </button>
+                                <form method="POST" action="{{ route('teacher.resources.destroy', $resource['id']) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button 
+                                        class="flex h-9 w-9 items-center justify-center rounded-lg transition-all hover:bg-red-50 cursor-pointer"
+                                        title="Delete"
+                                        onclick="return confirm('Delete this resource?')"
+                                    >
+                                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #EF4444;">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     @empty
@@ -368,7 +472,7 @@
                         </button>
                     </p>
                     <p class="mt-1 text-xs" style="color: var(--lumina-text-muted);">
-                        PDF, DOC, DOCX, ZIP up to 50MB
+                        PDF, DOC, DOCX, ZIP up to {{ $maxUploadSizeLabel ?? '50 MB' }}
                     </p>
                 </div>
             </div>
@@ -379,6 +483,7 @@
     <div 
         id="uploadModal" 
         class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+        data-open-on-load="{{ old('resource_form') === 'upload' ? '1' : '0' }}"
         onclick="if(event.target === this) this.classList.add('hidden')"
     >
         <div 
@@ -402,8 +507,9 @@
             </div>
 
             {{-- Upload Form --}}
-            <form action="#" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('teacher.resources.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
+                <input type="hidden" name="resource_form" value="upload">
                 
                 {{-- File Input --}}
                 <div class="mb-4">
@@ -414,7 +520,7 @@
                         class="rounded-xl border-2 border-dashed p-6 text-center"
                         style="border-color: var(--lumina-border);"
                     >
-                        <input type="file" name="file" class="hidden" id="fileInput" accept=".pdf,.doc,.docx,.zip">
+                        <input type="file" name="file" class="hidden" id="fileInput" accept=".pdf,.doc,.docx,.zip" required>
                         <label for="fileInput" class="cursor-pointer">
                             <svg class="mx-auto h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-muted);">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
@@ -423,7 +529,7 @@
                                 Click to select file
                             </p>
                             <p class="text-xs mt-1" style="color: var(--lumina-text-muted);">
-                                PDF, DOC, DOCX, ZIP up to 50MB
+                                PDF, DOC, DOCX, ZIP up to {{ $maxUploadSizeLabel ?? '50 MB' }}
                             </p>
                         </label>
                     </div>
@@ -437,12 +543,15 @@
                     <div class="relative">
                         <select 
                             name="class_id"
+                            required
                             class="w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none cursor-pointer"
                             style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
                         >
                             <option value="">Select a class</option>
                             @foreach($classes ?? [] as $class)
-                                <option value="{{ $class['id'] }}">{{ $class['name'] }} ({{ $class['students_count'] }} students)</option>
+                                <option value="{{ $class['id'] }}" @selected((string) old('class_id', $selectedClassId) === (string) $class['id'])>
+                                    {{ $class['name'] }} ({{ $class['students_count'] }} students)
+                                </option>
                             @endforeach
                         </select>
                         <svg class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2" fill="none" stroke="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
@@ -459,6 +568,8 @@
                     <input 
                         type="text" 
                         name="name" 
+                        value="{{ old('name') }}"
+                        required
                         placeholder="Enter resource name"
                         class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                         style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
@@ -472,12 +583,15 @@
                     </label>
                     <select 
                         name="category_id"
+                        required
                         class="w-full rounded-xl border px-4 py-3 text-sm outline-none cursor-pointer"
                         style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
                     >
                         <option value="">Select category</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category['id'] }}">{{ $category['name'] }}</option>
+                            <option value="{{ $category['id'] }}" @selected(old('category_id') === $category['id'])>
+                                {{ $category['name'] }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -493,7 +607,7 @@
                         placeholder="Brief description of the resource"
                         class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2 resize-none"
                         style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
-                    ></textarea>
+                    >{{ old('description') }}</textarea>
                 </div>
 
                 {{-- Submit Button --}}
@@ -508,6 +622,7 @@
                     </button>
                     <button 
                         type="submit"
+                        @disabled(! $hasClasses)
                         class="flex-1 rounded-xl px-4 py-3 text-sm font-semibold text-white transition-all hover:opacity-90 cursor-pointer"
                         style="background-color: var(--lumina-primary);"
                     >
@@ -518,24 +633,235 @@
         </div>
     </div>
 
+    {{-- Edit Modal --}}
+    <div
+        id="editModal"
+        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+        data-open-on-load="{{ old('resource_form') === 'update' ? '1' : '0' }}"
+        data-old-resource-id="{{ old('resource_id') }}"
+        data-old-resource-name="{{ old('name') }}"
+        data-old-resource-description="{{ old('description', '') }}"
+        data-old-resource-category-id="{{ old('category_id') }}"
+        data-old-resource-class-id="{{ old('class_id') }}"
+        data-update-url-template="{{ route('teacher.resources.update', ['resource' => '__RESOURCE__']) }}"
+        onclick="if(event.target === this) closeEditResourceModal()"
+    >
+        <div
+            class="w-full max-w-md rounded-3xl p-6"
+            style="background-color: #FFFFFF;"
+            onclick="event.stopPropagation()"
+        >
+            {{-- Modal Header --}}
+            <div class="mb-6 flex items-center justify-between">
+                <h3 class="text-xl font-bold" style="color: var(--lumina-text-primary);">
+                    Edit Resource
+                </h3>
+                <button
+                    type="button"
+                    onclick="closeEditResourceModal()"
+                    class="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-gray-100 cursor-pointer"
+                >
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-muted);">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="editResourceForm" method="POST" action="">
+                @csrf
+                @method('PATCH')
+                <input type="hidden" name="resource_form" value="update">
+                <input type="hidden" name="resource_id" id="editResourceId" value="">
+
+                {{-- Select Class --}}
+                <div class="mb-4">
+                    <label class="mb-2 block text-sm font-medium" style="color: var(--lumina-text-primary);">
+                        Select Class
+                    </label>
+                    <div class="relative">
+                        <select
+                            id="editResourceClass"
+                            name="class_id"
+                            required
+                            class="w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none cursor-pointer"
+                            style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
+                        >
+                            <option value="">Select a class</option>
+                            @foreach($classes ?? [] as $class)
+                                <option value="{{ $class['id'] }}">
+                                    {{ $class['name'] }} ({{ $class['students_count'] }} students)
+                                </option>
+                            @endforeach
+                        </select>
+                        <svg class="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2" fill="none" stroke="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                </div>
+
+                {{-- Resource Name --}}
+                <div class="mb-4">
+                    <label class="mb-2 block text-sm font-medium" style="color: var(--lumina-text-primary);">
+                        Resource Name
+                    </label>
+                    <input
+                        id="editResourceName"
+                        type="text"
+                        name="name"
+                        required
+                        placeholder="Enter resource name"
+                        class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
+                        style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
+                    >
+                </div>
+
+                {{-- Category --}}
+                <div class="mb-4">
+                    <label class="mb-2 block text-sm font-medium" style="color: var(--lumina-text-primary);">
+                        Category
+                    </label>
+                    <select
+                        id="editResourceCategory"
+                        name="category_id"
+                        required
+                        class="w-full rounded-xl border px-4 py-3 text-sm outline-none cursor-pointer"
+                        style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
+                    >
+                        <option value="">Select category</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category['id'] }}">{{ $category['name'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Description --}}
+                <div class="mb-6">
+                    <label class="mb-2 block text-sm font-medium" style="color: var(--lumina-text-primary);">
+                        Description (optional)
+                    </label>
+                    <textarea
+                        id="editResourceDescription"
+                        name="description"
+                        rows="3"
+                        placeholder="Brief description of the resource"
+                        class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2 resize-none"
+                        style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
+                    ></textarea>
+                </div>
+
+                <div class="flex gap-3">
+                    <button
+                        type="button"
+                        onclick="closeEditResourceModal()"
+                        class="flex-1 rounded-xl border px-4 py-3 text-sm font-semibold transition-all hover:bg-gray-50 cursor-pointer"
+                        style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        class="flex-1 rounded-xl px-4 py-3 text-sm font-semibold text-white transition-all hover:opacity-90 cursor-pointer"
+                        style="background-color: var(--lumina-primary);"
+                    >
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {{-- Script for Modal Display --}}
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('uploadModal');
-            // Make modal flex when visible
-            modal.style.display = 'none';
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'class') {
-                        if (modal.classList.contains('hidden')) {
-                            modal.style.display = 'none';
-                        } else {
-                            modal.style.display = 'flex';
+        document.addEventListener('DOMContentLoaded', function () {
+            const uploadModal = document.getElementById('uploadModal');
+            const editModal = document.getElementById('editModal');
+            const editForm = document.getElementById('editResourceForm');
+            const editResourceIdInput = document.getElementById('editResourceId');
+            const editResourceClassInput = document.getElementById('editResourceClass');
+            const editResourceNameInput = document.getElementById('editResourceName');
+            const editResourceCategoryInput = document.getElementById('editResourceCategory');
+            const editResourceDescriptionInput = document.getElementById('editResourceDescription');
+            const updateUrlTemplate = editModal.dataset.updateUrlTemplate ?? '';
+
+            function syncModalDisplay(modal, shouldShow) {
+                if (!modal) {
+                    return;
+                }
+
+                if (shouldShow) {
+                    modal.classList.remove('hidden');
+                    modal.style.display = 'flex';
+
+                    return;
+                }
+
+                modal.classList.add('hidden');
+                modal.style.display = 'none';
+            }
+
+            function observeModal(modal) {
+                if (!modal) {
+                    return;
+                }
+
+                const observer = new MutationObserver(function (mutations) {
+                    mutations.forEach(function (mutation) {
+                        if (mutation.attributeName === 'class') {
+                            modal.style.display = modal.classList.contains('hidden') ? 'none' : 'flex';
                         }
-                    }
+                    });
                 });
-            });
-            observer.observe(modal, { attributes: true });
+
+                observer.observe(modal, { attributes: true });
+            }
+
+            function fillEditForm(resource) {
+                if (!resource || !resource.id) {
+                    return;
+                }
+
+                editForm.action = updateUrlTemplate.replace('__RESOURCE__', String(resource.id));
+                editResourceIdInput.value = String(resource.id);
+                editResourceClassInput.value = String(resource.class_id ?? '');
+                editResourceNameInput.value = String(resource.name ?? '');
+                editResourceCategoryInput.value = String(resource.category_id ?? '');
+                editResourceDescriptionInput.value = String(resource.description ?? '');
+            }
+
+            window.openEditResourceModal = function (button) {
+                const payload = {
+                    id: button.dataset.resourceId,
+                    class_id: button.dataset.resourceClassId,
+                    name: button.dataset.resourceName,
+                    category_id: button.dataset.resourceCategoryId,
+                    description: button.dataset.resourceDescription,
+                };
+
+                fillEditForm(payload);
+                syncModalDisplay(editModal, true);
+            };
+
+            window.closeEditResourceModal = function () {
+                syncModalDisplay(editModal, false);
+            };
+
+            syncModalDisplay(uploadModal, uploadModal.dataset.openOnLoad === '1');
+            syncModalDisplay(editModal, false);
+            observeModal(uploadModal);
+            observeModal(editModal);
+
+            if (editModal.dataset.openOnLoad === '1') {
+                const oldResource = {
+                    id: editModal.dataset.oldResourceId,
+                    class_id: editModal.dataset.oldResourceClassId,
+                    name: editModal.dataset.oldResourceName,
+                    category_id: editModal.dataset.oldResourceCategoryId,
+                    description: editModal.dataset.oldResourceDescription,
+                };
+
+                fillEditForm(oldResource);
+                syncModalDisplay(editModal, true);
+            }
         });
     </script>
 </x-layouts.teacher>

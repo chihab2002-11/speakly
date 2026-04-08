@@ -231,12 +231,12 @@
                         <td><span class="role-badge">{{ $u->requested_role }}</span></td>
                         <td>
                             <div class="actions">
-                                <form method="POST" action="{{ route('approvals.approve', $u) }}">
+                                <form method="POST" action="{{ route('approvals.approve', ['role' => $currentRole, 'user' => $u]) }}">
                                     @csrf
                                     <button class="btn btn-approve" type="submit">Approve</button>
                                 </form>
 
-                                <form method="POST" action="{{ route('approvals.reject', $u) }}">
+                                <form method="POST" action="{{ route('approvals.reject', ['role' => $currentRole, 'user' => $u]) }}">
                                     @csrf
                                     <input class="reason-input" type="text" name="reason" placeholder="Reason (optional)">
                                     <button class="btn btn-reject" type="submit">Reject</button>

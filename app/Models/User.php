@@ -27,6 +27,9 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'phone',
+        'preferred_language',
+        'bio',
         'password',
         'requested_role',
         'date_of_birth',
@@ -62,6 +65,7 @@ class User extends Authenticatable
             'date_of_birth' => 'date',
             'approved_at' => 'datetime',
             'rejected_at' => 'datetime',
+            'password_changed_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -90,6 +94,11 @@ class User extends Authenticatable
         return $this->hasMany(CourseClass::class, 'teacher_id');
     }
 
+    public function teacherResources(): HasMany
+    {
+        return $this->hasMany(TeacherResource::class, 'teacher_id');
+    }
+
     public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_id');
@@ -98,5 +107,10 @@ class User extends Authenticatable
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
+    }
+
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class, 'student_id');
     }
 }

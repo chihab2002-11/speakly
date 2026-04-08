@@ -37,4 +37,14 @@ class CourseClass extends Model
     {
         return $this->hasMany(Schedule::class, 'class_id');
     }
+
+    public function teacherResources(): HasMany
+    {
+        return $this->hasMany(TeacherResource::class, 'class_id');
+    }
+
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class, 'class_id');
+    }
 }

@@ -108,7 +108,7 @@
                             <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
                             </svg>
-                            +4 this week
+                            {{ $totalClassesPerWeek ?? 0 }} weekly sessions
                         </p>
                     </div>
                     <div class="flex h-12 w-12 items-center justify-center rounded-full" style="background-color: #DBEAFE;">
@@ -126,7 +126,7 @@
                         <p class="text-sm" style="color: var(--lumina-text-muted);">Active Classes</p>
                         <p class="text-3xl font-bold mt-1" style="color: var(--lumina-text-primary);">{{ $activeClasses ?? 8 }}</p>
                         <p class="text-xs mt-1" style="color: var(--lumina-text-muted);">
-                            Advanced Level (C1)
+                            {{ $unreadMessagesCount ?? 0 }} unread messages
                         </p>
                     </div>
                     <div class="flex h-12 w-12 items-center justify-center rounded-full" style="background-color: var(--lumina-accent-green-light);">
@@ -154,12 +154,7 @@
 
                 {{-- Resource Cards Grid --}}
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    @foreach([
-                        ['name' => 'Templates', 'icon' => 'template', 'color' => '#EFF6FF', 'iconColor' => '#3B82F6'],
-                        ['name' => 'Flash Quizzes', 'icon' => 'lightning', 'color' => '#FEF3C7', 'iconColor' => '#D97706'],
-                        ['name' => 'AI Assistant', 'icon' => 'sparkles', 'color' => '#F3E8FF', 'iconColor' => '#9333EA'],
-                        ['name' => 'Idiom Bank', 'icon' => 'book', 'color' => '#ECFDF5', 'iconColor' => '#059669'],
-                    ] as $resource)
+                    @foreach($quickResources ?? [] as $resource)
                         <div 
                             class="group flex flex-col items-center justify-center gap-3 rounded-2xl border bg-white p-5 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] cursor-pointer"
                             style="border-color: var(--lumina-border-light);"
