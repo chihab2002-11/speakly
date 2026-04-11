@@ -434,33 +434,15 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </section>
 <!-- Testimonials Section -->
 <section class="py-32 px-8 bg-white relative overflow-hidden" id="testimonials">
-<!-- Language & Academic Background Patterns -->
-<div class="absolute inset-0 pointer-events-none overflow-hidden">
-<!-- Floating Language Characters -->
-<span class="absolute top-[5%] left-[5%] text-[120px] font-serif font-black text-primary/[0.08] rotate-12">A</span>
-<span class="absolute top-[12%] right-[10%] text-[100px] font-serif font-bold text-primary/[0.07] -rotate-12">あ</span>
-<span class="absolute bottom-[20%] left-[8%] text-[110px] font-serif font-bold text-primary/[0.09] -rotate-6">Ñ</span>
-<span class="absolute bottom-[15%] right-[5%] text-[130px] font-serif font-black text-primary/[0.08] rotate-[15deg]">¿</span>
-<span class="absolute top-[50%] left-[3%] text-[100px] font-serif font-bold text-primary/[0.07] -rotate-[15deg]">文</span>
-<!-- Material Symbols Icons -->
-<span class="material-symbols-outlined absolute top-[20%] left-[15%] text-[100px] text-primary/[0.08] rotate-6">record_voice_over</span>
-<span class="material-symbols-outlined absolute top-[25%] right-[20%] text-[120px] text-primary/[0.07] -rotate-12">chat</span>
-<span class="material-symbols-outlined absolute bottom-[30%] right-[15%] text-[110px] text-primary/[0.08] rotate-12">headphones</span>
-<span class="material-symbols-outlined absolute top-[60%] left-[75%] text-[100px] text-primary/[0.07] -rotate-6">psychology</span>
-<!-- Geometric Shapes -->
-<div class="absolute top-[10%] right-[35%] w-40 h-40 border-[2px] border-primary/10 rounded-full"></div>
-<div class="absolute bottom-[25%] left-[60%] w-32 h-32 border-[2px] border-primary/[0.08] rounded-full"></div>
-<div class="absolute top-[65%] right-[8%] w-24 h-24 border-[2px] border-primary/[0.07] rounded-full"></div>
-</div>
 <div class="max-w-7xl mx-auto relative z-10">
 <div class="text-center mb-24 space-y-6">
-<span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Student Success</span>
 <h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Voices of Lumina.</h2>
 <p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Hear from our scholars who've transformed their linguistic journeys at Lumina Academy.</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
 <!-- Testimonial 1 -->
-<div class="bg-surface-container-low p-8 rounded-3xl border border-black/5 hover-lift">
+<div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
+<div class="mb-6">
 <div class="flex items-center gap-1 mb-4">
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
@@ -468,17 +450,19 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 </div>
-<p class="text-on-surface-variant text-lg leading-relaxed mb-6 font-light italic">"I went from beginner to Cambridge Advanced in just 18 months. The personalized curriculum and expert instructors made all the difference."</p>
-<div class="flex items-center gap-4">
-<div class="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-purple"></div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"I went from beginner to Cambridge Advanced in just 18 months. The personalized curriculum and expert instructors made all the difference."</p>
+</div>
+<div class="flex items-center gap-4 mt-auto pt-6 border-t border-black/5">
+<div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-purple flex-shrink-0"></div>
 <div>
-<p class="font-black-900 text-on-surface">Sarah Mitchell</p>
-<p class="text-sm text-on-surface-variant">Cambridge CAE Certified</p>
+<p class="font-bold text-on-surface">Sarah Mitchell</p>
+<p class="text-sm text-on-surface-variant">Cambridge CAE</p>
 </div>
 </div>
 </div>
 <!-- Testimonial 2 -->
-<div class="bg-surface-container-low p-8 rounded-3xl border border-black/5 hover-lift">
+<div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
+<div class="mb-6">
 <div class="flex items-center gap-1 mb-4">
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
@@ -486,17 +470,19 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 <span class="material-symbols-outlined text-primary/50 text-2xl">star_half</span>
 </div>
-<p class="text-on-surface-variant text-lg leading-relaxed mb-6 font-light italic">"The cultural immersion aspect of the Spanish program helped me understand not just the language, but the people and traditions behind it."</p>
-<div class="flex items-center gap-4">
-<div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple to-primary"></div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"The cultural immersion aspect of the Spanish program helped me understand not just the language, but the people and traditions behind it."</p>
+</div>
+<div class="flex items-center gap-4 mt-auto pt-6 border-t border-black/5">
+<div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple to-primary flex-shrink-0"></div>
 <div>
-<p class="font-black-900 text-on-surface">Carlos Rodríguez</p>
-<p class="text-sm text-on-surface-variant">DELE B2 Certified</p>
+<p class="font-bold text-on-surface">Carlos Rodríguez</p>
+<p class="text-sm text-on-surface-variant">DELE B2</p>
 </div>
 </div>
 </div>
 <!-- Testimonial 3 -->
-<div class="bg-surface-container-low p-8 rounded-3xl border border-black/5 hover-lift">
+<div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
+<div class="mb-6">
 <div class="flex items-center gap-1 mb-4">
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
@@ -504,12 +490,13 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 </div>
-<p class="text-on-surface-variant text-lg leading-relaxed mb-6 font-light italic">"Lumina's cognitive progress tracking showed me exactly where I was improving, keeping me motivated throughout my learning journey."</p>
-<div class="flex items-center gap-4">
-<div class="w-12 h-12 rounded-full bg-gradient-to-br from-cyan to-primary"></div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"Lumina's cognitive progress tracking showed me exactly where I was improving, keeping me motivated throughout my learning journey."</p>
+</div>
+<div class="flex items-center gap-4 mt-auto pt-6 border-t border-black/5">
+<div class="w-14 h-14 rounded-full bg-gradient-to-br from-cyan to-primary flex-shrink-0"></div>
 <div>
-<p class="font-black-900 text-on-surface">Yuki Tanaka</p>
-<p class="text-sm text-on-surface-variant">JLPT N1 Certified</p>
+<p class="font-bold text-on-surface">Yuki Tanaka</p>
+<p class="text-sm text-on-surface-variant">JLPT N1</p>
 </div>
 </div>
 </div>
@@ -518,30 +505,8 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </section>
 <!-- Pricing Section -->
 <section class="py-32 px-8 bg-white relative overflow-hidden" id="pricing">
-<!-- Language & Academic Background Patterns -->
-<div class="absolute inset-0 pointer-events-none overflow-hidden">
-<!-- Floating Language Characters -->
-<span class="absolute top-[8%] left-[8%] text-[130px] font-serif font-black text-primary/[0.08] rotate-12">A</span>
-<span class="absolute top-[10%] right-[12%] text-[110px] font-serif font-bold text-primary/[0.07] -rotate-12">あ</span>
-<span class="absolute bottom-[25%] left-[5%] text-[120px] font-serif font-bold text-primary/[0.09] -rotate-6">ß</span>
-<span class="absolute bottom-[10%] right-[8%] text-[140px] font-serif font-black text-primary/[0.08] rotate-[15deg]">文</span>
-<span class="absolute top-[45%] left-[2%] text-[100px] font-serif font-bold text-primary/[0.07] -rotate-[15deg]">É</span>
-<!-- Material Symbols Icons -->
-<span class="material-symbols-outlined absolute top-[15%] left-[20%] text-[110px] text-primary/[0.08] rotate-6">menu_book</span>
-<span class="material-symbols-outlined absolute top-[30%] right-[15%] text-[100px] text-primary/[0.07] -rotate-12">lightbulb</span>
-<span class="material-symbols-outlined absolute bottom-[35%] right-[20%] text-[120px] text-primary/[0.08] rotate-12">translate</span>
-<span class="material-symbols-outlined absolute top-[55%] left-[70%] text-[110px] text-primary/[0.07] -rotate-6">school</span>
-<!-- Geometric Shapes -->
-<div class="absolute top-[12%] right-[30%] w-44 h-44 border-[2px] border-primary/10 rounded-full"></div>
-<div class="absolute bottom-[20%] left-[50%] w-36 h-36 border-[2px] border-primary/[0.08] rounded-full"></div>
-<div class="absolute top-[70%] right-[5%] w-28 h-28 border-[2px] border-primary/[0.07] rounded-full"></div>
-<!-- Squares and Rectangles -->
-<div class="absolute top-[40%] left-[10%] w-32 h-32 border-[2px] border-primary/[0.09] rotate-45"></div>
-<div class="absolute bottom-[40%] right-[25%] w-40 h-40 border-[2px] border-primary/10 rotate-12"></div>
-</div>
 <div class="max-w-7xl mx-auto relative z-10">
 <div class="text-center mb-24 space-y-6">
-<span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Flexible Plans</span>
 <h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Investment in Your Future.</h2>
 <p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Choose the language course that best fits your learning goals and linguistic ambitions.</p>
 </div>
