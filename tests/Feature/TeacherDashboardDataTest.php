@@ -20,20 +20,9 @@ beforeEach(function () {
     }
 });
 
-function createDashboardTeacher(): User
-{
-    $teacher = User::factory()->create([
-        'approved_at' => now(),
-    ]);
-
-    $teacher->assignRole('teacher');
-
-    return $teacher;
-}
-
 it('uses real class student and schedule aggregates on teacher dashboard', function () {
     /** @var TestCase $this */
-    $teacher = createDashboardTeacher();
+    $teacher = createApprovedTeacher();
 
     $courseOne = Course::factory()->create(['name' => 'English B2']);
     $courseTwo = Course::factory()->create(['name' => 'IELTS Preparation']);
@@ -93,7 +82,7 @@ it('uses real class student and schedule aggregates on teacher dashboard', funct
 
 it('uses real unread inbox and notification counts on teacher dashboard', function () {
     /** @var TestCase $this */
-    $teacher = createDashboardTeacher();
+    $teacher = createApprovedTeacher();
     $sender = User::factory()->create(['approved_at' => now()]);
     $sender->assignRole('student');
 
@@ -124,7 +113,7 @@ it('uses real unread inbox and notification counts on teacher dashboard', functi
 
 it('uses real resource aggregates for quick resource cards', function () {
     /** @var TestCase $this */
-    $teacher = createDashboardTeacher();
+    $teacher = createApprovedTeacher();
     $course = Course::factory()->create();
     $class = CourseClass::factory()->create([
         'teacher_id' => $teacher->id,

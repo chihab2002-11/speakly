@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 
@@ -9,17 +8,6 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     Role::findOrCreate('teacher', 'web');
 });
-
-function createApprovedTeacher(array $attributes = []): User
-{
-    $teacher = User::factory()->create(array_merge([
-        'approved_at' => now(),
-    ], $attributes));
-
-    $teacher->assignRole('teacher');
-
-    return $teacher;
-}
 
 it('teacher can update their own profile settings', function () {
     $teacher = createApprovedTeacher();

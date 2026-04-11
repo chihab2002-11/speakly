@@ -1,5 +1,11 @@
 <?php
 
+use App\Models\Course;
+use App\Models\CourseClass;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -11,8 +17,8 @@
 |
 */
 
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -41,7 +47,23 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function createApprovedTeacher(array $attributes = []): User
 {
-    // ..
+    $teacher = User::factory()->create(array_merge([
+        'approved_at' => now(),
+    ], $attributes));
+
+    $teacher->assignRole('teacher');
+
+    return $teacher;
+}
+
+function createClassForTeacher(User $teacher): CourseClass
+{
+    $course = Course::factory()->create();
+
+    return CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+    ]);
 }

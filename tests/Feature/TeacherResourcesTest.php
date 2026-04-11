@@ -1,9 +1,6 @@
 <?php
 
-use App\Models\Course;
-use App\Models\CourseClass;
 use App\Models\TeacherResource;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -15,31 +12,10 @@ beforeEach(function () {
     Role::findOrCreate('teacher', 'web');
 });
 
-function createResourceTeacher(): User
-{
-    $teacher = User::factory()->create([
-        'approved_at' => now(),
-    ]);
-
-    $teacher->assignRole('teacher');
-
-    return $teacher;
-}
-
-function createClassForTeacher(User $teacher): CourseClass
-{
-    $course = Course::factory()->create();
-
-    return CourseClass::factory()->create([
-        'course_id' => $course->id,
-        'teacher_id' => $teacher->id,
-    ]);
-}
-
 it('teacher can upload a resource for classes they teach', function () {
     Storage::fake('public');
 
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $class = createClassForTeacher($teacher);
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
@@ -65,7 +41,7 @@ it('teacher can upload a resource for classes they teach', function () {
 it('teacher can upload a pdf successfully end to end', function () {
     Storage::fake('public');
 
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $class = createClassForTeacher($teacher);
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
@@ -92,8 +68,8 @@ it('teacher can upload a pdf successfully end to end', function () {
 it('teacher cannot upload resources for classes they do not teach', function () {
     Storage::fake('public');
 
-    $teacher = createResourceTeacher();
-    $otherTeacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
+    $otherTeacher = createApprovedTeacher();
     $otherClass = createClassForTeacher($otherTeacher);
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
@@ -111,7 +87,7 @@ it('teacher cannot upload resources for classes they do not teach', function () 
 it('invalid upload requests are rejected', function () {
     Storage::fake('public');
 
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $class = createClassForTeacher($teacher);
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
@@ -129,7 +105,7 @@ it('invalid upload requests are rejected', function () {
 it('shows a clear error when php rejects an oversized upload before validation', function () {
     Storage::fake('public');
 
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $class = createClassForTeacher($teacher);
 
     $tempFilePath = tempnam(sys_get_temp_dir(), 'upload-limit-');
@@ -161,7 +137,7 @@ it('shows a clear error when php rejects an oversized upload before validation',
 });
 
 it('teacher can update own resource', function () {
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $initialClass = createClassForTeacher($teacher);
     $newClass = createClassForTeacher($teacher);
 
@@ -198,8 +174,8 @@ it('teacher can update own resource', function () {
 });
 
 it('teacher cannot update another teachers resource', function () {
-    $teacher = createResourceTeacher();
-    $otherTeacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
+    $otherTeacher = createApprovedTeacher();
     $otherClass = createClassForTeacher($otherTeacher);
 
     $resource = TeacherResource::query()->create([
@@ -229,10 +205,10 @@ it('teacher cannot update another teachers resource', function () {
 });
 
 it('invalid update payload is rejected', function () {
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $class = createClassForTeacher($teacher);
 
-    $otherTeacher = createResourceTeacher();
+    $otherTeacher = createApprovedTeacher();
     $otherClass = createClassForTeacher($otherTeacher);
 
     $resource = TeacherResource::query()->create([
@@ -267,7 +243,7 @@ it('invalid update payload is rejected', function () {
 it('teacher can download own resource and increments download count', function () {
     Storage::fake('public');
 
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $class = createClassForTeacher($teacher);
 
     $filePath = 'teacher-resources/'.$teacher->id.'/handout.pdf';
@@ -295,8 +271,8 @@ it('teacher can download own resource and increments download count', function (
 it('teacher cannot download or delete another teachers resource', function () {
     Storage::fake('public');
 
-    $teacher = createResourceTeacher();
-    $otherTeacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
+    $otherTeacher = createApprovedTeacher();
     $otherClass = createClassForTeacher($otherTeacher);
 
     $filePath = 'teacher-resources/'.$otherTeacher->id.'/private.pdf';
@@ -330,7 +306,7 @@ it('teacher cannot download or delete another teachers resource', function () {
 it('teacher can delete own resource and file', function () {
     Storage::fake('public');
 
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $class = createClassForTeacher($teacher);
 
     $filePath = 'teacher-resources/'.$teacher->id.'/deletable.pdf';
@@ -357,7 +333,7 @@ it('teacher can delete own resource and file', function () {
 });
 
 it('teacher can search and filter resources by category and file type', function () {
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $class = createClassForTeacher($teacher);
 
     TeacherResource::query()->create([
@@ -398,7 +374,7 @@ it('teacher can search and filter resources by category and file type', function
 });
 
 it('teacher can filter resources by class', function () {
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $classOne = createClassForTeacher($teacher);
     $classTwo = createClassForTeacher($teacher);
 
@@ -438,7 +414,7 @@ it('teacher can filter resources by class', function () {
 });
 
 it('teacher can sort resources by downloads descending', function () {
-    $teacher = createResourceTeacher();
+    $teacher = createApprovedTeacher();
     $class = createClassForTeacher($teacher);
 
     TeacherResource::query()->create([
