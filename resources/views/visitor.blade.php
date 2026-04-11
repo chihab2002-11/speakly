@@ -262,8 +262,19 @@
 </div>
 </div>
 </section>
+<!-- Our Languages Header Section -->
+<section class="py-16 px-8 relative">
+<div class="max-w-7xl mx-auto relative z-10">
+<div class="text-center mb-12 space-y-6">
+<span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Our Languages</span>
+<h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">World-Class Programs.</h2>
+<p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Curated pathways for every ambition, from conversational ease to professional certification, delivered by industry experts.</p>
+</div>
+</div>
+</section>
+
 <!-- Programs Section -->
-<section class="py-32 px-8 bg-surface-container-low/80 relative" id="programs">
+<section class="py-32 px-8 bg-white relative" id="programs">
 <!-- Subtle Flowing Shape Background -->
 <div class="absolute top-0 right-0 w-1/2 h-full opacity-[0.03] pointer-events-none">
 <svg class="w-full h-full" viewbox="0 0 500 500">
@@ -273,8 +284,6 @@
 <div class="max-w-7xl mx-auto relative z-10">
 <div class="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-8">
 <div class="space-y-4">
-<h2 class="text-5xl md:text-6xl font-young-serif text-on-surface tracking-tightest leading-tight">World-Class <br/>Programs.</h2>
-<p class="text-on-surface-variant text-xl leading-relaxed max-w-xl font-light">Curated pathways for every ambition, from conversational ease to professional certification, delivered by industry experts.</p>
 </div>
 <div class="hidden md:flex gap-4">
 <button class="slider-arrow-left w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="left">
@@ -499,7 +508,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </section>
 <!-- Pricing Section -->
-<section class="py-32 px-8 bg-surface-container-low/50 relative overflow-hidden" id="pricing">
+<section class="py-32 px-8 bg-white relative overflow-hidden" id="pricing">
 <div class="max-w-7xl mx-auto">
 <div class="text-center mb-24 space-y-6">
 <span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Flexible Plans</span>
@@ -556,9 +565,11 @@ IELTS Preparation
 </div>
 
 <!-- Contact Card (Middle) -->
-<div class="bg-gradient-to-br from-primary to-primary/80 rounded-3xl p-8 flex flex-col justify-center items-center text-center text-white hover-lift">
-<div class="mb-6">
-<span class="material-symbols-outlined text-6xl text-white/80">contact_support</span>
+<div class="bg-gradient-to-br from-primary to-primary/80 rounded-3xl p-8 flex flex-col justify-between items-center text-center text-white hover-lift overflow-hidden">
+<div class="w-full mb-6">
+<div class="w-full h-48 rounded-2xl overflow-hidden shadow-lg border-4 border-white/20">
+<iframe width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3192.5614755253276!2d3.0588235759999997!3d36.7372088!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x128fab4c1b7a7c19%3A0x1234567890abc!2sAlgiers%2C%20Algeria!5e0!3m2!1sen!2s!4v1234567890"></iframe>
+</div>
 </div>
 <h3 class="text-2xl font-bold mb-4">Looking for More Options?</h3>
 <p class="text-white/90 mb-2 text-sm font-light">Have questions about our other pricing plans and course options?</p>
