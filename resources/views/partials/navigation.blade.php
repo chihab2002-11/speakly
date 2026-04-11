@@ -26,6 +26,7 @@
             <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#about">About</a>
             <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#features">Features</a>
             <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#programs">Programs</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#testimonials">Reviews</a>
         </div>
         
         {{-- Auth Buttons --}}

@@ -433,7 +433,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </section>
 <!-- Testimonials Section -->
-<section class="py-32 px-8 bg-white relative overflow-hidden">
+<section class="py-32 px-8 bg-white relative overflow-hidden" id="testimonials">
 <div class="max-w-7xl mx-auto">
 <div class="text-center mb-24 space-y-6">
 <span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Student Success</span>
@@ -504,106 +504,120 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 <div class="text-center mb-24 space-y-6">
 <span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Flexible Plans</span>
 <h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Investment in Your Future.</h2>
-<p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Choose the plan that best fits your learning journey and linguistic ambitions.</p>
+<p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Choose the language course that best fits your learning goals and linguistic ambitions.</p>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-<!-- Starter Plan -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+<!-- IELTS Course -->
 <div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
 <div class="mb-8">
-<h3 class="text-2xl font-bold text-on-surface mb-2">Starter</h3>
-<p class="text-on-surface-variant text-sm font-light">Perfect for curious beginners</p>
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-sm mb-4">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+IELTS Preparation
+</div>
+<h3 class="text-2xl font-bold text-on-surface mb-2">IELTS Mastery</h3>
+<p class="text-on-surface-variant text-sm font-light">Comprehensive preparation for International English Language Testing System</p>
 </div>
 <div class="mb-8">
-<div class="text-4xl font-bold text-on-surface">$199<span class="text-lg text-on-surface-variant">/mo</span></div>
+<div class="text-3xl font-bold text-on-surface">37,500 <span class="text-lg text-on-surface-variant">DA/course</span></div>
+<p class="text-sm text-on-surface-variant mt-2">Available for all proficiency levels</p>
+</div>
+<div class="space-y-2 mb-8 flex-grow">
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">A1 - A2:</span>
+<span class="text-on-surface-variant text-sm">Foundation & Elementary</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">B1 - B2:</span>
+<span class="text-on-surface-variant text-sm">Intermediate & Upper Intermediate</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">C1 - C2:</span>
+<span class="text-on-surface-variant text-sm">Advanced & Mastery</span>
+</div>
 </div>
 <ul class="space-y-4 mb-8 flex-grow">
 <li class="flex items-start gap-3">
 <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
-<span class="text-on-surface-variant">Group classes (2x/week)</span>
+<span class="text-on-surface-variant">12-week intensive program</span>
 </li>
 <li class="flex items-start gap-3">
 <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
-<span class="text-on-surface-variant">Digital learning materials</span>
+<span class="text-on-surface-variant">Mock exam practice tests</span>
 </li>
 <li class="flex items-start gap-3">
 <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
-<span class="text-on-surface-variant">Student portal access</span>
+<span class="text-on-surface-variant">Expert listening & speaking training</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+<span class="text-on-surface-variant">Writing feedback & correction</span>
 </li>
 </ul>
-<button class="w-full bg-primary/10 text-primary font-bold py-3 rounded-2xl hover:bg-primary/20 transition-colors">Get Started</button>
+<button class="w-full bg-primary/10 text-primary font-bold py-3 rounded-2xl hover:bg-primary/20 transition-colors">Enroll Now</button>
 </div>
-<!-- Professional Plan -->
-<div class="bg-primary text-white rounded-3xl p-8 border-2 border-primary hover-lift flex flex-col relative overflow-hidden">
-<div class="absolute -right-20 -top-20 opacity-10">
-<span class="material-symbols-outlined text-[200px]">auto_awesome</span>
-</div>
-<div class="absolute top-4 right-4 px-3 py-1 bg-white/20 rounded-full text-xs font-black backdrop-blur-md">MOST POPULAR</div>
-<div class="mb-8 relative z-10">
-<h3 class="text-2xl font-bold mb-2">Professional</h3>
-<p class="text-white/80 text-sm font-light">For serious learners</p>
-</div>
-<div class="mb-8 relative z-10">
-<div class="text-4xl font-bold">$449<span class="text-lg text-white/80">/mo</span></div>
-</div>
-<ul class="space-y-4 mb-8 flex-grow relative z-10">
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-white text-xl flex-shrink-0">check_circle</span>
-<span class="text-white/90">Semi-private classes (3x/week)</span>
-</li>
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-white text-xl flex-shrink-0">check_circle</span>
-<span class="text-white/90">1-on-1 coaching (1x/month)</span>
-</li>
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-white text-xl flex-shrink-0">check_circle</span>
-<span class="text-white/90">Exam prep modules</span>
-</li>
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-white text-xl flex-shrink-0">check_circle</span>
-<span class="text-white/90">Cognitive progress analytics</span>
-</li>
-</ul>
-<button class="w-full bg-white text-primary font-bold py-3 rounded-2xl hover:bg-white/90 transition-colors relative z-10">Start Now</button>
-</div>
-<!-- Elite Plan -->
+<!-- TCF Course -->
 <div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
 <div class="mb-8">
-<h3 class="text-2xl font-bold text-on-surface mb-2">Elite</h3>
-<p class="text-on-surface-variant text-sm font-light">For certification seekers</p>
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-sm mb-4">
+<span class="material-symbols-outlined text-[16px]">language</span>
+TCF Français
+</div>
+<h3 class="text-2xl font-bold text-on-surface mb-2">TCF Certification</h3>
+<p class="text-on-surface-variant text-sm font-light">Test de Connaissance du Français - Official French proficiency exam</p>
 </div>
 <div class="mb-8">
-<div class="text-4xl font-bold text-on-surface">$799<span class="text-lg text-on-surface-variant">/mo</span></div>
+<div class="text-3xl font-bold text-on-surface">12,000 <span class="text-lg text-on-surface-variant">DA/course</span></div>
+<p class="text-sm text-on-surface-variant mt-2">Available for all proficiency levels</p>
+</div>
+<div class="space-y-2 mb-8 flex-grow">
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">A1 - A2:</span>
+<span class="text-on-surface-variant text-sm">Foundation & Elementary</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">B1 - B2:</span>
+<span class="text-on-surface-variant text-sm">Intermediate & Upper Intermediate</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">C1 - C2:</span>
+<span class="text-on-surface-variant text-sm">Advanced & Mastery</span>
+</div>
 </div>
 <ul class="space-y-4 mb-8 flex-grow">
 <li class="flex items-start gap-3">
 <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
-<span class="text-on-surface-variant">Unlimited 1-on-1 sessions</span>
+<span class="text-on-surface-variant">8-week focused preparation</span>
 </li>
 <li class="flex items-start gap-3">
 <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
-<span class="text-on-surface-variant">Intensive exam preparation</span>
+<span class="text-on-surface-variant">Official TCF practice materials</span>
 </li>
 <li class="flex items-start gap-3">
 <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
-<span class="text-on-surface-variant">Native speaker sessions</span>
+<span class="text-on-surface-variant">Phonetics & pronunciation coaching</span>
 </li>
 <li class="flex items-start gap-3">
 <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
-<span class="text-on-surface-variant">Concierge access</span>
-</li>
-<li class="flex items-start gap-3">
-<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
-<span class="text-on-surface-variant">Custom curriculum design</span>
+<span class="text-on-surface-variant">Final exam simulation</span>
 </li>
 </ul>
-<button class="w-full bg-primary text-white font-bold py-3 rounded-2xl hover:bg-primary/90 transition-colors">Schedule Consultation</button>
+<button class="w-full bg-primary/10 text-primary font-bold py-3 rounded-2xl hover:bg-primary/20 transition-colors">Enroll Now</button>
 </div>
 </div>
 </div>
 </section>
 <!-- CTA Section -->
 <section class="py-24 px-8 bg-gradient-to-r from-primary to-purple relative overflow-hidden">
-<div class="absolute inset-0 opacity-[0.03]">
+<!-- Educational Background Elements -->
+<div class="absolute inset-0 opacity-[0.08]">
+<span class="absolute top-[10%] left-[5%] material-symbols-outlined text-[120px] text-white/30">menu_book</span>
+<span class="absolute top-[15%] right-[8%] material-symbols-outlined text-[100px] text-white/30">school</span>
+<span class="absolute bottom-[20%] left-[10%] material-symbols-outlined text-[110px] text-white/30">translate</span>
+<span class="absolute bottom-[10%] right-[12%] material-symbols-outlined text-[130px] text-white/30">psychology</span>
+<span class="absolute top-[50%] left-[3%] material-symbols-outlined text-[90px] text-white/30">record_voice_over</span>
+<span class="absolute top-[40%] right-[5%] material-symbols-outlined text-[100px] text-white/30">lightbulb</span>
+</div>
+<div class="absolute inset-0 opacity-[0.05]">
 <svg class="w-full h-full" viewBox="0 0 1200 600">
 <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
 <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
@@ -616,7 +630,6 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 <p class="text-white/90 text-xl leading-relaxed mb-12 font-light">Join thousands of scholars who've transformed their linguistic future with Lumina Academy.</p>
 <div class="flex flex-col md:flex-row gap-4 justify-center">
 <button class="px-8 py-4 bg-white text-primary font-bold rounded-2xl hover:bg-white/90 transition-colors">Explore Programs</button>
-<button class="px-8 py-4 border-2 border-white text-white font-bold rounded-2xl hover:bg-white/10 transition-colors">Schedule Demo</button>
 </div>
 </div>
 </section>
