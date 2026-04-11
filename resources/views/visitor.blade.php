@@ -263,7 +263,7 @@
 </div>
 </section>
 <!-- Programs Section -->
-<section class="py-32 px-8 bg-surface-container-low/80 relative" id="about">
+<section class="py-32 px-8 bg-surface-container-low/80 relative" id="programs">
 <!-- Subtle Flowing Shape Background -->
 <div class="absolute top-0 right-0 w-1/2 h-full opacity-[0.03] pointer-events-none">
 <svg class="w-full h-full" viewbox="0 0 500 500">
@@ -286,9 +286,9 @@
 </div>
 </div>
 <div class="relative overflow-hidden">
-<div class="programs-slider flex gap-6 transition-transform duration-300 ease-out" id="programsSlider">
+<div class="programs-slider flex gap-6 transition-transform duration-300 ease-out select-none" id="programsSlider" style="width: fit-content;">
 <!-- English -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] cursor-pointer" data-lang="en">
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="en">
 <div class="mb-10 relative">
 <img alt="UK Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9fBXUXgMsr-Hhbu0-aE7d4oaCk8ACtNt3np_KPuv_OvjhRU33T2DwBLlUS5T4ytw74AbIiSlGqtj4xsxGIX52mjGe6FH5GI_td1YhpVBwyP2aDpF0MuG_UpkyjDr_gjy1KbWqP1ScNZEXJexrIpo-zj59Wpe8A2Tp9ig6NWIUQYWJJVZEL5E6RxCi0HZ2_9unSrLLk6rox-VPt7V8jbt_G7WbaDNKa6vT8YFsRt4XyyJd9MMMFwGwoRocyIDE3-J3k46SmjHQcBve"/>
 <div class="absolute -top-2 -right-2 text-en-red font-black-900 text-2xl">EN</div>
@@ -301,7 +301,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- Spanish -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] cursor-pointer" data-lang="es">
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="es">
 <div class="mb-10 relative">
 <img alt="Spanish Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACTBwMnOv7Pj2HZWIkBQiVbRR6BHwN0aktcIDkkPobYVYC_FDRxF7PY83FHD6xyZ2Fa83QSYqnvtbnE1lGOGVh9Q0YoBndVCtBgqUTl8JJ5uOxclJrNQIUHI8mGrVe8YxsZ0ehd99hGGNpz5pBUBh7TzEWcmKmGdTSOOTZllFSd99W0kJ2rb5K0JU-LW60Kgi9_Y69RBYXhOou-S3_J3xiiQ9J3lXJOCZJ_3-IyrtT4-1_rfZtkGbuaOZXppeI7msVWTpS6M-JhQId"/>
 <div class="absolute -top-2 -right-2 text-es-orange font-black-900 text-2xl">ES</div>
@@ -314,7 +314,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- French -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] cursor-pointer" data-lang="fr">
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="fr">
 <div class="mb-10 relative">
 <img alt="French Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnpwuOKXKvsaO5dDtKhu7VC-_rsToQbUWKgSSRNfR-CfyT37MXF2s3Z1DSJas5RGRAUZXMRg6LJzVXH8wqzqoG06hf_Qd4hCcgR7R7yeeCuBkQ3RRe_ZlpGWFyoeH_bYV2gPzvu_nRxMldUY_jTr5fHZSD7L__Nj3ARkLqlWD1DqP3mHoF7KvE-UMbTyCve0MbFOBoM67czJgFj2HGUzMjdCcIlgznMm_zFtmCwfOl-k7TCMQ5saMhmE-j-zEzAzAV2pIRZ-ZzKQQi"/>
 <div class="absolute -top-2 -right-2 text-fr-blue font-black-900 text-2xl">FR</div>
@@ -327,7 +327,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- German -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] cursor-pointer" data-lang="de">
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="de">
 <div class="mb-10 relative">
 <img alt="German Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_gr.png') }}"/>
 <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">DE</div>
@@ -340,7 +340,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- Italian -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] cursor-pointer" data-lang="it">
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="it">
 <div class="mb-10 relative">
 <img alt="Italian Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_it.png') }}"/>
 <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">IT</div>
@@ -353,7 +353,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- Portuguese -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] cursor-pointer" data-lang="pt">
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="pt">
 <div class="mb-10 relative">
 <img alt="Portuguese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8rL7E9M0i5DJh8t4n_xOhJ5O9zqaB9Z_N5nF3M9KqZpWv6EY3E7C_7bQ_8QhHkXQpN8ZJvTZqNQcvyIVnKPm_zYqYYn3h8kKf8C8qG9nG_CrHX3E0gLnhxWpFJ6K1vU7HQz_HjPxvJSqEpJrVBQF9K4ePp5N6Y"/>
 <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">PT</div>
@@ -366,7 +366,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- Japanese -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] cursor-pointer" data-lang="jp">
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="jp">
 <div class="mb-10 relative">
 <img alt="Japanese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJY4Z7q4m8qKlJ3qJ0zH8m9Pp7vQ5qKzQ8pR9tS0uVwXyZ2aAbCdEfGhIjK4L9nM5oP6qRsTuVuWxYzB5nKpQrStVwXyZ2aAbCdEfGhIjK4L9nM5oP6qRs"/>
 <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">JP</div>
@@ -499,14 +499,14 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </section>
 <!-- Pricing Section -->
-<section class="py-32 px-8 bg-surface-container-low/50 relative overflow-hidden">
+<section class="py-32 px-8 bg-surface-container-low/50 relative overflow-hidden" id="pricing">
 <div class="max-w-7xl mx-auto">
 <div class="text-center mb-24 space-y-6">
 <span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Flexible Plans</span>
 <h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Investment in Your Future.</h2>
 <p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Choose the language course that best fits your learning goals and linguistic ambitions.</p>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
 <!-- IELTS Course -->
 <div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
 <div class="mb-8">
@@ -518,7 +518,7 @@ IELTS Preparation
 <p class="text-on-surface-variant text-sm font-light">Comprehensive preparation for International English Language Testing System</p>
 </div>
 <div class="mb-8">
-<div class="text-3xl font-bold text-on-surface">37,500 <span class="text-lg text-on-surface-variant">DA/course</span></div>
+<div class="text-3xl font-bold text-on-surface">7,000 <span class="text-lg text-on-surface-variant">DA/course</span></div>
 <p class="text-sm text-on-surface-variant mt-2">Available for all proficiency levels</p>
 </div>
 <div class="space-y-2 mb-8 flex-grow">
@@ -553,8 +553,29 @@ IELTS Preparation
 <span class="text-on-surface-variant">Writing feedback & correction</span>
 </li>
 </ul>
-<button class="w-full bg-primary/10 text-primary font-bold py-3 rounded-2xl hover:bg-primary/20 transition-colors">Enroll Now</button>
 </div>
+
+<!-- Contact Card (Middle) -->
+<div class="bg-gradient-to-br from-primary to-primary/80 rounded-3xl p-8 flex flex-col justify-center items-center text-center text-white hover-lift">
+<div class="mb-6">
+<span class="material-symbols-outlined text-6xl text-white/80">contact_support</span>
+</div>
+<h3 class="text-2xl font-bold mb-4">Looking for More Options?</h3>
+<p class="text-white/90 mb-2 text-sm font-light">Have questions about our other pricing plans and course options?</p>
+<p class="text-white/80 text-xs mb-8 font-light">Get in touch with our team for personalized guidance and special offers.</p>
+<button class="contact-us-btn w-full px-8 py-3 bg-white text-primary font-bold rounded-2xl hover:bg-white/90 transition-all">Contact Us Now</button>
+<div class="mt-8 pt-8 border-t border-white/20 space-y-3 text-sm">
+<div class="flex items-center justify-center gap-3 text-white/80">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+<a href="mailto:admin@speakly.com" class="hover:text-white transition-colors">admin@speakly.com</a>
+</div>
+<div class="flex items-center justify-center gap-3 text-white/80">
+<span class="material-symbols-outlined text-[20px]">phone</span>
+<span>+213 345 464 654</span>
+</div>
+</div>
+</div>
+
 <!-- TCF Course -->
 <div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
 <div class="mb-8">
@@ -566,7 +587,7 @@ TCF Français
 <p class="text-on-surface-variant text-sm font-light">Test de Connaissance du Français - Official French proficiency exam</p>
 </div>
 <div class="mb-8">
-<div class="text-3xl font-bold text-on-surface">12,000 <span class="text-lg text-on-surface-variant">DA/course</span></div>
+<div class="text-3xl font-bold text-on-surface">6,000 <span class="text-lg text-on-surface-variant">DA/course</span></div>
 <p class="text-sm text-on-surface-variant mt-2">Available for all proficiency levels</p>
 </div>
 <div class="space-y-2 mb-8 flex-grow">
@@ -601,35 +622,26 @@ TCF Français
 <span class="text-on-surface-variant">Final exam simulation</span>
 </li>
 </ul>
-<button class="w-full bg-primary/10 text-primary font-bold py-3 rounded-2xl hover:bg-primary/20 transition-colors">Enroll Now</button>
 </div>
 </div>
 </div>
 </section>
 <!-- CTA Section -->
-<section class="py-24 px-8 bg-gradient-to-r from-primary to-purple relative overflow-hidden">
+<section class="py-24 px-8 bg-transparent relative overflow-hidden">
 <!-- Educational Background Elements -->
 <div class="absolute inset-0 opacity-[0.08]">
-<span class="absolute top-[10%] left-[5%] material-symbols-outlined text-[120px] text-white/30">menu_book</span>
-<span class="absolute top-[15%] right-[8%] material-symbols-outlined text-[100px] text-white/30">school</span>
-<span class="absolute bottom-[20%] left-[10%] material-symbols-outlined text-[110px] text-white/30">translate</span>
-<span class="absolute bottom-[10%] right-[12%] material-symbols-outlined text-[130px] text-white/30">psychology</span>
-<span class="absolute top-[50%] left-[3%] material-symbols-outlined text-[90px] text-white/30">record_voice_over</span>
-<span class="absolute top-[40%] right-[5%] material-symbols-outlined text-[100px] text-white/30">lightbulb</span>
-</div>
-<div class="absolute inset-0 opacity-[0.05]">
-<svg class="w-full h-full" viewBox="0 0 1200 600">
-<pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-<path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" stroke-width="0.5"/>
-</pattern>
-<rect width="100%" height="100%" fill="url(#grid)" />
-</svg>
+<span class="absolute top-[10%] left-[5%] material-symbols-outlined text-[120px] text-primary/30">menu_book</span>
+<span class="absolute top-[15%] right-[8%] material-symbols-outlined text-[100px] text-primary/30">school</span>
+<span class="absolute bottom-[20%] left-[10%] material-symbols-outlined text-[110px] text-primary/30">translate</span>
+<span class="absolute bottom-[10%] right-[12%] material-symbols-outlined text-[130px] text-primary/30">psychology</span>
+<span class="absolute top-[50%] left-[3%] material-symbols-outlined text-[90px] text-primary/30">record_voice_over</span>
+<span class="absolute top-[40%] right-[5%] material-symbols-outlined text-[100px] text-primary/30">lightbulb</span>
 </div>
 <div class="max-w-4xl mx-auto text-center relative z-10">
-<h2 class="text-5xl md:text-6xl font-young-serif text-white tracking-tightest mb-6 leading-tight">Ready to Master a New Language?</h2>
-<p class="text-white/90 text-xl leading-relaxed mb-12 font-light">Join thousands of scholars who've transformed their linguistic future with Lumina Academy.</p>
+<h2 class="text-5xl md:text-6xl font-young-serif text-on-surface tracking-tightest mb-6 leading-tight">Ready to Master a New Language?</h2>
+<p class="text-on-surface-variant text-xl leading-relaxed mb-12 font-light">Join thousands of scholars who've transformed their linguistic future with Lumina Academy.</p>
 <div class="flex flex-col md:flex-row gap-4 justify-center">
-<button class="px-8 py-4 bg-white text-primary font-bold rounded-2xl hover:bg-white/90 transition-colors">Explore Programs</button>
+<a href="{{ url('/') }}#programs" class="px-8 py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-colors">Explore Programs</a>
 </div>
 </div>
 </section>
@@ -759,10 +771,15 @@ document.addEventListener('DOMContentLoaded', function() {
   const cards = document.querySelectorAll('.slider-card');
   
   let currentSlide = 0;
-  const cardWidth = 360;
+  const cardWidth = 384; // w-96 = 24rem = 384px
   const gap = 24;
-  const cardsPerSlide = 3; // Always show 3 cards per slide
+  const cardsPerSlide = 3;
   const totalSlides = Math.ceil(cards.length / cardsPerSlide);
+  
+  let isDragging = false;
+  let startX = 0;
+  let currentX = 0;
+  let dragThreshold = 50;
   
   function updateSliderPosition() {
     const translateAmount = currentSlide * (cardWidth + gap) * cardsPerSlide;
@@ -787,6 +804,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
+  // Arrow click handlers
   leftArrow.addEventListener('click', function() {
     if (currentSlide > 0) {
       currentSlide--;
@@ -803,15 +821,65 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
+  // Drag functionality
+  slider.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.clientX;
+    slider.style.cursor = 'grabbing';
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    currentX = e.clientX - startX;
+  });
+  
+  document.addEventListener('mouseup', (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    slider.style.cursor = 'grab';
+    
+    if (Math.abs(currentX) > dragThreshold) {
+      if (currentX > 0 && currentSlide > 0) {
+        currentSlide--;
+      } else if (currentX < 0 && currentSlide < totalSlides - 1) {
+        currentSlide++;
+      }
+      updateSliderPosition();
+      updateArrowStates();
+    }
+    currentX = 0;
+  });
+  
   updateArrowStates();
   
   // Modal functionality
   cards.forEach(card => {
-    card.addEventListener('click', function() {
-      const langCode = this.getAttribute('data-lang');
-      openLanguageModal(langCode);
+    card.addEventListener('click', function(e) {
+      // Only open modal if not dragging
+      if (Math.abs(currentX) < 5) {
+        const langCode = this.getAttribute('data-lang');
+        openLanguageModal(langCode);
+      }
     });
   });
+  
+  // Home button scroll to top
+  const homeLink = document.querySelector('.nav-home-link');
+  if (homeLink) {
+    homeLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+  
+  // Contact Us button
+  const contactBtn = document.querySelector('.contact-us-btn');
+  if (contactBtn) {
+    contactBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      alert('📧 admin@speakly.com\n📱 +213 345 464 654');
+    });
+  }
 });
 
 function openLanguageModal(langCode) {
