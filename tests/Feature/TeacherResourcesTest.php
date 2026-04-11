@@ -15,7 +15,7 @@ beforeEach(function () {
     Role::findOrCreate('teacher', 'web');
 });
 
-function createApprovedTeacher(): User
+function createResourceTeacher(): User
 {
     $teacher = User::factory()->create([
         'approved_at' => now(),
@@ -39,7 +39,7 @@ function createClassForTeacher(User $teacher): CourseClass
 it('teacher can upload a resource for classes they teach', function () {
     Storage::fake('public');
 
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
@@ -93,7 +93,7 @@ it('teacher cannot upload resources for classes they do not teach', function () 
     Storage::fake('public');
 
     $teacher = createApprovedTeacher();
-    $otherTeacher = createApprovedTeacher();
+    $otherTeacher = createResourceTeacher();
     $otherClass = createClassForTeacher($otherTeacher);
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [

@@ -38,7 +38,7 @@ test('user can view conversation with another user', function () {
     $response = $this->actingAs($user1)->get(route('role.messages.index', ['role' => 'student', 'user_id' => $user2->id]));
 
     $response->assertStatus(200);
-    $response->assertViewIs('messages.index');
+    $response->assertViewIs('student.messages');
     $response->assertViewHas('conversations');
     $response->assertViewHas('selectedUser');
 });
