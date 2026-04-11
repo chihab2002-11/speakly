@@ -262,17 +262,6 @@
 </div>
 </div>
 </section>
-<!-- Our Languages Header Section -->
-<section class="py-16 px-8 relative">
-<div class="max-w-7xl mx-auto relative z-10">
-<div class="text-center mb-12 space-y-6">
-<span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Our Languages</span>
-<h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">World-Class Programs.</h2>
-<p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Curated pathways for every ambition, from conversational ease to professional certification, delivered by industry experts.</p>
-</div>
-</div>
-</section>
-
 <!-- Programs Section -->
 <section class="py-32 px-8 bg-white relative" id="programs">
 <!-- Subtle Flowing Shape Background -->
@@ -284,6 +273,8 @@
 <div class="max-w-7xl mx-auto relative z-10">
 <div class="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-8">
 <div class="space-y-4">
+<h2 class="text-5xl md:text-6xl font-young-serif text-on-surface tracking-tightest leading-tight">World-Class <br/>Programs.</h2>
+<p class="text-on-surface-variant text-xl leading-relaxed max-w-xl font-light">Curated pathways for every ambition, from conversational ease to professional certification, delivered by industry experts.</p>
 </div>
 <div class="hidden md:flex gap-4">
 <button class="slider-arrow-left w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="left">
@@ -443,7 +434,25 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </section>
 <!-- Testimonials Section -->
 <section class="py-32 px-8 bg-white relative overflow-hidden" id="testimonials">
-<div class="max-w-7xl mx-auto">
+<!-- Language & Academic Background Patterns -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden">
+<!-- Floating Language Characters -->
+<span class="absolute top-[5%] left-[5%] text-[120px] font-serif font-black text-primary/[0.08] rotate-12">A</span>
+<span class="absolute top-[12%] right-[10%] text-[100px] font-serif font-bold text-primary/[0.07] -rotate-12">あ</span>
+<span class="absolute bottom-[20%] left-[8%] text-[110px] font-serif font-bold text-primary/[0.09] -rotate-6">Ñ</span>
+<span class="absolute bottom-[15%] right-[5%] text-[130px] font-serif font-black text-primary/[0.08] rotate-[15deg]">¿</span>
+<span class="absolute top-[50%] left-[3%] text-[100px] font-serif font-bold text-primary/[0.07] -rotate-[15deg]">文</span>
+<!-- Material Symbols Icons -->
+<span class="material-symbols-outlined absolute top-[20%] left-[15%] text-[100px] text-primary/[0.08] rotate-6">record_voice_over</span>
+<span class="material-symbols-outlined absolute top-[25%] right-[20%] text-[120px] text-primary/[0.07] -rotate-12">chat</span>
+<span class="material-symbols-outlined absolute bottom-[30%] right-[15%] text-[110px] text-primary/[0.08] rotate-12">headphones</span>
+<span class="material-symbols-outlined absolute top-[60%] left-[75%] text-[100px] text-primary/[0.07] -rotate-6">psychology</span>
+<!-- Geometric Shapes -->
+<div class="absolute top-[10%] right-[35%] w-40 h-40 border-[2px] border-primary/10 rounded-full"></div>
+<div class="absolute bottom-[25%] left-[60%] w-32 h-32 border-[2px] border-primary/[0.08] rounded-full"></div>
+<div class="absolute top-[65%] right-[8%] w-24 h-24 border-[2px] border-primary/[0.07] rounded-full"></div>
+</div>
+<div class="max-w-7xl mx-auto relative z-10">
 <div class="text-center mb-24 space-y-6">
 <span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Student Success</span>
 <h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Voices of Lumina.</h2>
@@ -475,7 +484,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
 <span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
+<span class="material-symbols-outlined text-primary/50 text-2xl">star_half</span>
 </div>
 <p class="text-on-surface-variant text-lg leading-relaxed mb-6 font-light italic">"The cultural immersion aspect of the Spanish program helped me understand not just the language, but the people and traditions behind it."</p>
 <div class="flex items-center gap-4">
@@ -509,7 +518,28 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </section>
 <!-- Pricing Section -->
 <section class="py-32 px-8 bg-white relative overflow-hidden" id="pricing">
-<div class="max-w-7xl mx-auto">
+<!-- Language & Academic Background Patterns -->
+<div class="absolute inset-0 pointer-events-none overflow-hidden">
+<!-- Floating Language Characters -->
+<span class="absolute top-[8%] left-[8%] text-[130px] font-serif font-black text-primary/[0.08] rotate-12">A</span>
+<span class="absolute top-[10%] right-[12%] text-[110px] font-serif font-bold text-primary/[0.07] -rotate-12">あ</span>
+<span class="absolute bottom-[25%] left-[5%] text-[120px] font-serif font-bold text-primary/[0.09] -rotate-6">ß</span>
+<span class="absolute bottom-[10%] right-[8%] text-[140px] font-serif font-black text-primary/[0.08] rotate-[15deg]">文</span>
+<span class="absolute top-[45%] left-[2%] text-[100px] font-serif font-bold text-primary/[0.07] -rotate-[15deg]">É</span>
+<!-- Material Symbols Icons -->
+<span class="material-symbols-outlined absolute top-[15%] left-[20%] text-[110px] text-primary/[0.08] rotate-6">menu_book</span>
+<span class="material-symbols-outlined absolute top-[30%] right-[15%] text-[100px] text-primary/[0.07] -rotate-12">lightbulb</span>
+<span class="material-symbols-outlined absolute bottom-[35%] right-[20%] text-[120px] text-primary/[0.08] rotate-12">translate</span>
+<span class="material-symbols-outlined absolute top-[55%] left-[70%] text-[110px] text-primary/[0.07] -rotate-6">school</span>
+<!-- Geometric Shapes -->
+<div class="absolute top-[12%] right-[30%] w-44 h-44 border-[2px] border-primary/10 rounded-full"></div>
+<div class="absolute bottom-[20%] left-[50%] w-36 h-36 border-[2px] border-primary/[0.08] rounded-full"></div>
+<div class="absolute top-[70%] right-[5%] w-28 h-28 border-[2px] border-primary/[0.07] rounded-full"></div>
+<!-- Squares and Rectangles -->
+<div class="absolute top-[40%] left-[10%] w-32 h-32 border-[2px] border-primary/[0.09] rotate-45"></div>
+<div class="absolute bottom-[40%] right-[25%] w-40 h-40 border-[2px] border-primary/10 rotate-12"></div>
+</div>
+<div class="max-w-7xl mx-auto relative z-10">
 <div class="text-center mb-24 space-y-6">
 <span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Flexible Plans</span>
 <h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Investment in Your Future.</h2>
