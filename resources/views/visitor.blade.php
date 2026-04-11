@@ -277,17 +277,18 @@
 <p class="text-on-surface-variant text-xl leading-relaxed max-w-xl font-light">Curated pathways for every ambition, from conversational ease to professional certification, delivered by industry experts.</p>
 </div>
 <div class="hidden md:flex gap-4">
-<div class="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all">
+<button class="slider-arrow-left w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="left">
 <span class="material-symbols-outlined">west</span>
-</div>
-<div class="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all">
+</button>
+<button class="slider-arrow-right w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="right">
 <span class="material-symbols-outlined">east</span>
+</button>
 </div>
 </div>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-<!-- EN -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+<div class="relative overflow-hidden">
+<div class="programs-slider flex gap-6 transition-transform duration-300 ease-out" id="programsSlider">
+<!-- English -->
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
 <div class="mb-10 relative">
 <img alt="UK Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9fBXUXgMsr-Hhbu0-aE7d4oaCk8ACtNt3np_KPuv_OvjhRU33T2DwBLlUS5T4ytw74AbIiSlGqtj4xsxGIX52mjGe6FH5GI_td1YhpVBwyP2aDpF0MuG_UpkyjDr_gjy1KbWqP1ScNZEXJexrIpo-zj59Wpe8A2Tp9ig6NWIUQYWJJVZEL5E6RxCi0HZ2_9unSrLLk6rox-VPt7V8jbt_G7WbaDNKa6vT8YFsRt4XyyJd9MMMFwGwoRocyIDE3-J3k46SmjHQcBve"/>
 <div class="absolute -top-2 -right-2 text-en-red font-black-900 text-2xl">EN</div>
@@ -295,11 +296,12 @@
 <h3 class="text-xl font-bold text-on-surface mb-4">English Mastery</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Cambridge preparation and business-level fluency. Our most expansive program.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </div>
-<!-- ES -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+
+<!-- Spanish -->
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
 <div class="mb-10 relative">
 <img alt="Spanish Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACTBwMnOv7Pj2HZWIkBQiVbRR6BHwN0aktcIDkkPobYVYC_FDRxF7PY83FHD6xyZ2Fa83QSYqnvtbnE1lGOGVh9Q0YoBndVCtBgqUTl8JJ5uOxclJrNQIUHI8mGrVe8YxsZ0ehd99hGGNpz5pBUBh7TzEWcmKmGdTSOOTZllFSd99W0kJ2rb5K0JU-LW60Kgi9_Y69RBYXhOou-S3_J3xiiQ9J3lXJOCZJ_3-IyrtT4-1_rfZtkGbuaOZXppeI7msVWTpS6M-JhQId"/>
 <div class="absolute -top-2 -right-2 text-es-orange font-black-900 text-2xl">ES</div>
@@ -307,11 +309,12 @@
 <h3 class="text-xl font-bold text-on-surface mb-4">Spanish Immersion</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Deep dive into Castilian and Latin cultures through DELE-aligned courses.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </div>
-<!-- FR -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+
+<!-- French -->
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
 <div class="mb-10 relative">
 <img alt="French Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnpwuOKXKvsaO5dDtKhu7VC-_rsToQbUWKgSSRNfR-CfyT37MXF2s3Z1DSJas5RGRAUZXMRg6LJzVXH8wqzqoG06hf_Qd4hCcgR7R7yeeCuBkQ3RRe_ZlpGWFyoeH_bYV2gPzvu_nRxMldUY_jTr5fHZSD7L__Nj3ARkLqlWD1DqP3mHoF7KvE-UMbTyCve0MbFOBoM67czJgFj2HGUzMjdCcIlgznMm_zFtmCwfOl-k7TCMQ5saMhmE-j-zEzAzAV2pIRZ-ZzKQQi"/>
 <div class="absolute -top-2 -right-2 text-fr-blue font-black-900 text-2xl">FR</div>
@@ -319,35 +322,60 @@
 <h3 class="text-xl font-bold text-on-surface mb-4">French Elegance</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Master the language of diplomacy and art with DALF-certified instructors.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </div>
-<!-- DE -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+
+<!-- German -->
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
 <div class="mb-10 relative">
-<img alt="German Flag" 
-     class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" 
-     src="{{ asset('images/flag_gr.png') }}"/>
-     <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">DE</div>
+<img alt="German Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_gr.png') }}"/>
+<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">DE</div>
 </div>
 <h3 class="text-xl font-bold text-on-surface mb-4">German Precision</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Focus on technical German and Goëthe-Zertifikat certification pathways.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </div>
-<!-- IT -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+
+<!-- Italian -->
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
 <div class="mb-10 relative">
-<img alt="Italian Flag" 
-     class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" 
-     src="{{ asset('images/flag_it.png') }}"/>
-     <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">IT</div>
+<img alt="Italian Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_it.png') }}"/>
+<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">IT</div>
 </div>
 <h3 class="text-xl font-bold text-on-surface mb-4">Italian Heritage</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Explore the linguistic roots of the Renaissance and culinary traditions.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</div>
+</div>
+
+<!-- Portuguese -->
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
+<div class="mb-10 relative">
+<img alt="Portuguese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8rL7E9M0i5DJh8t4n_xOhJ5O9zqaB9Z_N5nF3M9KqZpWv6EY3E7C_7bQ_8QhHkXQpN8ZJvTZqNQcvyIVnKPm_zYqYYn3h8kKf8C8qG9nG_CrHX3E0gLnhxWpFJ6K1vU7HQz_HjPxvJSqEpJrVBQF9K4ePp5N6Y"/>
+<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">PT</div>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-4">Portuguese Power</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Connect with 250+ million speakers worldwide through CAPLE-aligned methodologies.</p>
+<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</div>
+</div>
+
+<!-- Japanese -->
+<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)]">
+<div class="mb-10 relative">
+<img alt="Japanese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJY4Z7q4m8qKlJ3qJ0zH8m9Pp7vQ5qKzQ8pR9tS0uVwXyZ2aAbCdEfGhIjK4L9nM5oP6qRsTuVuWxYzB5nKpQrStVwXyZ2aAbCdEfGhIjK4L9nM5oP6qRs"/>
+<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">JP</div>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-4">Japanese Mastery</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Master Hiragana, Katakana, and Kanji with JLPT certification pathways included.</p>
+<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</div>
 </div>
 </div>
 </div>
@@ -440,4 +468,94 @@
 </div>
 </div>
 </footer>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const slider = document.getElementById('programsSlider');
+  const leftArrow = document.querySelector('.slider-arrow-left');
+  const rightArrow = document.querySelector('.slider-arrow-right');
+  const cards = document.querySelectorAll('.slider-card');
+  
+  let currentPosition = 0;
+  const cardWidth = 360; // Default width for cards
+  const gap = 24; // Gap between cards (6 in Tailwind = 24px)
+  const totalScrollWidth = cards.length * (cardWidth + gap);
+  
+  // Get the actual container width to determine visible cards
+  function getVisibleCardsCount() {
+    const containerWidth = slider.parentElement.offsetWidth;
+    if (containerWidth < 768) {
+      return 1; // Mobile: 1 card
+    } else if (containerWidth < 1024) {
+      return 2; // Tablet: 2 cards
+    } else {
+      return 3; // Desktop: 3 cards
+    }
+  }
+  
+  function getScrollAmount() {
+    const visibleCards = getVisibleCardsCount();
+    return (cardWidth + gap) * visibleCards;
+  }
+  
+  function updateSliderPosition() {
+    slider.style.transform = `translateX(-${currentPosition}px)`;
+  }
+  
+  function canScrollLeft() {
+    return currentPosition > 0;
+  }
+  
+  function canScrollRight() {
+    const maxScroll = totalScrollWidth - (getScrollAmount());
+    return currentPosition < maxScroll;
+  }
+  
+  function updateArrowStates() {
+    leftArrow.disabled = !canScrollLeft();
+    rightArrow.disabled = !canScrollRight();
+    
+    if (!canScrollLeft()) {
+      leftArrow.style.opacity = '0.5';
+      leftArrow.style.pointerEvents = 'none';
+    } else {
+      leftArrow.style.opacity = '1';
+      leftArrow.style.pointerEvents = 'auto';
+    }
+    
+    if (!canScrollRight()) {
+      rightArrow.style.opacity = '0.5';
+      rightArrow.style.pointerEvents = 'none';
+    } else {
+      rightArrow.style.opacity = '1';
+      rightArrow.style.pointerEvents = 'auto';
+    }
+  }
+  
+  leftArrow.addEventListener('click', function() {
+    if (canScrollLeft()) {
+      currentPosition -= getScrollAmount();
+      if (currentPosition < 0) currentPosition = 0;
+      updateSliderPosition();
+      updateArrowStates();
+    }
+  });
+  
+  rightArrow.addEventListener('click', function() {
+    if (canScrollRight()) {
+      currentPosition += getScrollAmount();
+      const maxScroll = totalScrollWidth - getScrollAmount();
+      if (currentPosition > maxScroll) currentPosition = maxScroll;
+      updateSliderPosition();
+      updateArrowStates();
+    }
+  });
+  
+  // Initialize arrow states on page load
+  window.addEventListener('resize', function() {
+    updateArrowStates();
+  });
+  
+  updateArrowStates();
+});
+</script>
 </body></html>
