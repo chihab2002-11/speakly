@@ -218,7 +218,6 @@
 <section class="relative min-h-[90vh] flex items-center px-8 overflow-hidden">
 <!-- Background Motifs -->
 <div class="absolute inset-0 bg-grid opacity-[0.03] pointer-events-none"></div>
-<div class="absolute -left-20 top-20 text-[600px] font-black-900 text-primary/[0.03] select-none leading-none">L</div>
 <div class="absolute right-[10%] top-1/4 opacity-[0.05] pointer-events-none">
 <span class="material-symbols-outlined text-[400px]">explore</span>
 </div>
@@ -234,10 +233,10 @@
 <p class="text-xl md:text-2xl text-on-surface-variant max-w-xl mb-12 leading-relaxed font-light">
                     Step beyond standard learning. Experience an editorial approach to language mastery where every lesson is a curated exhibit of culture and fluency.
                 </p>
-<div class="flex flex-wrap gap-6 items-center">
-<a href="/register-login?tab=register" class="bg-primary text-white px-12 py-5 rounded-full font-black text-lg shadow-xl shadow-primary/20 hover-lift active:scale-95 transition-all">Join Our School</a>
-<a class="flex items-center gap-3 font-bold text-on-surface hover:text-primary transition-colors group" href="#about">
-                        View Curriculum 
+<div class="flex flex-wrap justify-center lg:justify-start items-center gap-6">
+<a href="/register-login?tab=register" class="bg-primary text-white px-14 py-6 rounded-full font-black text-xl shadow-xl shadow-primary/20 hover-lift active:scale-95 transition-all text-center">Join Our School</a>
+<a class="flex items-center justify-center gap-3 font-bold text-on-surface hover:text-primary transition-colors group text-lg" href="#pricing">
+                        Contact Us 
                         <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
 </a>
 </div>
@@ -247,7 +246,7 @@
 <img alt="Collaborative learning in a modern environment" 
      class="w-full h-full object-cover" 
      src="{{ asset('images/learners.jpg') }}"/></div>
-<div class="absolute -bottom-10 -left-10 z-20 bg-white p-6 rounded-2xl shadow-2xl max-w-[280px] hover-lift">
+<div class="absolute -bottom-10 -left-10 z-20 bg-white p-6 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] max-w-[280px] hover-lift">
 <div class="flex items-center gap-4 mb-3">
 <div class="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
 <span class="material-symbols-outlined">menu_book</span>
@@ -263,31 +262,32 @@
 </div>
 </section>
 <!-- Programs Section -->
-<section class="py-32 px-8 bg-surface-container-low/80 relative" id="about">
-<!-- Subtle Flowing Shape Background -->
-<div class="absolute top-0 right-0 w-1/2 h-full opacity-[0.03] pointer-events-none">
-<svg class="w-full h-full" viewbox="0 0 500 500">
-<path d="M444.5,296.5Q419,343,382,374.5Q345,406,297.5,427.5Q250,449,195.5,435Q141,421,114.5,373.5Q88,326,71,274.5Q54,223,79.5,173.5Q105,124,153,95.5Q201,67,253.5,74.5Q306,82,354.5,108Q403,134,436.5,185.5Q470,237,444.5,296.5Z" fill="#2D8C5E"></path>
-</svg>
-</div>
+<section class="py-32 px-8 relative overflow-hidden" id="programs">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
+<div class="absolute inset-0 bg-grid opacity-[0.02] pointer-events-none"></div>
 <div class="max-w-7xl mx-auto relative z-10">
-<div class="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-8">
-<div class="space-y-4">
-<h2 class="text-5xl md:text-6xl font-young-serif text-on-surface tracking-tightest leading-tight">World-Class <br/>Programs.</h2>
-<p class="text-on-surface-variant text-xl leading-relaxed max-w-xl font-light">Curated pathways for every ambition, from conversational ease to professional certification, delivered by industry experts.</p>
+<div class="mb-24 relative flex items-end justify-center">
+<div class="flex flex-col items-center text-center space-y-6 w-full mx-auto">
+<div class="flex items-center justify-center gap-8 w-full">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] shrink-0">World-class <br/><span class="text-purple italic">programs</span>.</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
 </div>
-<div class="hidden md:flex gap-4">
-<div class="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all">
+<p class="text-on-surface-variant text-xl leading-relaxed font-light max-w-2xl">Curated pathways for every ambition, from conversational ease to professional certification, delivered by industry experts.</p>
+</div>
+<div class="hidden md:flex gap-4 absolute right-0 bottom-2">
+<button class="slider-arrow-left w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="left">
 <span class="material-symbols-outlined">west</span>
-</div>
-<div class="w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all">
+</button>
+<button class="slider-arrow-right w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="right">
 <span class="material-symbols-outlined">east</span>
+</button>
 </div>
 </div>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-<!-- EN -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+<div class="relative overflow-hidden">
+<div class="programs-slider flex gap-6 transition-transform duration-300 ease-out select-none" id="programsSlider" style="width: fit-content;">
+<!-- English -->
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="en">
 <div class="mb-10 relative">
 <img alt="UK Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9fBXUXgMsr-Hhbu0-aE7d4oaCk8ACtNt3np_KPuv_OvjhRU33T2DwBLlUS5T4ytw74AbIiSlGqtj4xsxGIX52mjGe6FH5GI_td1YhpVBwyP2aDpF0MuG_UpkyjDr_gjy1KbWqP1ScNZEXJexrIpo-zj59Wpe8A2Tp9ig6NWIUQYWJJVZEL5E6RxCi0HZ2_9unSrLLk6rox-VPt7V8jbt_G7WbaDNKa6vT8YFsRt4XyyJd9MMMFwGwoRocyIDE3-J3k46SmjHQcBve"/>
 <div class="absolute -top-2 -right-2 text-en-red font-black-900 text-2xl">EN</div>
@@ -295,11 +295,12 @@
 <h3 class="text-xl font-bold text-on-surface mb-4">English Mastery</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Cambridge preparation and business-level fluency. Our most expansive program.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </div>
-<!-- ES -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+
+<!-- Spanish -->
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="es">
 <div class="mb-10 relative">
 <img alt="Spanish Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACTBwMnOv7Pj2HZWIkBQiVbRR6BHwN0aktcIDkkPobYVYC_FDRxF7PY83FHD6xyZ2Fa83QSYqnvtbnE1lGOGVh9Q0YoBndVCtBgqUTl8JJ5uOxclJrNQIUHI8mGrVe8YxsZ0ehd99hGGNpz5pBUBh7TzEWcmKmGdTSOOTZllFSd99W0kJ2rb5K0JU-LW60Kgi9_Y69RBYXhOou-S3_J3xiiQ9J3lXJOCZJ_3-IyrtT4-1_rfZtkGbuaOZXppeI7msVWTpS6M-JhQId"/>
 <div class="absolute -top-2 -right-2 text-es-orange font-black-900 text-2xl">ES</div>
@@ -307,11 +308,12 @@
 <h3 class="text-xl font-bold text-on-surface mb-4">Spanish Immersion</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Deep dive into Castilian and Latin cultures through DELE-aligned courses.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </div>
-<!-- FR -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+
+<!-- French -->
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="fr">
 <div class="mb-10 relative">
 <img alt="French Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnpwuOKXKvsaO5dDtKhu7VC-_rsToQbUWKgSSRNfR-CfyT37MXF2s3Z1DSJas5RGRAUZXMRg6LJzVXH8wqzqoG06hf_Qd4hCcgR7R7yeeCuBkQ3RRe_ZlpGWFyoeH_bYV2gPzvu_nRxMldUY_jTr5fHZSD7L__Nj3ARkLqlWD1DqP3mHoF7KvE-UMbTyCve0MbFOBoM67czJgFj2HGUzMjdCcIlgznMm_zFtmCwfOl-k7TCMQ5saMhmE-j-zEzAzAV2pIRZ-ZzKQQi"/>
 <div class="absolute -top-2 -right-2 text-fr-blue font-black-900 text-2xl">FR</div>
@@ -319,35 +321,60 @@
 <h3 class="text-xl font-bold text-on-surface mb-4">French Elegance</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Master the language of diplomacy and art with DALF-certified instructors.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </div>
-<!-- DE -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+
+<!-- German -->
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="de">
 <div class="mb-10 relative">
-<img alt="German Flag" 
-     class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" 
-     src="{{ asset('images/flag_gr.png') }}"/>
-     <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">DE</div>
+<img alt="German Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_gr.png') }}"/>
+<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">DE</div>
 </div>
 <h3 class="text-xl font-bold text-on-surface mb-4">German Precision</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Focus on technical German and Goëthe-Zertifikat certification pathways.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </div>
-<!-- IT -->
-<div class="bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group">
+
+<!-- Italian -->
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="it">
 <div class="mb-10 relative">
-<img alt="Italian Flag" 
-     class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" 
-     src="{{ asset('images/flag_it.png') }}"/>
-     <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">IT</div>
+<img alt="Italian Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_it.png') }}"/>
+<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">IT</div>
 </div>
 <h3 class="text-xl font-bold text-on-surface mb-4">Italian Heritage</h3>
 <p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Explore the linguistic roots of the Renaissance and culinary traditions.</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-                        Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</div>
+</div>
+
+<!-- Portuguese -->
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="pt">
+<div class="mb-10 relative">
+<img alt="Portuguese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_prgs.png') }}"/>
+<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">PT</div>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-4">Portuguese Power</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Connect with 250+ million speakers worldwide through CAPLE-aligned methodologies.</p>
+<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</div>
+</div>
+
+<!-- Japanese -->
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="jp">
+<div class="mb-10 relative">
+<img alt="Japanese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_japan.png') }}"/>
+<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">JP</div>
+</div>
+<h3 class="text-xl font-bold text-on-surface mb-4">Japanese Mastery</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Master Hiragana, Katakana, and Kanji with JLPT certification pathways included.</p>
+<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
+Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</div>
 </div>
 </div>
 </div>
@@ -355,11 +382,16 @@
 </section>
 <!-- Features/Portal Section -->
 <section class="py-32 px-8 relative overflow-hidden" id="features">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
 <div class="absolute inset-0 bg-grid opacity-[0.02] pointer-events-none"></div>
 <div class="max-w-7xl mx-auto relative z-10">
-<div class="text-center mb-24 space-y-6">
+<div class="text-center mb-24 space-y-6 w-full mx-auto flex flex-col items-center">
 <span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Portal Benefits</span>
-<h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Tools for the Modern Scholar.</h2>
+<div class="flex items-center justify-center gap-8 w-full">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] shrink-0 mb-4">Tools for the <br/><span class="text-purple italic">modern scholar</span>.</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+</div>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-12 gap-8 h-auto md:h-[650px]">
 <div class="md:col-span-8 bg-surface-container-low p-12 rounded-[40px] flex flex-col justify-between overflow-hidden shadow-sm border border-black/5 hover-lift transition-all duration-500">
@@ -404,6 +436,291 @@
 </div>
 </div>
 </section>
+<!-- Testimonials Section -->
+<section class="py-32 px-8 relative overflow-hidden" id="testimonials">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
+<div class="absolute inset-0 bg-grid opacity-[0.02] pointer-events-none"></div>
+<div class="max-w-7xl mx-auto relative z-10">
+<div class="mb-24 relative flex items-end justify-center">
+<div class="flex flex-col items-center text-center space-y-6 w-full mx-auto">
+<span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Reviews</span>
+<div class="flex items-center justify-center gap-8 w-full">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] mb-6 shrink-0">Voices of <br/><span class="text-purple italic">Lumina</span>.</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+</div>
+<p class="text-on-surface-variant text-xl leading-relaxed font-light max-w-2xl">Hear from our scholars who've transformed their linguistic journeys at Lumina Academy.</p>
+</div>
+<div class="hidden md:flex gap-4 absolute right-0 bottom-2">
+<button class="reviews-arrow-left w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="left">
+<span class="material-symbols-outlined">west</span>
+</button>
+<button class="reviews-arrow-right w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="right">
+<span class="material-symbols-outlined">east</span>
+</button>
+</div>
+</div>
+<div class="relative overflow-hidden">
+<div class="reviews-slider flex gap-6 transition-transform duration-300 ease-out select-none pb-4" id="reviewsSlider" style="width: fit-content;">
+<!-- Testimonial 1 -->
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">5.0/5.0</span>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"I went from beginner to Cambridge Advanced in just 18 months. The personalized curriculum and expert instructors made all the difference."</p>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-purple flex items-center justify-center text-white font-black">SM</div>
+<div>
+<p class="font-bold text-on-surface">Sarah Mitchell</p>
+<p class="text-sm text-on-surface-variant">Cambridge CAE</p>
+</div>
+</div>
+</article>
+<!-- Testimonial 2 -->
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">4.5/5.0</span>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"The cultural immersion aspect of the Spanish program helped me understand not just the language, but the people and traditions behind it."</p>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple to-primary flex items-center justify-center text-white font-black">CR</div>
+<div>
+<p class="font-bold text-on-surface">Carlos Rodriguez</p>
+<p class="text-sm text-on-surface-variant">DELE B2</p>
+</div>
+</div>
+</article>
+<!-- Testimonial 3 -->
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">4.0/5.0</span>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"Lumina's cognitive progress tracking showed me exactly where I was improving, keeping me motivated throughout my learning journey."</p>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan to-primary flex items-center justify-center text-white font-black">YT</div>
+<div>
+<p class="font-bold text-on-surface">Yuki Tanaka</p>
+<p class="text-sm text-on-surface-variant">JLPT N1</p>
+</div>
+</div>
+</article>
+<!-- Testimonial 4 -->
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">5.0/5.0</span>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"The interactive digital archive is a game changer. Having historical texts at my fingertips really accelerated my understanding of Italian literature."</p>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-primary flex items-center justify-center text-white font-black">LM</div>
+<div>
+<p class="font-bold text-on-surface">Lucas Moretti</p>
+<p class="text-sm text-on-surface-variant">CELI C1</p>
+</div>
+</div>
+</article>
+<!-- Testimonial 5 -->
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">4.8/5.0</span>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"Passing the Goethe-Zertifikat was always a daunting goal. The structured progression and concierge support gave me the exact confidence I needed."</p>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-black">EW</div>
+<div>
+<p class="font-bold text-on-surface">Emma Wagner</p>
+<p class="text-sm text-on-surface-variant">Goethe B2</p>
+</div>
+</div>
+</article>
+<!-- Testimonial 6 -->
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">5.0/5.0</span>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"The editorial approach to learning is unlike any other platform. It feels less like studying and more like an immersive journey through French culture."</p>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-black">AK</div>
+<div>
+<p class="font-bold text-on-surface">Aisha Khan</p>
+<p class="text-sm text-on-surface-variant">DALF C1</p>
+</div>
+</div>
+</article>
+</div>
+</div>
+</section>
+<!-- Pricing Section -->
+<section class="py-32 px-8 relative overflow-hidden" id="pricing">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
+<div class="absolute inset-0 bg-grid opacity-[0.02] pointer-events-none"></div>
+<div class="max-w-7xl mx-auto relative z-10">
+<div class="text-center mb-24 space-y-6 w-full mx-auto flex flex-col items-center">
+<span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Pricing Plans</span>
+<div class="flex items-center justify-center gap-8 w-full">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] mb-6 shrink-0">Investment in <br/><span class="text-purple italic">your future</span>.</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+</div>
+<p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Choose the language course that best fits your learning goals and linguistic ambitions.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+<!-- IELTS Course -->
+<div class="bg-slate-50 rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
+<div class="mb-8">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-sm mb-4">
+<span class="material-symbols-outlined text-[16px]">trending_up</span>
+IELTS Preparation
+</div>
+<h3 class="text-2xl font-bold text-on-surface mb-2">IELTS Mastery</h3>
+<p class="text-on-surface-variant text-sm font-light">Comprehensive preparation for International English Language Testing System</p>
+</div>
+<div class="mb-8">
+<div class="text-3xl font-bold text-on-surface">7,000 <span class="text-lg text-on-surface-variant">DA/course</span></div>
+<p class="text-sm text-on-surface-variant mt-2">Available for all proficiency levels</p>
+</div>
+<div class="space-y-2 mb-8 flex-grow">
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">A1 - A2:</span>
+<span class="text-on-surface-variant text-sm">Foundation & Elementary</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">B1 - B2:</span>
+<span class="text-on-surface-variant text-sm">Intermediate & Upper Intermediate</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">C1 - C2:</span>
+<span class="text-on-surface-variant text-sm">Advanced & Mastery</span>
+</div>
+</div>
+<ul class="space-y-4 mb-8 flex-grow">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+<span class="text-on-surface-variant">12-week intensive program</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+<span class="text-on-surface-variant">Mock exam practice tests</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+<span class="text-on-surface-variant">Expert listening & speaking training</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+<span class="text-on-surface-variant">Writing feedback & correction</span>
+</li>
+</ul>
+</div>
+
+<!-- Contact Card (Middle) -->
+<div class="bg-gradient-to-br from-primary to-primary/80 rounded-3xl p-8 flex flex-col justify-between items-center text-center text-white hover-lift overflow-hidden">
+<div class="w-full mb-6">
+<div class="w-full h-48 rounded-2xl overflow-hidden shadow-lg border-4 border-white/20">
+<iframe width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3192.5614755253276!2d3.0588235759999997!3d36.7372088!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x128fab4c1b7a7c19%3A0x1234567890abc!2sAlgiers%2C%20Algeria!5e0!3m2!1sen!2s!4v1234567890"></iframe>
+</div>
+</div>
+<h3 class="text-2xl font-bold mb-4">Looking for More Options?</h3>
+<p class="text-white/90 mb-2 text-sm font-light">Have questions about our other pricing plans and course options?</p>
+<p class="text-white/80 text-xs mb-8 font-light">Get in touch with our team for personalized guidance and special offers.</p>
+<button class="contact-us-btn w-full px-8 py-3 bg-white text-primary font-bold rounded-2xl hover:bg-white/90 transition-all">Contact Us Now</button>
+<div class="mt-8 pt-8 border-t border-white/20 space-y-3 text-sm">
+<div class="flex items-center justify-center gap-3 text-white/80">
+<span class="material-symbols-outlined text-[20px]">mail</span>
+<a href="mailto:admin@speakly.com" class="hover:text-white transition-colors">admin@speakly.com</a>
+</div>
+<div class="flex items-center justify-center gap-3 text-white/80">
+<span class="material-symbols-outlined text-[20px]">phone</span>
+<span>+213 345 464 654</span>
+</div>
+</div>
+</div>
+
+<!-- TCF Course -->
+<div class="bg-slate-50 rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
+<div class="mb-8">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-sm mb-4">
+<span class="material-symbols-outlined text-[16px]">language</span>
+TCF Français
+</div>
+<h3 class="text-2xl font-bold text-on-surface mb-2">TCF Certification</h3>
+<p class="text-on-surface-variant text-sm font-light">Test de Connaissance du Français - Official French proficiency exam</p>
+</div>
+<div class="mb-8">
+<div class="text-3xl font-bold text-on-surface">6,000 <span class="text-lg text-on-surface-variant">DA/course</span></div>
+<p class="text-sm text-on-surface-variant mt-2">Available for all proficiency levels</p>
+</div>
+<div class="space-y-2 mb-8 flex-grow">
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">A1 - A2:</span>
+<span class="text-on-surface-variant text-sm">Foundation & Elementary</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">B1 - B2:</span>
+<span class="text-on-surface-variant text-sm">Intermediate & Upper Intermediate</span>
+</div>
+<div class="flex items-center gap-3">
+<span class="text-primary font-bold text-sm min-w-fit">C1 - C2:</span>
+<span class="text-on-surface-variant text-sm">Advanced & Mastery</span>
+</div>
+</div>
+<ul class="space-y-4 mb-8 flex-grow">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+<span class="text-on-surface-variant">8-week focused preparation</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+<span class="text-on-surface-variant">Official TCF practice materials</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+<span class="text-on-surface-variant">Phonetics & pronunciation coaching</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-xl flex-shrink-0">check_circle</span>
+<span class="text-on-surface-variant">Final exam simulation</span>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-24 px-8 bg-transparent relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
+<!-- Educational Background Elements -->
+<div class="absolute inset-0 opacity-[0.08]">
+<span class="absolute top-[10%] left-[5%] material-symbols-outlined text-[120px] text-primary/30">menu_book</span>
+<span class="absolute top-[15%] right-[8%] material-symbols-outlined text-[100px] text-primary/30">school</span>
+<span class="absolute bottom-[20%] left-[10%] material-symbols-outlined text-[110px] text-primary/30">translate</span>
+<span class="absolute bottom-[10%] right-[12%] material-symbols-outlined text-[130px] text-primary/30">psychology</span>
+<span class="absolute top-[50%] left-[3%] material-symbols-outlined text-[90px] text-primary/30">record_voice_over</span>
+<span class="absolute top-[40%] right-[5%] material-symbols-outlined text-[100px] text-primary/30">lightbulb</span>
+</div>
+<div class="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
+<div class="flex items-center justify-center gap-8 w-full mb-10">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] shrink-0">Ready to master a<br/><span class="text-purple italic">new language</span>?</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+</div>
+<p class="text-xl md:text-2xl text-on-surface-variant max-w-2xl mx-auto mb-12 leading-relaxed font-light">Join thousands of scholars who've transformed their linguistic future with Lumina Academy.</p>
+<div class="flex flex-col md:flex-row gap-4 justify-center">
+<a href="{{ url('/') }}#programs" class="px-8 py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-colors">Explore Programs</a>
+</div>
+</div>
+</section>
 </main>
 <footer class="bg-white/90 border-t border-primary/10 py-20 px-8">
 <div class="max-w-7xl mx-auto">
@@ -440,4 +757,518 @@
 </div>
 </div>
 </footer>
+<script>
+// Language Details Data
+const languageData = {
+  en: {
+    name: 'English',
+    title: 'English Mastery',
+    description: 'Cambridge preparation and business-level fluency. Our most expansive program.',
+    fullDescription: 'Master the English language with our comprehensive programs designed for learners of all levels. From beginner fundamentals to advanced business communication, our expert instructors guide you through Cambridge exam preparation, TOEFL/IELTS readiness, and professional English mastery.',
+    certifications: [
+      { name: 'Cambridge ESOL', exams: ['KET', 'PET', 'FCE', 'CAE', 'CPE'] },
+      { name: 'IELTS', exams: ['Academic', 'General Training'] },
+      { name: 'TOEFL', exams: ['iBT'] },
+      { name: 'Business English', exams: ['BEC Preliminary', 'BEC Vantage', 'BEC Higher'] }
+    ]
+  },
+  es: {
+    name: 'Spanish',
+    title: 'Spanish Immersion',
+    description: 'Deep dive into Castilian and Latin cultures through DELE-aligned courses.',
+    fullDescription: 'Immerse yourself in the Spanish language and rich Hispanic cultures. Our programs combine linguistic excellence with cultural exploration, preparing you for everything from casual conversations to professional environments across Spain and Latin America.',
+    certifications: [
+      { name: 'DELE', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
+      { name: 'SIELE', exams: ['SIELE Global'] },
+      { name: 'Cervantes Institute', exams: ['Official Certification'] }
+    ]
+  },
+  fr: {
+    name: 'French',
+    title: 'French Elegance',
+    description: 'Master the language of diplomacy and art with DALF-certified instructors.',
+    fullDescription: 'Discover the elegance and sophistication of the French language. Our courses prepare you for successful communication in diplomatic, cultural, and professional contexts, with expert guidance from certified DALF instructors.',
+    certifications: [
+      { name: 'DELF', exams: ['A1', 'A2', 'B1', 'B2'] },
+      { name: 'DALF', exams: ['C1', 'C2'] },
+      { name: 'TCF', exams: ['TCF Tout Public', 'TCF DAP'] }
+    ]
+  },
+  de: {
+    name: 'German',
+    title: 'German Precision',
+    description: 'Focus on technical German and Goëthe-Zertifikat certification pathways.',
+    fullDescription: 'Master the precision and structure of the German language. Whether for academic pursuits, technical communication, or professional advancement, our programs equip you with the linguistic tools needed to excel in German-speaking environments.',
+    certifications: [
+      { name: 'Goethe Zertifikat', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
+      { name: 'TestDaF', exams: ['TestDaF (Academic)'] },
+      { name: 'ZD', exams: ['Zertifikat Deutsch'] }
+    ]
+  },
+  it: {
+    name: 'Italian',
+    title: 'Italian Heritage',
+    description: 'Explore the linguistic roots of the Renaissance and culinary traditions.',
+    fullDescription: 'Connect with Italian culture, art, and tradition through language mastery. From opera and literature to culinary arts and modern business communication, explore the richness of Italian across all proficiency levels.',
+    certifications: [
+      { name: 'CELI', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
+      { name: 'PLIDA', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
+      { name: 'AIL', exams: ['Italian Language Certificate'] }
+    ]
+  },
+  pt: {
+    name: 'Portuguese',
+    title: 'Portuguese Power',
+    description: 'Connect with 250+ million speakers worldwide through CAPLE-aligned methodologies.',
+    fullDescription: 'Access the world of Portuguese, spoken by over 250 million people globally. Our programs cover both European and Brazilian variants, preparing you to communicate effectively across continents.',
+    certifications: [
+      { name: 'CAPLE', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
+      { name: 'CELPE-BRAS', exams: ['Brazilian Portuguese'] },
+      { name: 'DEPLE', exams: ['European Portuguese'] }
+    ]
+  },
+  jp: {
+    name: 'Japanese',
+    title: 'Japanese Mastery',
+    description: 'Master Hiragana, Katakana, and Kanji with JLPT certification pathways included.',
+    fullDescription: 'Master the intricacies of the Japanese language, from fundamental writing systems to complex cultural communication. Our structured approach ensures steady progression through each proficiency level with cultural context.',
+    certifications: [
+      { name: 'JLPT', exams: ['N1', 'N2', 'N3', 'N4', 'N5'] },
+      { name: 'J.TEST', exams: ['J.TEST for Japanese'] },
+      { name: 'Kanji Kentei', exams: ['Kanji Proficiency Test'] }
+    ]
+  }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  const slider = document.getElementById('programsSlider');
+  const leftArrow = document.querySelector('.slider-arrow-left');
+  const rightArrow = document.querySelector('.slider-arrow-right');
+  const cards = document.querySelectorAll('.slider-card');
+  
+  let currentSlide = 0;
+  const cardWidth = 384; // w-96 = 24rem = 384px
+  const gap = 24;
+  const cardsPerSlide = 3;
+  const totalSlides = Math.ceil(cards.length / cardsPerSlide);
+  
+  let isDragging = false;
+  let startX = 0;
+  let currentX = 0;
+  let dragThreshold = 50;
+  
+  function updateSliderPosition() {
+    const translateAmount = currentSlide * (cardWidth + gap) * cardsPerSlide;
+    slider.style.transform = `translateX(-${translateAmount}px)`;
+  }
+  
+  function updateArrowStates() {
+    if (currentSlide === 0) {
+      leftArrow.style.opacity = '0.5';
+      leftArrow.style.pointerEvents = 'none';
+    } else {
+      leftArrow.style.opacity = '1';
+      leftArrow.style.pointerEvents = 'auto';
+    }
+    
+    if (currentSlide === totalSlides - 1) {
+      rightArrow.style.opacity = '0.5';
+      rightArrow.style.pointerEvents = 'none';
+    } else {
+      rightArrow.style.opacity = '1';
+      rightArrow.style.pointerEvents = 'auto';
+    }
+  }
+  
+  // Arrow click handlers
+  leftArrow.addEventListener('click', function() {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateSliderPosition();
+      updateArrowStates();
+    }
+  });
+  
+  rightArrow.addEventListener('click', function() {
+    if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      updateSliderPosition();
+      updateArrowStates();
+    }
+  });
+  
+  // Drag functionality
+  slider.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.clientX;
+    slider.style.cursor = 'grabbing';
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    currentX = e.clientX - startX;
+  });
+  
+  document.addEventListener('mouseup', (e) => {
+    if (!isDragging) return;
+    isDragging = false;
+    slider.style.cursor = 'grab';
+    
+    if (Math.abs(currentX) > dragThreshold) {
+      if (currentX > 0 && currentSlide > 0) {
+        currentSlide--;
+      } else if (currentX < 0 && currentSlide < totalSlides - 1) {
+        currentSlide++;
+      }
+      updateSliderPosition();
+      updateArrowStates();
+    }
+    currentX = 0;
+  });
+  
+  updateArrowStates();
+
+  // Reviews Slider Logic
+  const reviewsSlider = document.getElementById('reviewsSlider');
+  const reviewsLeftArrow = document.querySelector('.reviews-arrow-left');
+  const reviewsRightArrow = document.querySelector('.reviews-arrow-right');
+  const reviewCards = document.querySelectorAll('.reviews-slider .review-card, .reviews-slider article');
+  
+  let currentReviewSlide = 0;
+  // Based on w-96 = 384px + 24px gap
+  const reviewCardWidth = 384; 
+  const reviewGap = 24;
+  const reviewCardsPerSlide = 3;
+  const totalReviewSlides = Math.ceil(reviewCards.length / reviewCardsPerSlide);
+  
+  let isReviewDragging = false;
+  let reviewStartX = 0;
+  let currentReviewX = 0;
+  
+  function updateReviewSliderPosition() {
+    const translateAmount = currentReviewSlide * (reviewCardWidth + reviewGap) * reviewCardsPerSlide;
+    if (reviewsSlider) {
+      reviewsSlider.style.transform = `translateX(-${translateAmount}px)`;
+    }
+  }
+  
+  function updateReviewArrowStates() {
+    if (!reviewsLeftArrow || !reviewsRightArrow) return;
+    
+    if (currentReviewSlide === 0) {
+      reviewsLeftArrow.style.opacity = '0.5';
+      reviewsLeftArrow.style.pointerEvents = 'none';
+    } else {
+      reviewsLeftArrow.style.opacity = '1';
+      reviewsLeftArrow.style.pointerEvents = 'auto';
+    }
+    
+    if (currentReviewSlide >= totalReviewSlides - 1) {
+      reviewsRightArrow.style.opacity = '0.5';
+      reviewsRightArrow.style.pointerEvents = 'none';
+    } else {
+      reviewsRightArrow.style.opacity = '1';
+      reviewsRightArrow.style.pointerEvents = 'auto';
+    }
+  }
+  
+  if (reviewsLeftArrow && reviewsRightArrow) {
+    reviewsLeftArrow.addEventListener('click', function() {
+      if (currentReviewSlide > 0) {
+        currentReviewSlide--;
+        updateReviewSliderPosition();
+        updateReviewArrowStates();
+      }
+    });
+    
+    reviewsRightArrow.addEventListener('click', function() {
+      if (currentReviewSlide < totalReviewSlides - 1) {
+        currentReviewSlide++;
+        updateReviewSliderPosition();
+        updateReviewArrowStates();
+      }
+    });
+  }
+
+  if (reviewsSlider) {
+    reviewsSlider.addEventListener('mousedown', (e) => {
+      isReviewDragging = true;
+      reviewStartX = e.clientX;
+      reviewsSlider.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isReviewDragging) return;
+      currentReviewX = e.clientX - reviewStartX;
+    });
+    
+    document.addEventListener('mouseup', (e) => {
+      if (!isReviewDragging) return;
+      isReviewDragging = false;
+      reviewsSlider.style.cursor = 'grab';
+      
+      if (Math.abs(currentReviewX) > dragThreshold) {
+        if (currentReviewX > 0 && currentReviewSlide > 0) {
+          currentReviewSlide--;
+        } else if (currentReviewX < 0 && currentReviewSlide < totalReviewSlides - 1) {
+          currentReviewSlide++;
+        }
+        updateReviewSliderPosition();
+        updateReviewArrowStates();
+      }
+      currentReviewX = 0;
+    });
+  }
+  
+  updateReviewArrowStates();
+  
+  // Modal functionality
+  cards.forEach(card => {
+    card.addEventListener('click', function(e) {
+      // Only open modal if not dragging
+      if (Math.abs(currentX) < 5) {
+        const langCode = this.getAttribute('data-lang');
+        openLanguageModal(langCode);
+      }
+    });
+  });
+  
+  // Home button scroll to top
+  const homeLink = document.querySelector('.nav-home-link');
+  if (homeLink) {
+    homeLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+  
+  // Contact Us button
+  const contactBtn = document.querySelector('.contact-us-btn');
+  if (contactBtn) {
+    contactBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      alert('📧 admin@speakly.com\n📱 +213 345 464 654');
+    });
+  }
+});
+
+function openLanguageModal(langCode) {
+  const data = languageData[langCode];
+  if (!data) return;
+  
+  const modal = document.createElement('div');
+  modal.className = 'language-modal';
+  modal.innerHTML = `
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+      <button class="modal-close">×</button>
+      <div class="modal-header">
+        <h2>${data.title}</h2>
+        <p class="modal-subtitle">${data.description}</p>
+      </div>
+      <div class="modal-body">
+        <div class="modal-section">
+          <h3>About This Program</h3>
+          <p>${data.fullDescription}</p>
+        </div>
+        <div class="modal-section">
+          <h3>Certified Exams & Pathways</h3>
+          <div class="certifications-grid">
+            ${data.certifications.map(cert => `
+              <div class="certification-card">
+                <h4>${cert.name}</h4>
+                <ul>
+                  ${cert.exams.map(exam => `<li>${exam}</li>`).join('')}
+                </ul>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Close modal functionality
+  const closeBtn = modal.querySelector('.modal-close');
+  const overlay = modal.querySelector('.modal-overlay');
+  
+  closeBtn.addEventListener('click', () => modal.remove());
+  overlay.addEventListener('click', () => modal.remove());
+  
+  // Close on escape key
+  const escapeHandler = (e) => {
+    if (e.key === 'Escape') {
+      modal.remove();
+      document.removeEventListener('keydown', escapeHandler);
+    }
+  };
+  document.addEventListener('keydown', escapeHandler);
+}
+</script>
+<style>
+.language-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  background: white;
+  border-radius: 32px;
+  max-width: 700px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 50%;
+  font-size: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  z-index: 1001;
+}
+
+.modal-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  padding: 40px 40px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modal-header h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  color: #1f1f1f;
+}
+
+.modal-subtitle {
+  margin: 0;
+  color: #666;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.modal-body {
+  padding: 40px;
+}
+
+.modal-section {
+  margin-bottom: 32px;
+}
+
+.modal-section:last-child {
+  margin-bottom: 0;
+}
+
+.modal-section h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 16px 0;
+  color: #1f1f1f;
+}
+
+.modal-section p {
+  margin: 0;
+  color: #666;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+.certifications-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.certification-card {
+  background: #f5f5f5;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.certification-card h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f1f1f;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.certification-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.certification-card li {
+  background: white;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #333;
+  border: 1px solid #ddd;
+}
+</style>
+</script>
 </body></html>
