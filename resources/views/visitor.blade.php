@@ -218,7 +218,6 @@
 <section class="relative min-h-[90vh] flex items-center px-8 overflow-hidden">
 <!-- Background Motifs -->
 <div class="absolute inset-0 bg-grid opacity-[0.03] pointer-events-none"></div>
-<div class="absolute -left-20 top-20 text-[600px] font-black-900 text-primary/[0.03] select-none leading-none">L</div>
 <div class="absolute right-[10%] top-1/4 opacity-[0.05] pointer-events-none">
 <span class="material-symbols-outlined text-[400px]">explore</span>
 </div>
@@ -234,10 +233,10 @@
 <p class="text-xl md:text-2xl text-on-surface-variant max-w-xl mb-12 leading-relaxed font-light">
                     Step beyond standard learning. Experience an editorial approach to language mastery where every lesson is a curated exhibit of culture and fluency.
                 </p>
-<div class="flex flex-wrap gap-6 items-center">
-<a href="/register-login?tab=register" class="bg-primary text-white px-12 py-5 rounded-full font-black text-lg shadow-xl shadow-primary/20 hover-lift active:scale-95 transition-all">Join Our School</a>
-<a class="flex items-center gap-3 font-bold text-on-surface hover:text-primary transition-colors group" href="#about">
-                        View Curriculum 
+<div class="flex flex-wrap justify-center lg:justify-start items-center gap-6">
+<a href="/register-login?tab=register" class="bg-primary text-white px-14 py-6 rounded-full font-black text-xl shadow-xl shadow-primary/20 hover-lift active:scale-95 transition-all text-center">Join Our School</a>
+<a class="flex items-center justify-center gap-3 font-bold text-on-surface hover:text-primary transition-colors group text-lg" href="#pricing">
+                        Contact Us 
                         <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
 </a>
 </div>
@@ -247,7 +246,7 @@
 <img alt="Collaborative learning in a modern environment" 
      class="w-full h-full object-cover" 
      src="{{ asset('images/learners.jpg') }}"/></div>
-<div class="absolute -bottom-10 -left-10 z-20 bg-white p-6 rounded-2xl shadow-2xl max-w-[280px] hover-lift">
+<div class="absolute -bottom-10 -left-10 z-20 bg-white p-6 rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] max-w-[280px] hover-lift">
 <div class="flex items-center gap-4 mb-3">
 <div class="w-12 h-12 rounded-full bg-surface-container-low flex items-center justify-center text-primary">
 <span class="material-symbols-outlined">menu_book</span>
@@ -263,20 +262,20 @@
 </div>
 </section>
 <!-- Programs Section -->
-<section class="py-32 px-8 bg-white relative" id="programs">
-<!-- Subtle Flowing Shape Background -->
-<div class="absolute top-0 right-0 w-1/2 h-full opacity-[0.03] pointer-events-none">
-<svg class="w-full h-full" viewbox="0 0 500 500">
-<path d="M444.5,296.5Q419,343,382,374.5Q345,406,297.5,427.5Q250,449,195.5,435Q141,421,114.5,373.5Q88,326,71,274.5Q54,223,79.5,173.5Q105,124,153,95.5Q201,67,253.5,74.5Q306,82,354.5,108Q403,134,436.5,185.5Q470,237,444.5,296.5Z" fill="#2D8C5E"></path>
-</svg>
-</div>
+<section class="py-32 px-8 relative overflow-hidden" id="programs">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
+<div class="absolute inset-0 bg-grid opacity-[0.02] pointer-events-none"></div>
 <div class="max-w-7xl mx-auto relative z-10">
-<div class="mb-24 flex flex-col md:flex-row md:items-end justify-between gap-8">
-<div class="space-y-4">
-<h2 class="text-5xl md:text-6xl font-young-serif text-on-surface tracking-tightest leading-tight">World-Class <br/>Programs.</h2>
-<p class="text-on-surface-variant text-xl leading-relaxed max-w-xl font-light">Curated pathways for every ambition, from conversational ease to professional certification, delivered by industry experts.</p>
+<div class="mb-24 relative flex items-end justify-center">
+<div class="flex flex-col items-center text-center space-y-6 w-full mx-auto">
+<div class="flex items-center justify-center gap-8 w-full">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] shrink-0">World-class <br/><span class="text-purple italic">programs</span>.</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
 </div>
-<div class="hidden md:flex gap-4">
+<p class="text-on-surface-variant text-xl leading-relaxed font-light max-w-2xl">Curated pathways for every ambition, from conversational ease to professional certification, delivered by industry experts.</p>
+</div>
+<div class="hidden md:flex gap-4 absolute right-0 bottom-2">
 <button class="slider-arrow-left w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="left">
 <span class="material-symbols-outlined">west</span>
 </button>
@@ -288,7 +287,7 @@
 <div class="relative overflow-hidden">
 <div class="programs-slider flex gap-6 transition-transform duration-300 ease-out select-none" id="programsSlider" style="width: fit-content;">
 <!-- English -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="en">
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="en">
 <div class="mb-10 relative">
 <img alt="UK Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9fBXUXgMsr-Hhbu0-aE7d4oaCk8ACtNt3np_KPuv_OvjhRU33T2DwBLlUS5T4ytw74AbIiSlGqtj4xsxGIX52mjGe6FH5GI_td1YhpVBwyP2aDpF0MuG_UpkyjDr_gjy1KbWqP1ScNZEXJexrIpo-zj59Wpe8A2Tp9ig6NWIUQYWJJVZEL5E6RxCi0HZ2_9unSrLLk6rox-VPt7V8jbt_G7WbaDNKa6vT8YFsRt4XyyJd9MMMFwGwoRocyIDE3-J3k46SmjHQcBve"/>
 <div class="absolute -top-2 -right-2 text-en-red font-black-900 text-2xl">EN</div>
@@ -301,7 +300,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- Spanish -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="es">
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="es">
 <div class="mb-10 relative">
 <img alt="Spanish Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACTBwMnOv7Pj2HZWIkBQiVbRR6BHwN0aktcIDkkPobYVYC_FDRxF7PY83FHD6xyZ2Fa83QSYqnvtbnE1lGOGVh9Q0YoBndVCtBgqUTl8JJ5uOxclJrNQIUHI8mGrVe8YxsZ0ehd99hGGNpz5pBUBh7TzEWcmKmGdTSOOTZllFSd99W0kJ2rb5K0JU-LW60Kgi9_Y69RBYXhOou-S3_J3xiiQ9J3lXJOCZJ_3-IyrtT4-1_rfZtkGbuaOZXppeI7msVWTpS6M-JhQId"/>
 <div class="absolute -top-2 -right-2 text-es-orange font-black-900 text-2xl">ES</div>
@@ -314,7 +313,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- French -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="fr">
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="fr">
 <div class="mb-10 relative">
 <img alt="French Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnpwuOKXKvsaO5dDtKhu7VC-_rsToQbUWKgSSRNfR-CfyT37MXF2s3Z1DSJas5RGRAUZXMRg6LJzVXH8wqzqoG06hf_Qd4hCcgR7R7yeeCuBkQ3RRe_ZlpGWFyoeH_bYV2gPzvu_nRxMldUY_jTr5fHZSD7L__Nj3ARkLqlWD1DqP3mHoF7KvE-UMbTyCve0MbFOBoM67czJgFj2HGUzMjdCcIlgznMm_zFtmCwfOl-k7TCMQ5saMhmE-j-zEzAzAV2pIRZ-ZzKQQi"/>
 <div class="absolute -top-2 -right-2 text-fr-blue font-black-900 text-2xl">FR</div>
@@ -327,7 +326,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- German -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="de">
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="de">
 <div class="mb-10 relative">
 <img alt="German Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_gr.png') }}"/>
 <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">DE</div>
@@ -340,7 +339,7 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- Italian -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="it">
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="it">
 <div class="mb-10 relative">
 <img alt="Italian Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_it.png') }}"/>
 <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">IT</div>
@@ -353,9 +352,9 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- Portuguese -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="pt">
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="pt">
 <div class="mb-10 relative">
-<img alt="Portuguese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8rL7E9M0i5DJh8t4n_xOhJ5O9zqaB9Z_N5nF3M9KqZpWv6EY3E7C_7bQ_8QhHkXQpN8ZJvTZqNQcvyIVnKPm_zYqYYn3h8kKf8C8qG9nG_CrHX3E0gLnhxWpFJ6K1vU7HQz_HjPxvJSqEpJrVBQF9K4ePp5N6Y"/>
+<img alt="Portuguese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_prgs.png') }}"/>
 <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">PT</div>
 </div>
 <h3 class="text-xl font-bold text-on-surface mb-4">Portuguese Power</h3>
@@ -366,9 +365,9 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 
 <!-- Japanese -->
-<div class="slider-card bg-white p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="jp">
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="jp">
 <div class="mb-10 relative">
-<img alt="Japanese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJY4Z7q4m8qKlJ3qJ0zH8m9Pp7vQ5qKzQ8pR9tS0uVwXyZ2aAbCdEfGhIjK4L9nM5oP6qRsTuVuWxYzB5nKpQrStVwXyZ2aAbCdEfGhIjK4L9nM5oP6qRs"/>
+<img alt="Japanese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_japan.png') }}"/>
 <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">JP</div>
 </div>
 <h3 class="text-xl font-bold text-on-surface mb-4">Japanese Mastery</h3>
@@ -383,11 +382,16 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </section>
 <!-- Features/Portal Section -->
 <section class="py-32 px-8 relative overflow-hidden" id="features">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
 <div class="absolute inset-0 bg-grid opacity-[0.02] pointer-events-none"></div>
 <div class="max-w-7xl mx-auto relative z-10">
-<div class="text-center mb-24 space-y-6">
+<div class="text-center mb-24 space-y-6 w-full mx-auto flex flex-col items-center">
 <span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Portal Benefits</span>
-<h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Tools for the Modern Scholar.</h2>
+<div class="flex items-center justify-center gap-8 w-full">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] shrink-0 mb-4">Tools for the <br/><span class="text-purple italic">modern scholar</span>.</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+</div>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-12 gap-8 h-auto md:h-[650px]">
 <div class="md:col-span-8 bg-surface-container-low p-12 rounded-[40px] flex flex-col justify-between overflow-hidden shadow-sm border border-black/5 hover-lift transition-all duration-500">
@@ -433,86 +437,147 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </section>
 <!-- Testimonials Section -->
-<section class="py-32 px-8 bg-white relative overflow-hidden" id="testimonials">
+<section class="py-32 px-8 relative overflow-hidden" id="testimonials">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
+<div class="absolute inset-0 bg-grid opacity-[0.02] pointer-events-none"></div>
 <div class="max-w-7xl mx-auto relative z-10">
-<div class="text-center mb-24 space-y-6">
-<h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Voices of Lumina.</h2>
-<p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Hear from our scholars who've transformed their linguistic journeys at Lumina Academy.</p>
+<div class="mb-24 relative flex items-end justify-center">
+<div class="flex flex-col items-center text-center space-y-6 w-full mx-auto">
+<span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Reviews</span>
+<div class="flex items-center justify-center gap-8 w-full">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] mb-6 shrink-0">Voices of <br/><span class="text-purple italic">Lumina</span>.</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
 </div>
-<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<p class="text-on-surface-variant text-xl leading-relaxed font-light max-w-2xl">Hear from our scholars who've transformed their linguistic journeys at Lumina Academy.</p>
+</div>
+<div class="hidden md:flex gap-4 absolute right-0 bottom-2">
+<button class="reviews-arrow-left w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="left">
+<span class="material-symbols-outlined">west</span>
+</button>
+<button class="reviews-arrow-right w-12 h-12 rounded-full border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary hover:text-white transition-all" data-direction="right">
+<span class="material-symbols-outlined">east</span>
+</button>
+</div>
+</div>
+<div class="relative overflow-hidden">
+<div class="reviews-slider flex gap-6 transition-transform duration-300 ease-out select-none pb-4" id="reviewsSlider" style="width: fit-content;">
 <!-- Testimonial 1 -->
-<div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
-<div class="mb-6">
-<div class="flex items-center gap-1 mb-4">
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">5.0/5.0</span>
 </div>
 <p class="text-on-surface-variant text-base leading-relaxed font-medium">"I went from beginner to Cambridge Advanced in just 18 months. The personalized curriculum and expert instructors made all the difference."</p>
 </div>
-<div class="flex items-center gap-4 mt-auto pt-6 border-t border-black/5">
-<div class="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-purple flex-shrink-0"></div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-purple flex items-center justify-center text-white font-black">SM</div>
 <div>
 <p class="font-bold text-on-surface">Sarah Mitchell</p>
 <p class="text-sm text-on-surface-variant">Cambridge CAE</p>
 </div>
 </div>
-</div>
+</article>
 <!-- Testimonial 2 -->
-<div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
-<div class="mb-6">
-<div class="flex items-center gap-1 mb-4">
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary/50 text-2xl">star_half</span>
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">4.5/5.0</span>
 </div>
 <p class="text-on-surface-variant text-base leading-relaxed font-medium">"The cultural immersion aspect of the Spanish program helped me understand not just the language, but the people and traditions behind it."</p>
 </div>
-<div class="flex items-center gap-4 mt-auto pt-6 border-t border-black/5">
-<div class="w-14 h-14 rounded-full bg-gradient-to-br from-purple to-primary flex-shrink-0"></div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple to-primary flex items-center justify-center text-white font-black">CR</div>
 <div>
-<p class="font-bold text-on-surface">Carlos Rodríguez</p>
+<p class="font-bold text-on-surface">Carlos Rodriguez</p>
 <p class="text-sm text-on-surface-variant">DELE B2</p>
 </div>
 </div>
-</div>
+</article>
 <!-- Testimonial 3 -->
-<div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
-<div class="mb-6">
-<div class="flex items-center gap-1 mb-4">
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
-<span class="material-symbols-outlined text-primary text-2xl">star</span>
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">4.0/5.0</span>
 </div>
 <p class="text-on-surface-variant text-base leading-relaxed font-medium">"Lumina's cognitive progress tracking showed me exactly where I was improving, keeping me motivated throughout my learning journey."</p>
 </div>
-<div class="flex items-center gap-4 mt-auto pt-6 border-t border-black/5">
-<div class="w-14 h-14 rounded-full bg-gradient-to-br from-cyan to-primary flex-shrink-0"></div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan to-primary flex items-center justify-center text-white font-black">YT</div>
 <div>
 <p class="font-bold text-on-surface">Yuki Tanaka</p>
 <p class="text-sm text-on-surface-variant">JLPT N1</p>
 </div>
 </div>
+</article>
+<!-- Testimonial 4 -->
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">5.0/5.0</span>
 </div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"The interactive digital archive is a game changer. Having historical texts at my fingertips really accelerated my understanding of Italian literature."</p>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-primary flex items-center justify-center text-white font-black">LM</div>
+<div>
+<p class="font-bold text-on-surface">Lucas Moretti</p>
+<p class="text-sm text-on-surface-variant">CELI C1</p>
+</div>
+</div>
+</article>
+<!-- Testimonial 5 -->
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">4.8/5.0</span>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"Passing the Goethe-Zertifikat was always a daunting goal. The structured progression and concierge support gave me the exact confidence I needed."</p>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-black">EW</div>
+<div>
+<p class="font-bold text-on-surface">Emma Wagner</p>
+<p class="text-sm text-on-surface-variant">Goethe B2</p>
+</div>
+</div>
+</article>
+<!-- Testimonial 6 -->
+<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+<div class="relative z-10 mb-6">
+<div class="mb-4">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">5.0/5.0</span>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"The editorial approach to learning is unlike any other platform. It feels less like studying and more like an immersive journey through French culture."</p>
+</div>
+<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-black">AK</div>
+<div>
+<p class="font-bold text-on-surface">Aisha Khan</p>
+<p class="text-sm text-on-surface-variant">DALF C1</p>
+</div>
+</div>
+</article>
 </div>
 </div>
 </section>
 <!-- Pricing Section -->
-<section class="py-32 px-8 bg-white relative overflow-hidden" id="pricing">
+<section class="py-32 px-8 relative overflow-hidden" id="pricing">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
+<div class="absolute inset-0 bg-grid opacity-[0.02] pointer-events-none"></div>
 <div class="max-w-7xl mx-auto relative z-10">
-<div class="text-center mb-24 space-y-6">
-<h2 class="text-5xl md:text-6xl font-young-serif tracking-header text-on-surface">Investment in Your Future.</h2>
+<div class="text-center mb-24 space-y-6 w-full mx-auto flex flex-col items-center">
+<span class="inline-block px-4 py-1.5 rounded-full bg-primary/5 text-primary font-black tracking-widest uppercase text-xs border border-primary/10">Pricing Plans</span>
+<div class="flex items-center justify-center gap-8 w-full">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] mb-6 shrink-0">Investment in <br/><span class="text-purple italic">your future</span>.</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+</div>
 <p class="text-on-surface-variant text-xl leading-relaxed max-w-2xl mx-auto font-light">Choose the language course that best fits your learning goals and linguistic ambitions.</p>
 </div>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
 <!-- IELTS Course -->
-<div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
+<div class="bg-slate-50 rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
 <div class="mb-8">
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-sm mb-4">
 <span class="material-symbols-outlined text-[16px]">trending_up</span>
@@ -583,7 +648,7 @@ IELTS Preparation
 </div>
 
 <!-- TCF Course -->
-<div class="bg-white rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
+<div class="bg-slate-50 rounded-3xl p-8 border border-black/5 hover-lift flex flex-col">
 <div class="mb-8">
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-bold text-sm mb-4">
 <span class="material-symbols-outlined text-[16px]">language</span>
@@ -634,6 +699,7 @@ TCF Français
 </section>
 <!-- CTA Section -->
 <section class="py-24 px-8 bg-transparent relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent shadow-md shadow-primary/30"></div>
 <!-- Educational Background Elements -->
 <div class="absolute inset-0 opacity-[0.08]">
 <span class="absolute top-[10%] left-[5%] material-symbols-outlined text-[120px] text-primary/30">menu_book</span>
@@ -643,9 +709,13 @@ TCF Français
 <span class="absolute top-[50%] left-[3%] material-symbols-outlined text-[90px] text-primary/30">record_voice_over</span>
 <span class="absolute top-[40%] right-[5%] material-symbols-outlined text-[100px] text-primary/30">lightbulb</span>
 </div>
-<div class="max-w-4xl mx-auto text-center relative z-10">
-<h2 class="text-5xl md:text-6xl font-young-serif text-on-surface tracking-tightest mb-6 leading-tight">Ready to Master a New Language?</h2>
-<p class="text-on-surface-variant text-xl leading-relaxed mb-12 font-light">Join thousands of scholars who've transformed their linguistic future with Lumina Academy.</p>
+<div class="max-w-4xl mx-auto text-center relative z-10 flex flex-col items-center">
+<div class="flex items-center justify-center gap-8 w-full mb-10">
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+<h2 class="text-6xl md:text-[5.5rem] font-young-serif text-on-surface tracking-tight leading-[1.1] shrink-0">Ready to master a<br/><span class="text-purple italic">new language</span>?</h2>
+<div class="h-[2px] bg-primary/40 shadow-md shadow-primary/40 flex-grow hidden md:block rounded-full"></div>
+</div>
+<p class="text-xl md:text-2xl text-on-surface-variant max-w-2xl mx-auto mb-12 leading-relaxed font-light">Join thousands of scholars who've transformed their linguistic future with Lumina Academy.</p>
 <div class="flex flex-col md:flex-row gap-4 justify-center">
 <a href="{{ url('/') }}#programs" class="px-8 py-4 bg-primary text-white font-bold rounded-2xl hover:bg-primary/90 transition-colors">Explore Programs</a>
 </div>
@@ -857,6 +927,100 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   updateArrowStates();
+
+  // Reviews Slider Logic
+  const reviewsSlider = document.getElementById('reviewsSlider');
+  const reviewsLeftArrow = document.querySelector('.reviews-arrow-left');
+  const reviewsRightArrow = document.querySelector('.reviews-arrow-right');
+  const reviewCards = document.querySelectorAll('.reviews-slider .review-card, .reviews-slider article');
+  
+  let currentReviewSlide = 0;
+  // Based on w-96 = 384px + 24px gap
+  const reviewCardWidth = 384; 
+  const reviewGap = 24;
+  const reviewCardsPerSlide = 3;
+  const totalReviewSlides = Math.ceil(reviewCards.length / reviewCardsPerSlide);
+  
+  let isReviewDragging = false;
+  let reviewStartX = 0;
+  let currentReviewX = 0;
+  
+  function updateReviewSliderPosition() {
+    const translateAmount = currentReviewSlide * (reviewCardWidth + reviewGap) * reviewCardsPerSlide;
+    if (reviewsSlider) {
+      reviewsSlider.style.transform = `translateX(-${translateAmount}px)`;
+    }
+  }
+  
+  function updateReviewArrowStates() {
+    if (!reviewsLeftArrow || !reviewsRightArrow) return;
+    
+    if (currentReviewSlide === 0) {
+      reviewsLeftArrow.style.opacity = '0.5';
+      reviewsLeftArrow.style.pointerEvents = 'none';
+    } else {
+      reviewsLeftArrow.style.opacity = '1';
+      reviewsLeftArrow.style.pointerEvents = 'auto';
+    }
+    
+    if (currentReviewSlide >= totalReviewSlides - 1) {
+      reviewsRightArrow.style.opacity = '0.5';
+      reviewsRightArrow.style.pointerEvents = 'none';
+    } else {
+      reviewsRightArrow.style.opacity = '1';
+      reviewsRightArrow.style.pointerEvents = 'auto';
+    }
+  }
+  
+  if (reviewsLeftArrow && reviewsRightArrow) {
+    reviewsLeftArrow.addEventListener('click', function() {
+      if (currentReviewSlide > 0) {
+        currentReviewSlide--;
+        updateReviewSliderPosition();
+        updateReviewArrowStates();
+      }
+    });
+    
+    reviewsRightArrow.addEventListener('click', function() {
+      if (currentReviewSlide < totalReviewSlides - 1) {
+        currentReviewSlide++;
+        updateReviewSliderPosition();
+        updateReviewArrowStates();
+      }
+    });
+  }
+
+  if (reviewsSlider) {
+    reviewsSlider.addEventListener('mousedown', (e) => {
+      isReviewDragging = true;
+      reviewStartX = e.clientX;
+      reviewsSlider.style.cursor = 'grabbing';
+    });
+    
+    document.addEventListener('mousemove', (e) => {
+      if (!isReviewDragging) return;
+      currentReviewX = e.clientX - reviewStartX;
+    });
+    
+    document.addEventListener('mouseup', (e) => {
+      if (!isReviewDragging) return;
+      isReviewDragging = false;
+      reviewsSlider.style.cursor = 'grab';
+      
+      if (Math.abs(currentReviewX) > dragThreshold) {
+        if (currentReviewX > 0 && currentReviewSlide > 0) {
+          currentReviewSlide--;
+        } else if (currentReviewX < 0 && currentReviewSlide < totalReviewSlides - 1) {
+          currentReviewSlide++;
+        }
+        updateReviewSliderPosition();
+        updateReviewArrowStates();
+      }
+      currentReviewX = 0;
+    });
+  }
+  
+  updateReviewArrowStates();
   
   // Modal functionality
   cards.forEach(card => {
