@@ -76,8 +76,9 @@
                                     @if(isset($timetableData[$day][$slot]))
                                         @php $class = $timetableData[$day][$slot]; @endphp
                                         <div 
-                                            class="rounded-lg p-3 border-l-4 h-full flex flex-col justify-center transition-all duration-200 hover:shadow-md cursor-pointer"
-                                            style="background-color: {{ $class['color'] }}; border-left-color: {{ $class['border'] }};"
+                                            class="js-timetable-card rounded-lg p-3 border-l-4 h-full flex flex-col justify-center transition-all duration-200 hover:shadow-md cursor-pointer"
+                                            data-bg="<?php echo e($class['color']); ?>"
+                                            data-border="<?php echo e($class['border']); ?>"
                                         >
                                             <p class="text-xs font-bold truncate" style="color: var(--lumina-text-primary);">{{ $class['name'] }}</p>
                                             <p class="text-xs mt-1" style="color: var(--lumina-text-muted);">{{ $class['room'] }}</p>
@@ -91,6 +92,23 @@
             </table>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.js-timetable-card').forEach(function (card) {
+                var bg = card.getAttribute('data-bg');
+                var border = card.getAttribute('data-border');
+
+                if (bg) {
+                    card.style.backgroundColor = bg;
+                }
+
+                if (border) {
+                    card.style.borderLeftColor = border;
+                }
+            });
+        });
+    </script>
 
     {{-- ======================================================================= --}}
     {{-- Attendance History START                                              --}}
