@@ -20,6 +20,12 @@
         </p>
     </div>
 
+    @if(session('success'))
+        <div class="mb-6 rounded-xl border p-4 text-sm font-semibold" style="background-color: #D1FAE5; border-color: #A7F3D0; color: #065F46;">
+            {{ session('success') }}
+        </div>
+    @endif
+
     {{-- Password Change Card --}}
     <div class="mx-auto max-w-xl">
         <div 
@@ -47,7 +53,7 @@
             </div>
 
             {{-- Password Form --}}
-            <form class="flex flex-col gap-5" method="POST" action="#">
+            <form class="flex flex-col gap-5" method="POST" action="{{ route('student.password.update') }}">
                 @csrf
                 
                 {{-- Current Password --}}
@@ -74,6 +80,9 @@
                             </svg>
                         </button>
                     </div>
+                    @error('current_password')
+                        <p class="text-xs font-semibold" style="color: #b91c1c;">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- Divider --}}
@@ -103,6 +112,9 @@
                             </svg>
                         </button>
                     </div>
+                    @error('password')
+                        <p class="text-xs font-semibold" style="color: #b91c1c;">{{ $message }}</p>
+                    @enderror
                     {{-- Password Requirements --}}
                     <div class="mt-1 flex flex-col gap-1">
                         <p class="text-xs" style="color: var(--lumina-text-muted);">Password must contain:</p>
@@ -138,6 +150,9 @@
                             </svg>
                         </button>
                     </div>
+                    @error('password_confirmation')
+                        <p class="text-xs font-semibold" style="color: #b91c1c;">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 {{-- Action Buttons --}}

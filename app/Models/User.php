@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -112,5 +113,34 @@ class User extends Authenticatable
     public function attendanceRecords(): HasMany
     {
         return $this->hasMany(AttendanceRecord::class, 'student_id');
+    }
+
+    public function studentCards(): HasMany
+    {
+        return $this->hasMany(StudentCard::class);
+    }
+
+    public function latestStudentCard(): ?StudentCard
+    {
+        return $this->studentCards()->latest('valid_to')->first();
+    }
+
+    public function currentStudentCard(): ?StudentCard
+    {
+        return $this->studentCards()
+            ->where('status', 'active')
+            ->whereDate('valid_from', '<=', now())
+            ->whereDate('valid_to', '>=', now())
+            ->latest('valid_to')
+            ->first();
+    }
+
+    public function getStudentAgeAttribute(): ?int
+    {
+        if (! $this->date_of_birth) {
+            return null;
+        }
+
+        return Carbon::parse($this->date_of_birth)->age;
     }
 }

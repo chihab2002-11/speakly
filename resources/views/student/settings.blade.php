@@ -9,6 +9,12 @@
         </p>
     </div>
 
+    @if(session('success'))
+        <div class="mb-6 rounded-xl border p-4 text-sm font-semibold" style="background-color: #D1FAE5; border-color: #A7F3D0; color: #065F46;">
+            {{ session('success') }}
+        </div>
+    @endif
+
     {{-- Main Grid Layout --}}
     <div class="grid gap-6 lg:grid-cols-2">
         {{-- Left Column --}}
@@ -53,6 +59,51 @@
                     JPG, GIF or PNG. Max size of 800K
                 </p>
             </div>
+
+            {{-- Academic Information Card --}}
+            <div
+                class="flex flex-col rounded-3xl border p-8"
+                style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.1); border-radius: 24px;"
+            >
+                <div class="mb-6 flex items-center gap-2">
+                    <svg class="h-5 w-5" fill="currentColor" style="color: var(--lumina-primary);" viewBox="0 0 24 24">
+                        <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/>
+                    </svg>
+                    <h3 class="text-lg font-bold" style="color: var(--lumina-text-primary);">Academic Information</h3>
+                </div>
+
+                @php($academic = $academicInfo ?? [])
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-xl p-3" style="background-color: var(--lumina-bg-card);">
+                        <p class="text-[11px] font-bold uppercase" style="color: var(--lumina-text-muted);">Academic Year</p>
+                        <p class="mt-1 text-sm font-bold" style="color: var(--lumina-text-primary);">{{ $academic['academicYear'] ?? 'N/A' }}</p>
+                    </div>
+                    <div class="rounded-xl p-3" style="background-color: var(--lumina-bg-card);">
+                        <p class="text-[11px] font-bold uppercase" style="color: var(--lumina-text-muted);">Registration Year</p>
+                        <p class="mt-1 text-sm font-bold" style="color: var(--lumina-text-primary);">{{ $academic['registrationYear'] ?? 'N/A' }}</p>
+                    </div>
+                    <div class="rounded-xl p-3" style="background-color: var(--lumina-bg-card);">
+                        <p class="text-[11px] font-bold uppercase" style="color: var(--lumina-text-muted);">Classes</p>
+                        <p class="mt-1 text-sm font-bold" style="color: var(--lumina-text-primary);">{{ $academic['enrolledClassesCount'] ?? 0 }}</p>
+                    </div>
+                    <div class="rounded-xl p-3" style="background-color: var(--lumina-bg-card);">
+                        <p class="text-[11px] font-bold uppercase" style="color: var(--lumina-text-muted);">Sessions / Week</p>
+                        <p class="mt-1 text-sm font-bold" style="color: var(--lumina-text-primary);">{{ $academic['sessionsPerWeek'] ?? 0 }}</p>
+                    </div>
+                    <div class="col-span-2 rounded-xl p-3" style="background-color: var(--lumina-bg-card);">
+                        <p class="text-[11px] font-bold uppercase" style="color: var(--lumina-text-muted);">Study Hours / Week</p>
+                        <p class="mt-1 text-sm font-bold" style="color: var(--lumina-text-primary);">{{ $academic['hoursPerWeek'] ?? 0 }} h</p>
+                    </div>
+                </div>
+
+                <div class="mt-4 rounded-xl border p-3" style="border-color: var(--lumina-border);">
+                    <p class="text-[11px] font-bold uppercase" style="color: var(--lumina-text-muted);">Enrolled Courses</p>
+                    <p class="mt-1 text-xs" style="color: var(--lumina-text-secondary);">
+                        {{ !empty($academic['courses']) ? implode(' • ', $academic['courses']) : 'No enrolled courses yet.' }}
+                    </p>
+                </div>
+            </div>
         </div>
 
         {{-- Right Column --}}
@@ -73,17 +124,22 @@
                 </div>
 
                 {{-- Form Fields --}}
-                <form class="flex flex-col gap-5">
+                <form class="flex flex-col gap-5" method="POST" action="{{ route('student.settings.update') }}">
+                    @csrf
                     <div class="grid gap-5 sm:grid-cols-2">
                         {{-- Full Name --}}
                         <div class="flex flex-col gap-2">
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Full Name</label>
                             <input 
                                 type="text" 
-                                value="{{ $user->name ?? 'Alex Thompson' }}"
+                                name="name"
+                                value="{{ old('name', $user->name ?? '') }}"
                                 class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                                 style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
                             >
+                            @error('name')
+                                <p class="text-xs font-semibold" style="color: #b91c1c;">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         {{-- Email Address --}}
@@ -91,10 +147,14 @@
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Email Address</label>
                             <input 
                                 type="email" 
-                                value="{{ $user->email ?? 'alex.thompson@lumina.edu' }}"
+                                name="email"
+                                value="{{ old('email', $user->email ?? '') }}"
                                 class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                                 style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
                             >
+                            @error('email')
+                                <p class="text-xs font-semibold" style="color: #b91c1c;">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -104,10 +164,14 @@
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Phone Number</label>
                             <input 
                                 type="tel" 
-                                value="{{ $user->phone ?? '+1 (555) 012-3456' }}"
+                                name="phone"
+                                value="{{ old('phone', $user->phone ?? '') }}"
                                 class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                                 style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
                             >
+                            @error('phone')
+                                <p class="text-xs font-semibold" style="color: #b91c1c;">{{ $message }}</p>
+                            @enderror
                         </div>
 
                         {{-- Primary Language --}}
@@ -115,20 +179,55 @@
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Primary Language</label>
                             <div class="relative">
                                 <select 
+                                    name="preferred_language"
                                     class="w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2 cursor-pointer"
                                     style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
                                 >
-                                    <option value="english" selected>English</option>
-                                    <option value="french">French</option>
-                                    <option value="spanish">Spanish</option>
-                                    <option value="german">German</option>
-                                    <option value="arabic">Arabic</option>
+                                    @php($selectedLanguage = strtolower((string) old('preferred_language', $user->preferred_language ?? 'english')))
+                                    <option value="english" {{ $selectedLanguage === 'english' ? 'selected' : '' }}>English</option>
+                                    <option value="french" {{ $selectedLanguage === 'french' ? 'selected' : '' }}>French</option>
+                                    <option value="spanish" {{ $selectedLanguage === 'spanish' ? 'selected' : '' }}>Spanish</option>
+                                    <option value="german" {{ $selectedLanguage === 'german' ? 'selected' : '' }}>German</option>
+                                    <option value="arabic" {{ $selectedLanguage === 'arabic' ? 'selected' : '' }}>Arabic</option>
                                 </select>
                                 <svg class="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2" fill="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
                                     <path d="M7 10l5 5 5-5z"/>
                                 </svg>
                             </div>
+                            @error('preferred_language')
+                                <p class="text-xs font-semibold" style="color: #b91c1c;">{{ $message }}</p>
+                            @enderror
                         </div>
+                    </div>
+
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Date of Birth</label>
+                            <input
+                                type="date"
+                                name="date_of_birth"
+                                value="{{ old('date_of_birth', optional($user->date_of_birth)->format('Y-m-d')) }}"
+                                class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
+                                style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
+                            >
+                            @error('date_of_birth')
+                                <p class="text-xs font-semibold" style="color: #b91c1c;">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Bio</label>
+                        <textarea
+                            name="bio"
+                            rows="4"
+                            class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
+                            style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
+                            placeholder="Tell us a little about yourself"
+                        >{{ old('bio', $user->bio ?? '') }}</textarea>
+                        @error('bio')
+                            <p class="text-xs font-semibold" style="color: #b91c1c;">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     {{-- Save Button --}}

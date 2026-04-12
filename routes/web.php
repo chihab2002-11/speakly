@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\ApprovalController;
@@ -6,7 +6,10 @@ use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\SecretaryDashboardController;
 use App\Http\Controllers\SecretaryTimetableController;
+use App\Http\Controllers\StudentAcademicController;
 use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\StudentMaterialsController;
+use App\Http\Controllers\StudentSettingsController;
 use App\Http\Controllers\TeacherAttendanceController;
 use App\Http\Controllers\TeacherDashboardController;
 use App\Http\Controllers\TeacherResourceController;
@@ -17,6 +20,7 @@ use App\Http\Middleware\EnsureApproved;
 use App\Models\User;
 use App\Support\DashboardRedirector;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 $supportedRoles = ['student', 'teacher', 'secretary', 'parent', 'admin'];
@@ -24,8 +28,8 @@ $supportedRolesMiddleware = 'role:student|teacher|secretary|parent|admin';
 
 Route::get('/', function () {
     // If user is logged in, redirect to appropriate page
-    if (auth()->check()) {
-        $user = auth()->user();
+    if (Auth::check()) {
+        $user = User::query()->findOrFail((int) Auth::id());
         // If not approved yet, go to pending-approval
         if (is_null($user->approved_at)) {
             return redirect()->route('pending-approval');
@@ -90,82 +94,11 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
     ->name('student.')
     ->group(function () {
         // Academic Information page
-        Route::get('/academic', function () {
-            $user = auth()->user();
-
-            // Placeholder attendance data (4 weeks)
-            // 1 = present, 0 = absent, null = no class
-            $attendance = [
-                ['week' => 'W1', 'days' => [1, 1, 1, 1, 1, null, null]],
-                ['week' => 'W2', 'days' => [1, 1, 0, 1, 1, null, null]],
-                ['week' => 'W3', 'days' => [1, 1, 1, 1, 1, null, null]],
-                ['week' => 'W4', 'days' => [1, 1, 1, 1, null, null, null]],
-            ];
-
-            // Placeholder evaluations data
-            $evaluations = [
-                [
-                    'subject' => 'French B2',
-                    'assessment' => 'Oral Presentation',
-                    'score' => 92,
-                    'feedback' => 'Excellent pronunciation and fluency. Continue practicing complex grammar structures.',
-                ],
-                [
-                    'subject' => 'French B2',
-                    'assessment' => 'Written Essay',
-                    'score' => 88,
-                    'feedback' => 'Strong vocabulary usage. Work on paragraph transitions.',
-                ],
-                [
-                    'subject' => 'Spanish A2',
-                    'assessment' => 'Listening Comprehension',
-                    'score' => 85,
-                    'feedback' => 'Good understanding of native speakers. Focus on regional accents.',
-                ],
-                [
-                    'subject' => 'Spanish A2',
-                    'assessment' => 'Grammar Quiz',
-                    'score' => 78,
-                    'feedback' => 'Review subjunctive mood conjugations.',
-                ],
-            ];
-
-            // Placeholder schedule data
-            $schedule = [
-                'Mon' => [
-                    '09:00' => ['course' => 'French B2', 'color' => '#006A41', 'room' => 'Room 101'],
-                    '14:30' => ['course' => 'Spanish A2', 'color' => '#5E70BB', 'room' => 'Room 203'],
-                ],
-                'Tue' => [
-                    '11:30' => ['course' => 'French B2', 'color' => '#006A41', 'room' => 'Room 101'],
-                ],
-                'Wed' => [
-                    '09:00' => ['course' => 'Spanish A2', 'color' => '#5E70BB', 'room' => 'Room 203'],
-                    '14:30' => ['course' => 'French B2', 'color' => '#006A41', 'room' => 'Room 101'],
-                ],
-                'Thu' => [
-                    '09:00' => ['course' => 'Tutorial', 'color' => '#64748B', 'room' => 'Lab 2'],
-                    '11:30' => ['course' => 'French B2', 'color' => '#006A41', 'room' => 'Room 101'],
-                ],
-                'Fri' => [
-                    '09:00' => ['course' => 'Spanish A2', 'color' => '#5E70BB', 'room' => 'Room 203'],
-                ],
-            ];
-
-            return view('student.academic', [
-                'user' => $user,
-                'currentStreak' => 12, // Placeholder - backend will calculate
-                'attendance' => $attendance,
-                'evaluations' => $evaluations,
-                'schedule' => $schedule,
-                'classesPerWeek' => 8,
-                'hoursPerWeek' => 12,
-            ]);
-        })->name('academic');
+        Route::get('/academic', [StudentAcademicController::class, 'index'])->name('academic');
 
         // Financial Information page
         Route::get('/financial', function () {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
 
             // Placeholder ledger items
             $ledgerItems = [
@@ -241,41 +174,23 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
             ]);
         })->name('financial');
 
-        Route::get('/materials', function () {
-            $user = auth()->user();
+        Route::get('/materials', [StudentMaterialsController::class, 'index'])->name('materials');
+        Route::get('/materials/{resource}/download', [StudentMaterialsController::class, 'download'])
+            ->whereNumber('resource')
+            ->name('materials.download');
+        Route::get('/materials/{resource}/print', [StudentMaterialsController::class, 'print'])
+            ->whereNumber('resource')
+            ->name('materials.print');
 
-            return view('student.materials', [
-                'user' => $user,
-            ]);
-        })->name('materials');
+        Route::get('/settings', [StudentSettingsController::class, 'edit'])->name('settings');
+        Route::post('/settings', [StudentSettingsController::class, 'updateProfile'])->name('settings.update');
 
-        // Account Settings page
-        Route::get('/settings', function () {
-            $user = auth()->user();
-
-            return view('student.settings', [
-                'user' => $user,
-                'studentId' => 'LUM-2024-'.str_pad($user->id, 4, '0', STR_PAD_LEFT),
-                'proficiencyLevel' => 'C1', // Placeholder - backend will implement
-                'proficiencyPercent' => 84, // Placeholder - backend will implement
-                'proficiencyStatus' => 'Advanced',
-                'passwordLastChanged' => '3 months ago', // Placeholder
-                'twoFactorEnabled' => $user->two_factor_confirmed_at !== null,
-            ]);
-        })->name('settings');
-
-        // Change Password page
-        Route::get('/password', function () {
-            $user = auth()->user();
-
-            return view('student.password', [
-                'user' => $user,
-            ]);
-        })->name('password');
+        Route::get('/password', [StudentSettingsController::class, 'editPassword'])->name('password');
+        Route::post('/password', [StudentSettingsController::class, 'updatePassword'])->name('password.update');
 
         // Student Notifications page
         Route::get('/notifications', function () {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
             $notifications = $user->notifications()->latest()->get();
 
             return view('student.notifications', [
@@ -286,7 +201,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
 
         // Mark notification as read
         Route::post('/notifications/{id}/read', function ($id) {
-            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification = User::query()->findOrFail((int) Auth::id())->notifications()->where('id', $id)->firstOrFail();
             $notification->markAsRead();
 
             return back()->with('success', 'Notification marked as read');
@@ -294,7 +209,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
 
         // Mark all notifications as read
         Route::post('/notifications/read-all', function () {
-            auth()->user()->unreadNotifications->markAsRead();
+            User::query()->findOrFail((int) Auth::id())->unreadNotifications->markAsRead();
 
             return back()->with('success', 'All notifications marked as read');
         })->name('notifications.read-all');
@@ -337,7 +252,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
 
         // Parent Financial Information
         Route::get('/financial', function () use ($getChildren) {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
             $children = $getChildren();
 
             // Placeholder financial data in Algerian Dinars
@@ -407,7 +322,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
 
         // Parent Calendar (Timetable)
         Route::get('/calendar', function () use ($getChildren) {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
             $children = $getChildren();
 
             return view('parent.calendar', [
@@ -420,7 +335,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
 
         // Parent Settings
         Route::get('/settings', function () use ($getChildren) {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
             $children = $getChildren();
 
             return view('parent.settings', [
@@ -432,7 +347,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
 
         // Parent Password Change
         Route::get('/password', function () use ($getChildren) {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
             $children = $getChildren();
 
             return view('parent.password', [
@@ -443,7 +358,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
 
         // Parent Notifications page
         Route::get('/notifications', function () use ($getChildren) {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
             $children = $getChildren();
             $notifications = $user->notifications()->latest()->get();
 
@@ -456,7 +371,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
 
         // Mark notification as read
         Route::post('/notifications/{id}/read', function ($id) {
-            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification = User::query()->findOrFail((int) Auth::id())->notifications()->where('id', $id)->firstOrFail();
             $notification->markAsRead();
 
             return back()->with('success', 'Notification marked as read');
@@ -464,7 +379,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
 
         // Mark all notifications as read
         Route::post('/notifications/read-all', function () {
-            auth()->user()->unreadNotifications->markAsRead();
+            User::query()->findOrFail((int) Auth::id())->unreadNotifications->markAsRead();
 
             return back()->with('success', 'All notifications marked as read');
         })->name('notifications.read-all');
@@ -498,7 +413,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:teacher'])
 
         // Teacher Notifications page
         Route::get('/notifications', function () {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
             $notifications = $user->notifications()->latest()->get();
 
             return view('teacher.notifications', [
@@ -509,7 +424,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:teacher'])
 
         // Mark notification as read
         Route::post('/notifications/{id}/read', function ($id) {
-            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification = User::query()->findOrFail((int) Auth::id())->notifications()->where('id', $id)->firstOrFail();
             $notification->markAsRead();
 
             return back()->with('success', 'Notification marked as read');
@@ -517,14 +432,14 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:teacher'])
 
         // Mark all notifications as read
         Route::post('/notifications/read-all', function () {
-            auth()->user()->unreadNotifications->markAsRead();
+            User::query()->findOrFail((int) Auth::id())->unreadNotifications->markAsRead();
 
             return back()->with('success', 'All notifications marked as read');
         })->name('notifications.read-all');
 
         // Get available users for new conversations (API endpoint)
         Route::get('/messages/recipients', function () {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
 
             // Teachers can message: students, parents, other teachers, admins
             $users = User::whereHas('roles', function ($query) {
@@ -556,7 +471,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
     ->group(function () {
         // Admin Notifications page
         Route::get('/notifications', function () {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
             $notifications = $user->notifications()->latest()->get();
 
             return view('admin.notifications', [
@@ -567,7 +482,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
 
         // Mark notification as read
         Route::post('/notifications/{id}/read', function ($id) {
-            $notification = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+            $notification = User::query()->findOrFail((int) Auth::id())->notifications()->where('id', $id)->firstOrFail();
             $notification->markAsRead();
 
             return back()->with('success', 'Notification marked as read');
@@ -575,14 +490,14 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
 
         // Mark all notifications as read
         Route::post('/notifications/read-all', function () {
-            auth()->user()->unreadNotifications->markAsRead();
+            User::query()->findOrFail((int) Auth::id())->unreadNotifications->markAsRead();
 
             return back()->with('success', 'All notifications marked as read');
         })->name('notifications.read-all');
 
         // Admin can access a page to start new conversations with anyone
         Route::get('/messages/new', function () {
-            $user = auth()->user();
+            $user = User::query()->findOrFail((int) Auth::id());
 
             // Get all users except current admin (students, parents, teachers, secretaries)
             $users = User::whereHas('roles', function ($query) {
@@ -602,7 +517,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
 
 Route::get('/pending-approval', function () {
     // If user is already approved, redirect to dashboard
-    $user = auth()->user();
+    $user = User::query()->findOrFail((int) Auth::id());
     if (! is_null($user->approved_at)) {
         return redirect()->route(
             DashboardRedirector::routeNameFor($user),
@@ -686,13 +601,13 @@ Route::middleware([
 
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', function () {
-        $notifications = auth()->user()->notifications()->latest()->get();
+        $notifications = User::query()->findOrFail((int) Auth::id())->notifications()->latest()->get();
 
         return view('notifications.index', compact('notifications'));
     })->name('notifications.index');
 
     Route::post('/notifications/{id}/read', function ($id) {
-        $n = auth()->user()->notifications()->where('id', $id)->firstOrFail();
+        $n = User::query()->findOrFail((int) Auth::id())->notifications()->where('id', $id)->firstOrFail();
         $n->markAsRead();
 
         return back();
@@ -700,3 +615,5 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/settings.php';
+
+

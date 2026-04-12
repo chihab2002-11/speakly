@@ -1,6 +1,6 @@
 <x-layouts.student :title="__('Financial Information')" :currentRoute="'financial'">
     {{-- Header Section --}}
-    <div class="mb-8 flex flex-col justify-between gap-6 lg:flex-row lg:items-end">
+    <div class="mb-8 flex flex-col gap-6">
         {{-- Left: Title & Badge --}}
         <div class="flex flex-col gap-3">
             {{-- Verified Account Badge --}}
@@ -25,37 +25,6 @@
             </p>
         </div>
 
-        {{-- Right: Primary Balance Card --}}
-        <div class="relative">
-            {{-- Glow Effect --}}
-            <div 
-                class="absolute -inset-1 rounded-xl opacity-25 blur"
-                style="background: linear-gradient(90deg, #006A41 0%, #238457 100%);"
-            ></div>
-            {{-- Card --}}
-            <div 
-                class="relative flex items-center gap-8 rounded-xl border p-6"
-                style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.15);"
-            >
-                <div class="flex flex-col gap-1">
-                    <span class="text-xs font-bold uppercase tracking-wider" style="color: #3F4941; letter-spacing: 1.2px;">
-                        Total Outstanding
-                    </span>
-                    <span class="text-4xl font-black" style="color: #181D19;">
-                        ${{ number_format($totalOutstanding ?? 1240.00, 2) }}
-                    </span>
-                </div>
-                <button 
-                    class="flex items-center gap-2 rounded-lg px-8 py-4 text-base font-bold text-white transition-all hover:opacity-90"
-                    style="background: linear-gradient(135deg, #006A41 0%, #238457 100%); box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.1), 0px 4px 6px -4px rgba(0, 0, 0, 0.1);"
-                >
-                    Pay Balance
-                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
     </div>
 
     {{-- Bento Grid Content --}}
@@ -139,11 +108,10 @@
                                     <div class="flex items-center gap-4">
                                         {{-- Icon --}}
                                         <div 
-                                            class="flex h-10 w-10 items-center justify-center rounded"
-                                            style="background-color: {{ $item['status'] === 'outstanding' ? '#ECFDF5' : '#F8FAFC' }};"
+                                            class="flex h-10 w-10 items-center justify-center rounded {{ $item['status'] === 'outstanding' ? 'bg-emerald-50' : 'bg-slate-50' }}"
                                         >
                                             @if($item['icon'] === 'course')
-                                                <svg class="h-5 w-5" fill="currentColor" style="color: {{ $item['status'] === 'outstanding' ? '#047857' : '#475569' }};" viewBox="0 0 24 24">
+                                                <svg class="h-5 w-5 {{ $item['status'] === 'outstanding' ? 'text-emerald-700' : 'text-slate-600' }}" fill="currentColor" viewBox="0 0 24 24">
                                                     <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
                                                 </svg>
                                             @elseif($item['icon'] === 'workshop')
@@ -203,7 +171,7 @@
         </div>
 
         {{-- Right Column: Scholarships (1 column) --}}
-        <div class="flex flex-col gap-6 lg:col-span-1">
+        <div class="flex flex-col gap-4 lg:col-span-1">
             {{-- Scholarships Header --}}
             <h2 class="text-2xl font-bold" style="color: #181D19; letter-spacing: -0.6px;">
                 Scholarships
@@ -254,44 +222,6 @@
                 </div>
             </div>
 
-            {{-- Financial Summary Card --}}
-            <div 
-                class="flex flex-col gap-4 rounded-xl border p-6"
-                style="background-color: #E5E9E3; border-color: rgba(190, 201, 191, 0.15);"
-            >
-                <span class="text-xs font-bold uppercase tracking-wider" style="color: #3F4941; letter-spacing: 1.2px;">
-                    Financial Summary
-                </span>
-
-                <div class="flex flex-col gap-3">
-                    {{-- Gross Tuition --}}
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm" style="color: #3F4941;">Gross Tuition</span>
-                        <span class="text-sm font-semibold" style="color: #181D19;">
-                            ${{ number_format($grossTuition ?? 1458.82, 2) }}
-                        </span>
-                    </div>
-
-                    {{-- Scholarship Credit --}}
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm" style="color: #3F4941;">Scholarship Credit</span>
-                        <span class="text-sm font-semibold" style="color: #059669;">
-                            -${{ number_format($scholarshipCredit ?? 218.82, 2) }}
-                        </span>
-                    </div>
-
-                    {{-- Divider --}}
-                    <div class="h-px" style="background-color: rgba(190, 201, 191, 0.3);"></div>
-
-                    {{-- Net Due --}}
-                    <div class="flex items-center justify-between">
-                        <span class="text-base font-bold" style="color: #181D19;">Net Due</span>
-                        <span class="text-base font-black" style="color: #181D19;">
-                            ${{ number_format($netDue ?? 1240.00, 2) }}
-                        </span>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 

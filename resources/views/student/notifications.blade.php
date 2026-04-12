@@ -31,21 +31,25 @@
         style="background-color: #FFFFFF; border-color: var(--lumina-border-light);"
     >
         @forelse($notifications as $notification)
+            @php
+                $isRead = (bool) $notification->read_at;
+                $iconBgClass = $isRead ? 'bg-slate-100' : 'bg-emerald-100';
+                $iconColorClass = $isRead ? 'text-slate-500' : 'text-emerald-700';
+            @endphp
             <div 
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
                 style="border-color: var(--lumina-border);"
             >
                 {{-- Notification Icon --}}
                 <div 
-                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full"
-                    style="background-color: {{ $notification->read_at ? '#F1F5F9' : 'var(--lumina-accent-green)' }};"
+                    class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {{ $iconBgClass }}"
                 >
                     @if(isset($notification->data['type']) && $notification->data['type'] === 'message')
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $notification->read_at ? '#64748B' : 'var(--lumina-primary)' }};">
+                        <svg class="h-6 w-6 {{ $iconColorClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
                     @else
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $notification->read_at ? '#64748B' : 'var(--lumina-primary)' }};">
+                        <svg class="h-6 w-6 {{ $iconColorClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                         </svg>
                     @endif

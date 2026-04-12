@@ -50,16 +50,13 @@
                 </div>
                 {{-- Status Badge --}}
                 <div 
-                    class="flex items-center gap-2 rounded-full px-3 py-1"
-                    style="background-color: {{ ($studentStatus ?? 'active') === 'active' ? 'rgba(0, 106, 65, 0.1)' : 'rgba(186, 26, 26, 0.1)' }};"
+                    class="flex items-center gap-2 rounded-full px-3 py-1 {{ ($studentStatus ?? 'active') === 'active' ? 'bg-emerald-50' : 'bg-red-50' }}"
                 >
                     <span 
-                        class="h-2 w-2 rounded-full"
-                        style="background-color: {{ ($studentStatus ?? 'active') === 'active' ? 'var(--lumina-primary)' : 'var(--lumina-accent-red)' }};"
+                        class="h-2 w-2 rounded-full {{ ($studentStatus ?? 'active') === 'active' ? 'bg-emerald-700' : 'bg-red-700' }}"
                     ></span>
                     <span 
-                        class="text-xs font-bold uppercase"
-                        style="color: {{ ($studentStatus ?? 'active') === 'active' ? 'var(--lumina-primary)' : 'var(--lumina-accent-red)' }};"
+                        class="text-xs font-bold uppercase {{ ($studentStatus ?? 'active') === 'active' ? 'text-emerald-700' : 'text-red-700' }}"
                     >
                         {{ ucfirst($studentStatus ?? 'Active') }}
                     </span>
@@ -95,7 +92,7 @@
                 </div>
 
                 {{-- Student Information --}}
-                <div class="flex flex-1 flex-col gap-5">
+                <div class="flex flex-1 flex-col gap-4">
                     {{-- Essential Identity --}}
                     <div class="flex flex-col gap-1">
                         <h4 class="font-serif text-2xl font-bold" style="color: var(--lumina-text-primary); font-family: 'Young Serif', Georgia, serif;">
@@ -119,7 +116,7 @@
                     </div>
 
                     {{-- Academic & Card Info --}}
-                    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                    <div class="grid gap-4 sm:grid-cols-2">
                         {{-- Academic Year --}}
                         <div class="flex flex-col gap-2 rounded-xl p-4" style="background-color: var(--lumina-bg-card);">
                             <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
@@ -135,24 +132,6 @@
                             </div>
                             <span class="text-xs" style="color: var(--lumina-text-secondary);">
                                 Registration Year: {{ $registrationYear ?? '2025' }}
-                            </span>
-                        </div>
-
-                        {{-- Blood Type --}}
-                        <div class="flex flex-col gap-2 rounded-xl p-4" style="background-color: var(--lumina-bg-card);">
-                            <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
-                                Blood Type
-                            </span>
-                            <div class="flex items-center gap-2">
-                                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" style="color: var(--lumina-accent-red);">
-                                    <path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8zm0 18c-3.35 0-6-2.57-6-6.2 0-2.34 1.95-5.44 6-9.14 4.05 3.7 6 6.79 6 9.14 0 3.63-2.65 6.2-6 6.2z"/>
-                                </svg>
-                                <span class="text-lg font-bold" style="color: var(--lumina-text-primary);">
-                                    {{ $bloodType ?? 'O+' }}
-                                </span>
-                            </div>
-                            <span class="text-xs" style="color: var(--lumina-text-secondary);">
-                                Emergency info
                             </span>
                         </div>
 
@@ -173,40 +152,11 @@
                                 $isValid = ($cardStatus ?? 'valid') === 'valid';
                             @endphp
                             <span 
-                                class="inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold"
-                                style="background-color: {{ $isValid ? 'var(--lumina-accent-green-bg)' : 'var(--lumina-accent-red-bg)' }}; color: {{ $isValid ? 'var(--lumina-accent-green)' : 'var(--lumina-accent-red)' }};"
+                                class="inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold {{ $isValid ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700' }}"
                             >
                                 <span class="h-1.5 w-1.5 rounded-full" style="background-color: currentColor;"></span>
                                 {{ $isValid ? 'Valid' : 'Expired' }}
                             </span>
-                        </div>
-                    </div>
-
-                    {{-- Emergency Contact --}}
-                    <div class="flex flex-col gap-2 rounded-xl p-4" style="background-color: var(--lumina-bg-card);">
-                        <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
-                            Emergency Contact
-                        </span>
-                        <div class="flex flex-wrap items-center gap-4">
-                            <div class="flex items-center gap-2">
-                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" style="color: var(--lumina-primary);">
-                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                                </svg>
-                                <span class="text-sm font-semibold" style="color: var(--lumina-text-primary);">
-                                    {{ $emergencyContactName ?? 'Maria Thompson' }}
-                                </span>
-                                <span class="text-xs" style="color: var(--lumina-text-muted);">
-                                    ({{ $emergencyContactRelation ?? 'Mother' }})
-                                </span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" style="color: var(--lumina-primary);">
-                                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
-                                </svg>
-                                <span class="text-sm" style="color: var(--lumina-text-secondary);">
-                                    {{ $emergencyContactPhone ?? '+1 (555) 123-4567' }}
-                                </span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -245,7 +195,7 @@
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
                     <span class="text-sm font-medium">
-                        {{ $nextClass->room ?? 'Lecture Hall 4' }} • {{ $nextClass->teacher->name ?? 'Dr. Sterling' }}
+                        {{ $nextClassRoomName ?? 'Lecture Hall 4' }} • {{ $nextClass->teacher->name ?? 'Dr. Sterling' }}
                     </span>
                 </div>
             </div>
@@ -258,14 +208,9 @@
                 <span class="text-xs font-bold uppercase tracking-wider text-white/80" style="letter-spacing: 1.2px;">
                     Starts in
                 </span>
-                <div class="flex items-baseline gap-1">
-                    <span class="text-4xl font-black text-white">
-                        {{ $nextClassMinutes ?? 42 }}
-                    </span>
-                    <span class="text-xl font-bold text-white/80" style="letter-spacing: -1px;">
-                        Minutes
-                    </span>
-                </div>
+                <span id="nextClassCountdownLive" data-target="{{ $nextClassStartsAt ?? '' }}" class="block w-full overflow-hidden text-center font-black text-white" style="font-size: clamp(1rem, 3.1vw, 1.65rem); letter-spacing: -0.2px; line-height: 1.15; white-space: nowrap;">
+                    {{ $nextClassCountdown ?? '42Min' }}
+                </span>
             </div>
         </div>
         
@@ -282,9 +227,12 @@
                     <h3 class="text-sm font-bold uppercase tracking-wider" style="color: var(--lumina-text-heading); letter-spacing: 1.4px;">
                         Language Proficiency
                     </h3>
-                    <svg class="h-5 w-5" fill="currentColor" style="color: #5E70BB;" viewBox="0 0 24 24">
-                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.91-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
-                    </svg>
+                    <div class="flex items-center gap-2">
+                        <select id="proficiencyGroupFilter" class="rounded-lg border px-2 py-1 text-xs font-semibold" style="border-color: var(--lumina-border); background-color: #fff; color: var(--lumina-text-secondary);"></select>
+                        <svg class="h-5 w-5" fill="currentColor" style="color: #5E70BB;" viewBox="0 0 24 24">
+                            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95c-.32-1.25-.78-2.45-1.38-3.56 1.84.63 3.37 1.91 4.33 3.56zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2 0 .68.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56-1.84-.63-3.37-1.91-4.33-3.56zm2.95-8H5.08c.96-1.66 2.49-2.93 4.33-3.56C8.81 5.55 8.35 6.75 8.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2 0-.68.07-1.35.16-2h4.68c.09.65.16 1.32.16 2 0 .68-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95c-.96 1.65-2.49 2.93-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2 0-.68-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/>
+                        </svg>
+                    </div>
                 </div>
                 
                 {{-- Circular Progress --}}
@@ -294,22 +242,20 @@
                         <svg class="absolute h-full w-full -rotate-90" viewBox="0 0 128 128">
                             <circle cx="64" cy="64" r="56" fill="none" stroke="#DFE4DD" stroke-width="10"/>
                             <circle 
+                                id="proficiencyProgressCircle"
                                 cx="64" cy="64" r="56" 
                                 fill="none" 
                                 stroke="var(--lumina-primary)" 
                                 stroke-width="10" 
                                 stroke-dasharray="352" 
-                                stroke-dashoffset="{{ 352 - (352 * ($proficiencyPercent ?? 75) / 100) }}"
+                                stroke-dashoffset="{{ 352 - (352 * ($proficiencyPercent ?? 0) / 100) }}"
                                 stroke-linecap="round"
                             />
                         </svg>
                         {{-- Center Text --}}
                         <div class="relative z-10 flex flex-col items-center">
-                            <span class="text-2xl font-black" style="color: var(--lumina-text-primary);">
-                                {{ $proficiencyLevel ?? 'C1' }}
-                            </span>
-                            <span class="text-[10px] font-bold uppercase tracking-tight" style="color: var(--lumina-text-secondary);">
-                                Current Goal
+                            <span id="proficiencyCenterGroupText" class="max-w-[90px] text-center text-[12px] font-black leading-tight" style="color: var(--lumina-text-primary);">
+                                All Groups
                             </span>
                         </div>
                     </div>
@@ -319,15 +265,15 @@
             {{-- Progress Info --}}
             <div class="flex flex-col gap-2 border-t pt-4" style="border-color: rgba(190, 201, 191, 0.3);">
                 <div class="flex items-center justify-between">
-                    <span class="text-sm font-bold" style="color: var(--lumina-text-secondary);">
-                        {{ $proficiencyPercent ?? 75 }}% to {{ $proficiencyLevel ?? 'C1' }}
+                    <span id="proficiencyPercentText" class="text-sm font-bold" style="color: var(--lumina-text-secondary);">
+                        {{ $proficiencyPercent ?? 0 }}%
                     </span>
-                    <span class="text-sm font-bold" style="color: var(--lumina-primary);">
+                    <span id="proficiencyStatusText" class="text-sm font-bold" style="color: var(--lumina-primary);">
                         {{ $proficiencyStatus ?? 'Advanced' }}
                     </span>
                 </div>
-                <p class="text-xs" style="color: var(--lumina-text-secondary);">
-                    Focus on specialized terminology to unlock the next level.
+                <p id="proficiencyInsightText" class="text-xs" style="color: var(--lumina-text-secondary);">
+                    {{ $proficiencyInsight ?? 'Complete evaluations to track your language progression.' }}
                 </p>
             </div>
         </div>
@@ -337,80 +283,52 @@
             class="flex flex-col justify-between rounded-3xl border p-8"
             style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.1); border-radius: 24px;"
         >
-            {{-- Header --}}
             <div class="flex flex-col gap-6">
                 <h3 class="text-sm font-bold uppercase tracking-wider" style="color: var(--lumina-text-heading); letter-spacing: 1.4px;">
                     Mentors
                 </h3>
-                
-                {{-- Mentors List --}}
-                <div class="flex flex-col gap-4">
+
+                <div class="flex flex-col gap-3">
                     @forelse($mentors ?? [] as $mentor)
-                        <div class="flex items-center gap-3">
-                            {{-- Avatar with Status --}}
+                        <button
+                            type="button"
+                            class="mentor-trigger group flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-all duration-200 hover:-translate-y-0.5 hover:bg-[rgba(0,106,65,0.08)] hover:shadow-sm"
+                            data-mentor-index="{{ $loop->index }}"
+                        >
                             <div class="relative">
-                                <div class="h-10 w-10 overflow-hidden rounded-full">
-                                    @if($mentor->avatar ?? false)
-                                        <img src="{{ $mentor->avatar }}" alt="{{ $mentor->name }}" class="h-full w-full object-cover">
+                                <div class="h-10 w-10 overflow-hidden rounded-full transition-transform duration-200 group-hover:scale-105">
+                                    @if($mentor['avatar'] ?? false)
+                                        <img src="{{ $mentor['avatar'] }}" alt="{{ $mentor['name'] }}" class="h-full w-full object-cover">
                                     @else
                                         <div class="flex h-full w-full items-center justify-center text-sm font-semibold" style="background-color: var(--lumina-bg-card); color: var(--lumina-primary);">
-                                            {{ substr($mentor->name ?? 'M', 0, 1) }}
+                                            {{ substr($mentor['name'] ?? 'M', 0, 1) }}
                                         </div>
                                     @endif
                                 </div>
-                                {{-- Online Status --}}
-                                <div 
-                                    class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white"
-                                    style="background-color: {{ ($mentor->is_online ?? false) ? 'var(--lumina-primary)' : '#BEC9BF' }};"
-                                ></div>
+                                <div class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white" style="background-color: #BEC9BF;"></div>
                             </div>
-                            {{-- Info --}}
-                            <div class="flex flex-col">
-                                <span class="text-sm font-bold" style="color: var(--lumina-text-primary);">
-                                    {{ $mentor->name ?? 'Mentor Name' }}
+                            <div class="flex min-w-0 flex-1 flex-col">
+                                <span class="mentor-name truncate text-sm font-bold" style="color: var(--lumina-text-primary);">
+                                    {{ $mentor['name'] ?? 'Mentor Name' }}
                                 </span>
-                                <span class="text-[10px]" style="color: var(--lumina-text-secondary);">
-                                    {{ $mentor->specialty ?? 'Specialist' }}
+                                <span class="mentor-specialty truncate text-[10px]" style="color: var(--lumina-text-secondary);">
+                                    {{ $mentor['specialty'] ?? 'Specialist' }}
                                 </span>
                             </div>
-                        </div>
+                        </button>
                     @empty
-                        {{-- Default mentors if none provided --}}
-                        @foreach([
-                            ['name' => 'Prof. Janice S.', 'specialty' => 'Phonetics Expert', 'online' => true],
-                            ['name' => 'Marcus L.', 'specialty' => 'Grammar Specialist', 'online' => false],
-                            ['name' => 'Hamdane C.', 'specialty' => 'Math Specialist', 'online' => false],
-                        ] as $defaultMentor)
-                            <div class="flex items-center gap-3">
-                                <div class="relative">
-                                    <div class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full" style="background-color: var(--lumina-bg-card);">
-                                        <span class="text-sm font-semibold" style="color: var(--lumina-primary);">
-                                            {{ substr($defaultMentor['name'], 0, 1) }}
-                                        </span>
-                                    </div>
-                                    <div 
-                                        class="absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white"
-                                        style="background-color: {{ $defaultMentor['online'] ? 'var(--lumina-primary)' : '#BEC9BF' }};"
-                                    ></div>
-                                </div>
-                                <div class="flex flex-col">
-                                    <span class="text-sm font-bold" style="color: var(--lumina-text-primary);">
-                                        {{ $defaultMentor['name'] }}
-                                    </span>
-                                    <span class="text-[10px]" style="color: var(--lumina-text-secondary);">
-                                        {{ $defaultMentor['specialty'] }}
-                                    </span>
-                                </div>
-                            </div>
-                        @endforeach
+                        <p class="text-xs" style="color: var(--lumina-text-secondary);">No mentor linked yet. Enroll in a class to see your teachers.</p>
                     @endforelse
                 </div>
+
+                <p class="text-xs" style="color: var(--lumina-text-secondary);">
+                    Click a mentor to open their information form in the center of the dashboard.
+                </p>
             </div>
-            
-            {{-- Message Center Link --}}
+
             <div class="pt-4">
-                <a 
-                    href="{{ route('messages.inbox') }}" 
+                <a
+                    href="{{ route('role.messages.index', ['role' => 'student']) }}"
                     class="inline-flex items-center gap-2 text-sm font-bold transition-colors hover:opacity-80"
                     style="color: var(--lumina-primary);"
                     wire:navigate
@@ -467,4 +385,226 @@
             </div>
         </div>
     </div>
+
+    <style>
+        .mentor-trigger {
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .mentor-trigger .mentor-name,
+        .mentor-trigger .mentor-specialty {
+            transition: color .2s ease;
+        }
+
+        .mentor-trigger:hover {
+            border-color: rgba(0, 106, 65, 0.22);
+            background-color: rgba(0, 106, 65, 0.1);
+        }
+
+        .mentor-trigger:hover .mentor-name {
+            color: var(--lumina-primary);
+        }
+
+        .mentor-trigger:hover .mentor-specialty {
+            color: #36556d;
+        }
+    </style>
+
+    {{-- Mentor Information Modal --}}
+    <div id="mentorModal" class="hidden items-center justify-center bg-black/45 backdrop-blur-[1px] px-4" style="position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 2147483647;">
+        <div class="w-full max-w-md rounded-3xl border bg-white p-6 shadow-2xl" style="position: relative; z-index: 2147483647; border-color: rgba(190, 201, 191, 0.25);">
+            <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-sm font-bold uppercase tracking-wider" style="color: var(--lumina-text-heading); letter-spacing: 1.2px;">Mentor Information</h3>
+                <button id="mentorModalClose" type="button" class="rounded-lg px-2 py-1 text-sm font-bold" style="color: var(--lumina-text-muted);">X</button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2">
+                <div class="rounded-lg px-3 py-2" style="background-color: var(--lumina-bg-card);">
+                    <span class="text-[10px] font-bold uppercase" style="color: var(--lumina-text-muted);">Full Name</span>
+                    <p id="mentorFieldName" class="text-sm font-semibold" style="color: var(--lumina-text-primary);"></p>
+                </div>
+                <div class="rounded-lg px-3 py-2" style="background-color: var(--lumina-bg-card);">
+                    <span class="text-[10px] font-bold uppercase" style="color: var(--lumina-text-muted);">Email</span>
+                    <p id="mentorFieldEmail" class="text-sm font-semibold" style="color: var(--lumina-text-primary);"></p>
+                </div>
+                <div class="rounded-lg px-3 py-2" style="background-color: var(--lumina-bg-card);">
+                    <span class="text-[10px] font-bold uppercase" style="color: var(--lumina-text-muted);">Phone</span>
+                    <p id="mentorFieldPhone" class="text-sm font-semibold" style="color: var(--lumina-text-primary);"></p>
+                </div>
+                <div class="rounded-lg px-3 py-2" style="background-color: var(--lumina-bg-card);">
+                    <span class="text-[10px] font-bold uppercase" style="color: var(--lumina-text-muted);">Preferred Language</span>
+                    <p id="mentorFieldLanguage" class="text-sm font-semibold" style="color: var(--lumina-text-primary);"></p>
+                </div>
+                <div class="rounded-lg px-3 py-2" style="background-color: var(--lumina-bg-card);">
+                    <span class="text-[10px] font-bold uppercase" style="color: var(--lumina-text-muted);">Assigned Courses</span>
+                    <p id="mentorFieldCourses" class="text-sm font-semibold" style="color: var(--lumina-text-primary);"></p>
+                </div>
+                <div class="rounded-lg px-3 py-2" style="background-color: var(--lumina-bg-card);">
+                    <span class="text-[10px] font-bold uppercase" style="color: var(--lumina-text-muted);">Bio</span>
+                    <p id="mentorFieldBio" class="text-sm" style="color: var(--lumina-text-secondary);"></p>
+                </div>
+            </div>
+
+            <div class="mt-4 flex items-center justify-end gap-2">
+                <a id="mentorMessageBtn" href="#" class="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold text-white transition-opacity hover:opacity-90" style="background-color: var(--lumina-primary);">
+                    <span>Message Teacher</span>
+                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script id="studentProficiencyGroups" type="application/json">@json($proficiencyGroups ?? [])</script>
+    <script id="studentMentorsData" type="application/json">@json(($mentors ?? collect())->values())</script>
+    <script>
+        const PROFICIENCY_GROUPS = JSON.parse(document.getElementById('studentProficiencyGroups')?.textContent || '[]');
+        const DEFAULT_PROFICIENCY_GROUP = "{{ $selectedProficiencyGroup ?? 'all' }}";
+        const MENTORS_DATA = JSON.parse(document.getElementById('studentMentorsData')?.textContent || '[]');
+        const MENTOR_FALLBACK_MESSAGE_URL = "{{ route('role.messages.index', ['role' => 'student']) }}";
+        const mentorModal = document.getElementById('mentorModal');
+        const mentorModalClose = document.getElementById('mentorModalClose');
+
+        (function initializeProficiencyCard() {
+            const selectEl = document.getElementById('proficiencyGroupFilter');
+            const centerGroupEl = document.getElementById('proficiencyCenterGroupText');
+            const percentEl = document.getElementById('proficiencyPercentText');
+            const statusEl = document.getElementById('proficiencyStatusText');
+            const insightEl = document.getElementById('proficiencyInsightText');
+            const circleEl = document.getElementById('proficiencyProgressCircle');
+
+            if (!selectEl || !centerGroupEl || !percentEl || !statusEl || !insightEl || !circleEl) {
+                return;
+            }
+
+            const groups = Array.isArray(PROFICIENCY_GROUPS) ? PROFICIENCY_GROUPS : [];
+
+            if (!groups.length) {
+                return;
+            }
+
+            const chooseColor = (percent) => {
+                const value = Number(percent || 0);
+
+                if (value < 25) return '#dc2626';
+                if (value < 50) return '#eab308';
+                if (value < 75) return '#f97316';
+                return '#047857';
+            };
+
+            const render = (key) => {
+                const group = groups.find(item => String(item.key) === String(key)) || groups[0];
+                const percent = Math.max(0, Math.min(100, Number(group.percent || 0)));
+                const circumference = 352;
+                const strokeColor = chooseColor(percent);
+
+                centerGroupEl.textContent = String(group.displayName || group.label || 'Group');
+                percentEl.textContent = `${Math.round(percent)}%`;
+                statusEl.textContent = String(group.status || 'No Data');
+                statusEl.style.color = strokeColor;
+                insightEl.textContent = String(group.insight || 'No graded evaluations yet.');
+
+                circleEl.setAttribute('stroke-dashoffset', String(circumference - ((circumference * percent) / 100)));
+                circleEl.setAttribute('stroke', strokeColor);
+            };
+
+            selectEl.innerHTML = groups.map(group => {
+                const selected = String(group.key) === String(DEFAULT_PROFICIENCY_GROUP) ? 'selected' : '';
+                const count = Number(group.count || 0);
+                return `<option value="${String(group.key)}" ${selected}>${String(group.label)} (${count})</option>`;
+            }).join('');
+
+            selectEl.addEventListener('change', () => {
+                render(selectEl.value);
+            });
+
+            render(selectEl.value || DEFAULT_PROFICIENCY_GROUP);
+        })();
+
+        function mentorValue(value, fallback = 'Not provided') {
+            return (value && String(value).trim() !== '') ? String(value) : fallback;
+        }
+
+        function openMentorModal(index) {
+            const mentor = MENTORS_DATA[index];
+
+            if (!mentor) {
+                return;
+            }
+
+            document.getElementById('mentorFieldName').textContent = mentorValue(mentor.name, 'Mentor');
+            document.getElementById('mentorFieldEmail').textContent = mentorValue(mentor.email);
+            document.getElementById('mentorFieldPhone').textContent = mentorValue(mentor.phone);
+            document.getElementById('mentorFieldLanguage').textContent = mentorValue(mentor.preferredLanguage, 'Not set');
+            document.getElementById('mentorFieldCourses').textContent = (mentor.courses && mentor.courses.length)
+                ? mentor.courses.join(', ')
+                : 'No assigned courses';
+            document.getElementById('mentorFieldBio').textContent = mentorValue(mentor.bio, 'No bio provided yet.');
+
+            const messageBtn = document.getElementById('mentorMessageBtn');
+            messageBtn.href = mentor.messageUrl || MENTOR_FALLBACK_MESSAGE_URL;
+
+            mentorModal.classList.remove('hidden');
+            mentorModal.classList.add('flex');
+        }
+
+        function closeMentorModal() {
+            mentorModal.classList.add('hidden');
+            mentorModal.classList.remove('flex');
+        }
+
+        document.querySelectorAll('.mentor-trigger').forEach((button) => {
+            button.addEventListener('click', () => {
+                openMentorModal(Number(button.dataset.mentorIndex));
+            });
+        });
+
+        mentorModalClose?.addEventListener('click', closeMentorModal);
+
+        mentorModal?.addEventListener('click', (event) => {
+            if (event.target === mentorModal) {
+                closeMentorModal();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && mentorModal && !mentorModal.classList.contains('hidden')) {
+                closeMentorModal();
+            }
+        });
+
+        (function initializeNextClassLiveCountdown() {
+            const countdownEl = document.getElementById('nextClassCountdownLive');
+
+            if (!countdownEl) {
+                return;
+            }
+
+            const targetRaw = countdownEl.dataset.target || '';
+            const targetTime = Date.parse(targetRaw);
+
+            if (Number.isNaN(targetTime)) {
+                return;
+            }
+
+            const formatPart = (value, suffix) => `${String(Math.max(0, value)).padStart(2, '0')}${suffix}`;
+
+            const tick = () => {
+                const totalSeconds = Math.max(0, Math.floor((targetTime - Date.now()) / 1000));
+
+                const days = Math.floor(totalSeconds / 86400);
+                const hours = Math.floor((totalSeconds % 86400) / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+
+                const dayPrefix = days > 0 ? `${days}d:` : '';
+                countdownEl.textContent = `${dayPrefix}${formatPart(hours, 'h')}:${formatPart(minutes, 'min')}:${formatPart(seconds, 's')}`;
+            };
+
+            tick();
+            setInterval(tick, 1000);
+        })();
+    </script>
 </x-layouts.student>

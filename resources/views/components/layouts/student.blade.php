@@ -18,7 +18,7 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    {{-- Lumina Academy Custom Styles --}}
+    {{-- Lumina Academy Student Portal Styles --}}
     <style>
         :root {
             /* Primary Colors */
@@ -46,28 +46,114 @@
             /* Border Colors */
             --lumina-border: #E2E8F0;
             --lumina-border-light: rgba(190, 201, 191, 0.15);
+
+            /* Chat Colors */
+            --lumina-chat-incoming: #F1F5F9;
+            --lumina-chat-outgoing: #047857;
+        }
+
+        /* Smooth transitions for interactive elements */
+        .transition-smooth {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Card hover effect */
+        .card-hover {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Button press effect */
+        .btn-press:active {
+            transform: scale(0.98);
+        }
+
+        /* Sidebar link hover */
+        .sidebar-link {
+            position: relative;
+            overflow: hidden;
+        }
+        .sidebar-link::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            background: rgba(255, 255, 255, 0.3);
+            transition: width 0.3s ease;
+            border-radius: inherit;
+        }
+        .sidebar-link:hover::before {
+            width: 100%;
+        }
+
+        /* Input focus ring */
+        .input-focus:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 106, 65, 0.15);
+        }
+
+        /* Avatar ring animation */
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .avatar-online::after {
+            animation: pulse-ring 2s infinite;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 106, 65, 0.2);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 106, 65, 0.4);
+        }
+
+        /* Loading skeleton animation */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
         }
     </style>
 </head>
-<body class="min-h-screen font-inter" style="background-color: var(--lumina-bg-main);">
+<body class="min-h-screen font-inter antialiased" style="background-color: var(--lumina-bg-main);">
     <div class="flex min-h-screen">
-        {{-- Sidebar --}}
+        {{-- Sidebar (Fixed) --}}
         <x-student.sidebar :user="$user ?? auth()->user()" :currentRoute="$currentRoute ?? 'dashboard'" />
 
-        {{-- Main Content Area --}}
-        <div class="flex flex-1 flex-col lg:ml-0">
+        {{-- Main Content Area - offset by sidebar width on desktop --}}
+        <div class="flex flex-1 flex-col lg:ml-64">
             {{-- Top Navigation Header --}}
             <x-student.header :user="$user ?? auth()->user()" />
 
             {{-- Main Scrollable Content --}}
-            <main class="flex-1 overflow-y-auto p-4 md:p-8" style="background-color: var(--lumina-bg-section);">
+            <main class="flex-1 p-4 md:p-8" style="background-color: var(--lumina-bg-section);">
                 {{ $slot }}
             </main>
         </div>
     </div>
 
     {{-- Mobile Sidebar Overlay --}}
-    <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/50 lg:hidden" onclick="toggleSidebar()"></div>
+    <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/50 backdrop-blur-sm lg:hidden transition-opacity duration-300" onclick="toggleSidebar()"></div>
 
     <script>
         function toggleSidebar() {
@@ -77,6 +163,18 @@
             sidebar.classList.toggle('-translate-x-full');
             overlay.classList.toggle('hidden');
         }
+
+        // Close sidebar on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('student-sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                if (!sidebar.classList.contains('-translate-x-full')) {
+                    sidebar.classList.add('-translate-x-full');
+                    overlay.classList.add('hidden');
+                }
+            }
+        });
     </script>
 </body>
 </html>

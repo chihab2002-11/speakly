@@ -117,8 +117,16 @@ class TeacherAttendanceController extends Controller
         ]);
 
         $courseClass = $teacher->taughtClasses()
-            ->with('students:id')
+            ->with(['students:id', 'schedules:id,class_id,day_of_week'])
             ->findOrFail((int) $validated['class_id']);
+
+        $selectedDate = Carbon::createFromFormat('Y-m-d', $validated['date']);
+
+        if (! $this->classHasSessionOnDate($courseClass, $selectedDate)) {
+            throw ValidationException::withMessages([
+                'date' => 'No class is scheduled on '.$selectedDate->format('l, M j, Y').'. Attendance and grades were not saved.',
+            ]);
+        }
 
         $enrolledStudentIds = $courseClass->students->pluck('id')->map(fn (mixed $id): int => (int) $id);
         $submittedStudentIds = collect($validated['records'])
@@ -266,6 +274,23 @@ class TeacherAttendanceController extends Controller
         } catch (\Throwable) {
             return now()->toDateString();
         }
+    }
+
+    private function classHasSessionOnDate(CourseClass $courseClass, Carbon $date): bool
+    {
+        $scheduledDays = $courseClass->schedules
+            ->pluck('day_of_week')
+            ->filter()
+            ->map(fn (mixed $day): string => strtolower(trim((string) $day)));
+
+        if ($scheduledDays->isEmpty()) {
+            return false;
+        }
+
+        $fullDay = strtolower($date->format('l'));
+        $shortDay = strtolower($date->format('D'));
+
+        return $scheduledDays->contains($fullDay) || $scheduledDays->contains($shortDay);
     }
 
     /**
