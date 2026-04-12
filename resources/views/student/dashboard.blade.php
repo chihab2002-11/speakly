@@ -161,7 +161,31 @@
                     </div>
                 </div>
 
-</div>
+            </div>
+
+            {{-- Assigned Courses --}}
+            <div class="mt-5 rounded-xl border p-4" style="border-color: rgba(190, 201, 191, 0.25); background-color: #F8FBF9;">
+                <div class="mb-2 flex items-center justify-between">
+                    <span class="text-[10px] font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted); letter-spacing: 1.1px;">
+                        Assigned Courses
+                    </span>
+                    <span class="text-xs font-bold" style="color: var(--lumina-primary);">
+                        {{ count($assignedCourseNames ?? []) }} Course{{ count($assignedCourseNames ?? []) === 1 ? '' : 's' }}
+                    </span>
+                </div>
+
+                @if(!empty($assignedCourseNames ?? []))
+                    <div class="flex flex-wrap gap-2">
+                        @foreach(($assignedCourseNames ?? []) as $courseName)
+                            <span class="rounded-full px-3 py-1 text-xs font-semibold" style="background-color: #E5EFEA; color: #1E3A2F;">
+                                {{ $courseName }}
+                            </span>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-xs" style="color: var(--lumina-text-secondary);">No course assignment found yet.</p>
+                @endif
+            </div>
         </div>
         
         {{-- Next Class Countdown Card --}}
@@ -599,8 +623,20 @@
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
 
-                const dayPrefix = days > 0 ? `${days}d:` : '';
-                countdownEl.textContent = `${dayPrefix}${formatPart(hours, 'h')}:${formatPart(minutes, 'min')}:${formatPart(seconds, 's')}`;
+                const parts = [];
+
+                if (days > 0) {
+                    parts.push(`${days}d`);
+                }
+
+                if (hours > 0) {
+                    parts.push(formatPart(hours, 'h'));
+                }
+
+                parts.push(formatPart(minutes, 'min'));
+                parts.push(formatPart(seconds, 's'));
+
+                countdownEl.textContent = parts.join(':');
             };
 
             tick();

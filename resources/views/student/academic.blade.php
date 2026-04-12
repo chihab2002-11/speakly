@@ -75,19 +75,9 @@
                                 <td class="p-2 text-center h-16">
                                     @if(isset($timetableData[$day][$slot]))
                                         @php $class = $timetableData[$day][$slot]; @endphp
-                                        @php
-                                            $paletteKey = strtolower((string) ($class['color'] ?? '')).'|'.strtolower((string) ($class['border'] ?? ''));
-                                            $paletteClasses = [
-                                                '#d1fae5|#10b981' => 'bg-emerald-100 border-l-emerald-500',
-                                                '#e0e7ff|#6366f1' => 'bg-indigo-100 border-l-indigo-500',
-                                                '#dbeafe|#3b82f6' => 'bg-blue-100 border-l-blue-500',
-                                                '#fee2e2|#ef4444' => 'bg-red-100 border-l-red-500',
-                                                '#f3f4f6|#6b7280' => 'bg-gray-100 border-l-gray-500',
-                                            ];
-                                            $paletteClass = $paletteClasses[$paletteKey] ?? 'bg-slate-100 border-l-slate-400';
-                                        @endphp
                                         <div 
-                                            class="rounded-lg p-3 border-l-4 h-full flex flex-col justify-center transition-all duration-200 hover:shadow-md cursor-pointer {{ $paletteClass }}"
+                                            class="rounded-lg p-3 border-l-4 h-full flex flex-col justify-center transition-all duration-200 hover:shadow-md cursor-pointer"
+                                            style="background-color: {{ $class['color'] }}; border-left-color: {{ $class['border'] }};"
                                         >
                                             <p class="text-xs font-bold truncate" style="color: var(--lumina-text-primary);">{{ $class['name'] }}</p>
                                             <p class="text-xs mt-1" style="color: var(--lumina-text-muted);">{{ $class['room'] }}</p>

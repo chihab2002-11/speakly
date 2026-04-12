@@ -65,6 +65,7 @@ class StudentDashboardController extends Controller
         $nextClassStartsAt = null;
         $nextClassRoomName = 'Lecture Hall 4';
         $enrolledClasses = collect();
+        $assignedCourseNames = [];
         $mentors = collect();
         $selectedMentor = null;
         $popularCourses = collect();
@@ -77,6 +78,13 @@ class StudentDashboardController extends Controller
             $enrolledClasses = CourseClass::whereHas('students', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })->with(['course', 'teacher', 'schedules.room'])->get();
+
+            $assignedCourseNames = $enrolledClasses
+                ->map(fn (CourseClass $courseClass): string => (string) ($courseClass->course?->name ?? ''))
+                ->filter(fn (string $name): bool => $name !== '')
+                ->unique()
+                ->values()
+                ->all();
 
             $nextClassData = $this->resolveNextClassData($enrolledClasses);
 
@@ -148,6 +156,7 @@ class StudentDashboardController extends Controller
             'studentBirthday' => $studentBirthday,
             'enrollmentDate' => $enrollmentDate,
             'enrolledCoursesCount' => $enrolledCoursesCount,
+            'assignedCourseNames' => $assignedCourseNames,
             'completedLessonsCount' => 24,
             'courseProgressPercent' => 75,
             'lessonProgressPercent' => 60,
