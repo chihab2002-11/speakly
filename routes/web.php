@@ -1,6 +1,7 @@
-﻿<?php
+<?php
 
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminLanguageProgramController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ParentDashboardController;
@@ -17,11 +18,13 @@ use App\Http\Controllers\TeacherSettingsController;
 use App\Http\Controllers\TeacherTimetableController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Middleware\EnsureApproved;
+use App\Models\LanguageProgram;
 use App\Models\User;
 use App\Support\DashboardRedirector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 $supportedRoles = ['student', 'teacher', 'secretary', 'parent', 'admin'];
 $supportedRolesMiddleware = 'role:student|teacher|secretary|parent|admin';
@@ -41,7 +44,32 @@ Route::get('/', function () {
         );
     }
 
-    return view('visitor');
+    $languagePrograms = config('visitor.programs', []);
+
+    if (Schema::hasTable('language_programs')) {
+        $languagePrograms = LanguageProgram::query()
+            ->ordered()
+            ->where('is_active', true)
+            ->get()
+            ->map(fn (LanguageProgram $program): array => [
+                'id' => $program->id,
+                'code' => $program->code,
+                'name' => $program->name,
+                'title' => $program->title,
+                'description' => $program->description,
+                'full_description' => $program->full_description,
+                'flag_url' => $program->flag_url,
+                'sort_order' => $program->sort_order,
+                'is_active' => $program->is_active,
+                'certifications' => $program->certifications ?? [],
+            ])
+            ->values()
+            ->all();
+    }
+
+    return view('visitor', [
+        'languagePrograms' => $languagePrograms,
+    ]);
 })->name('home');
 
 Route::get('/register-login', function () {
@@ -513,6 +541,22 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
                 'users' => $users,
             ]);
         })->name('messages.new');
+
+        Route::post('/programs', [AdminLanguageProgramController::class, 'store'])->name('programs.store');
+        Route::patch('/programs/reorder', [AdminLanguageProgramController::class, 'reorder'])->name('programs.reorder');
+        Route::patch('/programs/{program}', [AdminLanguageProgramController::class, 'update'])
+            ->whereNumber('program')
+            ->name('programs.update');
+        Route::patch('/programs/{program}/toggle', [AdminLanguageProgramController::class, 'toggleStatus'])
+            ->whereNumber('program')
+            ->name('programs.toggle');
+        Route::patch('/programs/{program}/move/{direction}', [AdminLanguageProgramController::class, 'move'])
+            ->whereNumber('program')
+            ->whereIn('direction', ['up', 'down'])
+            ->name('programs.move');
+        Route::delete('/programs/{program}', [AdminLanguageProgramController::class, 'destroy'])
+            ->whereNumber('program')
+            ->name('programs.destroy');
     });
 
 Route::get('/pending-approval', function () {
@@ -615,5 +659,3 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/settings.php';
-
-

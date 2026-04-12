@@ -55,6 +55,27 @@
 </head>
 <body class="bg-white text-on-surface overflow-x-hidden relative">
 
+@php
+    $programs = collect($languagePrograms ?? [])
+        ->filter(fn ($program) => $program['is_active'] ?? true)
+        ->sortBy('sort_order')
+        ->values();
+
+    $languageModalData = $programs
+        ->mapWithKeys(function ($program) {
+            return [
+                $program['code'] => [
+                    'name' => $program['name'],
+                    'title' => $program['title'],
+                    'description' => $program['description'],
+                    'fullDescription' => $program['full_description'],
+                    'certifications' => $program['certifications'] ?? [],
+                ],
+            ];
+        })
+        ->all();
+@endphp
+
 <!-- Academic/Language Background Patterns -->
 <div class="fixed inset-0 z-[-1] pointer-events-none overflow-hidden w-full h-full select-none">
     
@@ -286,96 +307,20 @@
 </div>
 <div class="relative overflow-hidden">
 <div class="programs-slider flex gap-6 transition-transform duration-300 ease-out select-none" id="programsSlider" style="width: fit-content;">
-<!-- English -->
-<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="en">
+@foreach ($programs as $program)
+<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer"
+     data-lang="{{ $program['code'] }}">
 <div class="mb-10 relative">
-<img alt="UK Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9fBXUXgMsr-Hhbu0-aE7d4oaCk8ACtNt3np_KPuv_OvjhRU33T2DwBLlUS5T4ytw74AbIiSlGqtj4xsxGIX52mjGe6FH5GI_td1YhpVBwyP2aDpF0MuG_UpkyjDr_gjy1KbWqP1ScNZEXJexrIpo-zj59Wpe8A2Tp9ig6NWIUQYWJJVZEL5E6RxCi0HZ2_9unSrLLk6rox-VPt7V8jbt_G7WbaDNKa6vT8YFsRt4XyyJd9MMMFwGwoRocyIDE3-J3k46SmjHQcBve"/>
-<div class="absolute -top-2 -right-2 text-en-red font-black-900 text-2xl">EN</div>
+<img alt="{{ $program['name'] }} Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ $program['flag_url'] }}"/>
+<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">{{ strtoupper($program['code']) }}</div>
 </div>
-<h3 class="text-xl font-bold text-on-surface mb-4">English Mastery</h3>
-<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Cambridge preparation and business-level fluency. Our most expansive program.</p>
+<h3 class="text-xl font-bold text-on-surface mb-4">{{ $program['title'] }}</h3>
+<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">{{ $program['description'] }}</p>
 <div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
 Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 </div>
-
-<!-- Spanish -->
-<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="es">
-<div class="mb-10 relative">
-<img alt="Spanish Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACTBwMnOv7Pj2HZWIkBQiVbRR6BHwN0aktcIDkkPobYVYC_FDRxF7PY83FHD6xyZ2Fa83QSYqnvtbnE1lGOGVh9Q0YoBndVCtBgqUTl8JJ5uOxclJrNQIUHI8mGrVe8YxsZ0ehd99hGGNpz5pBUBh7TzEWcmKmGdTSOOTZllFSd99W0kJ2rb5K0JU-LW60Kgi9_Y69RBYXhOou-S3_J3xiiQ9J3lXJOCZJ_3-IyrtT4-1_rfZtkGbuaOZXppeI7msVWTpS6M-JhQId"/>
-<div class="absolute -top-2 -right-2 text-es-orange font-black-900 text-2xl">ES</div>
-</div>
-<h3 class="text-xl font-bold text-on-surface mb-4">Spanish Immersion</h3>
-<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Deep dive into Castilian and Latin cultures through DELE-aligned courses.</p>
-<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-</div>
-</div>
-
-<!-- French -->
-<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="fr">
-<div class="mb-10 relative">
-<img alt="French Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDnpwuOKXKvsaO5dDtKhu7VC-_rsToQbUWKgSSRNfR-CfyT37MXF2s3Z1DSJas5RGRAUZXMRg6LJzVXH8wqzqoG06hf_Qd4hCcgR7R7yeeCuBkQ3RRe_ZlpGWFyoeH_bYV2gPzvu_nRxMldUY_jTr5fHZSD7L__Nj3ARkLqlWD1DqP3mHoF7KvE-UMbTyCve0MbFOBoM67czJgFj2HGUzMjdCcIlgznMm_zFtmCwfOl-k7TCMQ5saMhmE-j-zEzAzAV2pIRZ-ZzKQQi"/>
-<div class="absolute -top-2 -right-2 text-fr-blue font-black-900 text-2xl">FR</div>
-</div>
-<h3 class="text-xl font-bold text-on-surface mb-4">French Elegance</h3>
-<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Master the language of diplomacy and art with DALF-certified instructors.</p>
-<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-</div>
-</div>
-
-<!-- German -->
-<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="de">
-<div class="mb-10 relative">
-<img alt="German Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_gr.png') }}"/>
-<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">DE</div>
-</div>
-<h3 class="text-xl font-bold text-on-surface mb-4">German Precision</h3>
-<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Focus on technical German and Goëthe-Zertifikat certification pathways.</p>
-<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-</div>
-</div>
-
-<!-- Italian -->
-<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="it">
-<div class="mb-10 relative">
-<img alt="Italian Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_it.png') }}"/>
-<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">IT</div>
-</div>
-<h3 class="text-xl font-bold text-on-surface mb-4">Italian Heritage</h3>
-<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Explore the linguistic roots of the Renaissance and culinary traditions.</p>
-<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-</div>
-</div>
-
-<!-- Portuguese -->
-<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="pt">
-<div class="mb-10 relative">
-<img alt="Portuguese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_prgs.png') }}"/>
-<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">PT</div>
-</div>
-<h3 class="text-xl font-bold text-on-surface mb-4">Portuguese Power</h3>
-<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Connect with 250+ million speakers worldwide through CAPLE-aligned methodologies.</p>
-<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-</div>
-</div>
-
-<!-- Japanese -->
-<div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer" data-lang="jp">
-<div class="mb-10 relative">
-<img alt="Japanese Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ asset('images/flag_japan.png') }}"/>
-<div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">JP</div>
-</div>
-<h3 class="text-xl font-bold text-on-surface mb-4">Japanese Mastery</h3>
-<p class="text-on-surface-variant text-sm leading-relaxed mb-auto font-medium">Master Hiragana, Katakana, and Kanji with JLPT certification pathways included.</p>
-<div class="text-primary font-bold flex items-center gap-2 mt-8 cursor-pointer group-hover:gap-3 transition-all">
-Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-</div>
-</div>
+@endforeach
 </div>
 </div>
 </div>
@@ -634,7 +579,7 @@ IELTS Preparation
 <h3 class="text-2xl font-bold mb-4">Looking for More Options?</h3>
 <p class="text-white/90 mb-2 text-sm font-light">Have questions about our other pricing plans and course options?</p>
 <p class="text-white/80 text-xs mb-8 font-light">Get in touch with our team for personalized guidance and special offers.</p>
-<button class="contact-us-btn w-full px-8 py-3 bg-white text-primary font-bold rounded-2xl hover:bg-white/90 transition-all">Contact Us Now</button>
+<a href="mailto:admin@speakly.com" class="contact-us-btn w-full px-8 py-3 bg-white text-primary font-bold rounded-2xl hover:bg-white/90 transition-all text-center">Contact Us Now</a>
 <div class="mt-8 pt-8 border-t border-white/20 space-y-3 text-sm">
 <div class="flex items-center justify-center gap-3 text-white/80">
 <span class="material-symbols-outlined text-[20px]">mail</span>
@@ -722,123 +667,49 @@ TCF Français
 </div>
 </section>
 </main>
-<footer class="bg-white/90 border-t border-primary/10 py-20 px-8">
+<footer class="bg-white/90 border-t border-primary/10 py-20 px-8" id="about">
 <div class="max-w-7xl mx-auto">
 <div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-20">
 <div class="col-span-1 md:col-span-2">
 <div class="text-3xl font-black-900 tracking-tight mb-8"><span class="text-on-surface">Lumina</span> <span class="text-purple">Academy</span></div>
-<p class="text-on-surface-variant max-w-sm text-lg leading-relaxed font-light">The premier institute for language mastery, where academic tradition meets modern pedagogical innovation.</p>
+<p class="text-on-surface-variant max-w-sm text-lg leading-relaxed font-light">Lumina Academy helps learners build real language confidence through structured classes, practical communication, and clear progression levels.</p>
 </div>
 <div>
-<h4 class="font-black text-on-surface mb-6 uppercase tracking-wider text-sm">Institution</h4>
+<h4 class="font-black text-on-surface mb-6 uppercase tracking-wider text-sm">About</h4>
 <ul class="space-y-4 text-on-surface-variant font-medium">
-<li><a class="hover:text-primary transition-colors" href="#">Our Ethos</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Curriculum</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Faculty</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">Admissions</a></li>
+<li><a class="hover:text-primary transition-colors" href="{{ url('/') }}#programs">Language Programs</a></li>
+<li><a class="hover:text-primary transition-colors" href="{{ url('/') }}#features">Student Portal Features</a></li>
+<li><a class="hover:text-primary transition-colors" href="{{ url('/register-login?tab=register') }}">Enrollment</a></li>
+<li><a class="hover:text-primary transition-colors" href="mailto:admin@speakly.com">Admissions Support</a></li>
 </ul>
 </div>
 <div>
 <h4 class="font-black text-on-surface mb-6 uppercase tracking-wider text-sm">Connect</h4>
 <ul class="space-y-4 text-on-surface-variant font-medium">
-<li><a class="hover:text-primary transition-colors" href="#">Instagram</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">LinkedIn</a></li>
-<li><a class="hover:text-primary transition-colors" href="#">The Gallery Journal</a></li>
+<li><a class="hover:text-primary transition-colors" href="https://www.instagram.com/luminaacademy" rel="noopener noreferrer" target="_blank">Instagram</a></li>
+<li><a class="hover:text-primary transition-colors" href="https://www.linkedin.com/company/lumina-academy" rel="noopener noreferrer" target="_blank">LinkedIn</a></li>
+<li><a class="hover:text-primary transition-colors" href="https://maps.google.com/?q=Algiers,+Algeria" rel="noopener noreferrer" target="_blank">Google Maps</a></li>
+<li><a class="hover:text-primary transition-colors" href="tel:+213345464654">+213 345 464 654</a></li>
 </ul>
 </div>
 </div>
 <div class="flex flex-col md:flex-row justify-between items-center pt-10 border-t border-primary/5 opacity-60">
 <p class="text-sm font-medium">© 2026 Lumina Academy. All rights reserved.</p>
 <div class="flex gap-8 text-sm font-medium mt-4 md:mt-0">
-<a class="hover:underline" href="#">Privacy Policy</a>
-<a class="hover:underline" href="#">Terms of Service</a>
-<a class="hover:underline" href="#">Cookies</a>
+<a class="hover:underline" href="mailto:admin@speakly.com">Support</a>
+<a class="hover:underline" href="https://maps.google.com/?q=Algiers,+Algeria" rel="noopener noreferrer" target="_blank">Algiers, Algeria</a>
+<a class="hover:underline" href="tel:+213345464654">Call Us</a>
 </div>
 </div>
 </div>
 </footer>
+<script id="languageDataJson" type="application/json">@json($languageModalData)</script>
 <script>
 // Language Details Data
-const languageData = {
-  en: {
-    name: 'English',
-    title: 'English Mastery',
-    description: 'Cambridge preparation and business-level fluency. Our most expansive program.',
-    fullDescription: 'Master the English language with our comprehensive programs designed for learners of all levels. From beginner fundamentals to advanced business communication, our expert instructors guide you through Cambridge exam preparation, TOEFL/IELTS readiness, and professional English mastery.',
-    certifications: [
-      { name: 'Cambridge ESOL', exams: ['KET', 'PET', 'FCE', 'CAE', 'CPE'] },
-      { name: 'IELTS', exams: ['Academic', 'General Training'] },
-      { name: 'TOEFL', exams: ['iBT'] },
-      { name: 'Business English', exams: ['BEC Preliminary', 'BEC Vantage', 'BEC Higher'] }
-    ]
-  },
-  es: {
-    name: 'Spanish',
-    title: 'Spanish Immersion',
-    description: 'Deep dive into Castilian and Latin cultures through DELE-aligned courses.',
-    fullDescription: 'Immerse yourself in the Spanish language and rich Hispanic cultures. Our programs combine linguistic excellence with cultural exploration, preparing you for everything from casual conversations to professional environments across Spain and Latin America.',
-    certifications: [
-      { name: 'DELE', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
-      { name: 'SIELE', exams: ['SIELE Global'] },
-      { name: 'Cervantes Institute', exams: ['Official Certification'] }
-    ]
-  },
-  fr: {
-    name: 'French',
-    title: 'French Elegance',
-    description: 'Master the language of diplomacy and art with DALF-certified instructors.',
-    fullDescription: 'Discover the elegance and sophistication of the French language. Our courses prepare you for successful communication in diplomatic, cultural, and professional contexts, with expert guidance from certified DALF instructors.',
-    certifications: [
-      { name: 'DELF', exams: ['A1', 'A2', 'B1', 'B2'] },
-      { name: 'DALF', exams: ['C1', 'C2'] },
-      { name: 'TCF', exams: ['TCF Tout Public', 'TCF DAP'] }
-    ]
-  },
-  de: {
-    name: 'German',
-    title: 'German Precision',
-    description: 'Focus on technical German and Goëthe-Zertifikat certification pathways.',
-    fullDescription: 'Master the precision and structure of the German language. Whether for academic pursuits, technical communication, or professional advancement, our programs equip you with the linguistic tools needed to excel in German-speaking environments.',
-    certifications: [
-      { name: 'Goethe Zertifikat', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
-      { name: 'TestDaF', exams: ['TestDaF (Academic)'] },
-      { name: 'ZD', exams: ['Zertifikat Deutsch'] }
-    ]
-  },
-  it: {
-    name: 'Italian',
-    title: 'Italian Heritage',
-    description: 'Explore the linguistic roots of the Renaissance and culinary traditions.',
-    fullDescription: 'Connect with Italian culture, art, and tradition through language mastery. From opera and literature to culinary arts and modern business communication, explore the richness of Italian across all proficiency levels.',
-    certifications: [
-      { name: 'CELI', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
-      { name: 'PLIDA', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
-      { name: 'AIL', exams: ['Italian Language Certificate'] }
-    ]
-  },
-  pt: {
-    name: 'Portuguese',
-    title: 'Portuguese Power',
-    description: 'Connect with 250+ million speakers worldwide through CAPLE-aligned methodologies.',
-    fullDescription: 'Access the world of Portuguese, spoken by over 250 million people globally. Our programs cover both European and Brazilian variants, preparing you to communicate effectively across continents.',
-    certifications: [
-      { name: 'CAPLE', exams: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] },
-      { name: 'CELPE-BRAS', exams: ['Brazilian Portuguese'] },
-      { name: 'DEPLE', exams: ['European Portuguese'] }
-    ]
-  },
-  jp: {
-    name: 'Japanese',
-    title: 'Japanese Mastery',
-    description: 'Master Hiragana, Katakana, and Kanji with JLPT certification pathways included.',
-    fullDescription: 'Master the intricacies of the Japanese language, from fundamental writing systems to complex cultural communication. Our structured approach ensures steady progression through each proficiency level with cultural context.',
-    certifications: [
-      { name: 'JLPT', exams: ['N1', 'N2', 'N3', 'N4', 'N5'] },
-      { name: 'J.TEST', exams: ['J.TEST for Japanese'] },
-      { name: 'Kanji Kentei', exams: ['Kanji Proficiency Test'] }
-    ]
-  }
-};
+const languageDataElement = document.getElementById('languageDataJson');
+const languageData = languageDataElement
+  ? JSON.parse(languageDataElement.textContent || '{}')
+  : {};
 
 document.addEventListener('DOMContentLoaded', function() {
   const slider = document.getElementById('programsSlider');
@@ -1042,14 +913,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Contact Us button
-  const contactBtn = document.querySelector('.contact-us-btn');
-  if (contactBtn) {
-    contactBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      alert('📧 admin@speakly.com\n📱 +213 345 464 654');
-    });
-  }
 });
 
 function openLanguageModal(langCode) {
@@ -1270,5 +1133,4 @@ function openLanguageModal(langCode) {
   border: 1px solid #ddd;
 }
 </style>
-</script>
 </body></html>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\LanguageProgram;
 use App\Support\DashboardDataProvider;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,6 +13,13 @@ class AdminDashboardController extends Controller
 
     public function index(Request $request): View
     {
-        return view('dashboards.admin', $this->dashboardDataProvider->forUser($request->user()));
+        $programs = LanguageProgram::query()->ordered()->get();
+
+        return view('dashboards.admin', [
+            ...$this->dashboardDataProvider->forUser($request->user()),
+            'user' => $request->user(),
+            'programs' => $programs,
+            'activeProgramsCount' => $programs->where('is_active', true)->count(),
+        ]);
     }
 }

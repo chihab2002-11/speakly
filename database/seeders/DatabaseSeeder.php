@@ -40,6 +40,7 @@ class DatabaseSeeder extends Seeder
         if (app()->environment(['local', 'development'])) {
             $this->call([
                 TeacherWorkflowSeeder::class,
+                LanguageProgramSeeder::class,
             ]);
         }
     }

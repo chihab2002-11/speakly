@@ -53,7 +53,6 @@
         }
         .forms-container {
             position: relative;
-            min-height: 580px;
         }
         
         /* Custom radio button styling */
@@ -88,17 +87,18 @@
             height: 100%;
             cursor: pointer;
         }
+
     </style>
 </head>
-<body class="bg-white text-on-surface min-h-screen flex flex-col">
+<body class="bg-white text-on-surface min-h-screen flex flex-col" data-open-register="{{ old('requested_role') || request()->query('tab') === 'register' ? '1' : '0' }}">
 
     <!-- Navigation -->
     @include('partials.navigation', ['fixed' => false])
 
     <!-- Main Content -->
-    <main class="flex-1 flex">
+    <main class="flex-1 flex lg:overflow-hidden">
         <!-- Left Side - Decorative Section -->
-        <div class="hidden lg:flex lg:w-[45%] bg-surface-container-low relative overflow-hidden flex-col justify-between p-12">
+        <div class="hidden lg:flex lg:w-[45%] bg-surface-container-low relative overflow-hidden flex-col p-12 gap-6">
             <!-- Decorative curved shape at top-left -->
             <div class="absolute top-0 left-0 w-64 h-64">
                 <svg viewBox="0 0 200 200" class="w-full h-full">
@@ -133,33 +133,31 @@
                 </p>
             </div>
             
-            <!-- Stats Cards -->
-            <div class="relative z-10 space-y-4">
-                <!-- 98% Card -->
-                <div class="bg-white rounded-2xl p-5 shadow-sm max-w-xs flex items-center gap-4">
-                    <div class="w-12 h-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                        <span class="text-2xl">🏆</span>
+                <!-- Trust Cards -->
+                <div class="relative z-10 space-y-3 max-w-sm">
+                    <div class="bg-white/90 rounded-xl p-3.5 shadow-sm border border-white/70 flex items-start gap-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-blue-600">verified_user</span>
+                        </div>
+                        <div>
+                            <div class="text-base font-semibold text-on-surface leading-tight">Secure approval flow</div>
+                            <div class="text-xs text-on-surface-variant mt-1">Role-based onboarding for students, parents, teachers, and secretaries.</div>
+                        </div>
                     </div>
-                    <div>
-                        <div class="text-2xl font-young-serif text-purple">98%</div>
-                        <div class="text-xs text-on-surface-variant font-bold tracking-wide uppercase font-inter">CERTIFICATION PASS RATE</div>
+                    
+                    <div class="bg-white/90 rounded-xl p-3.5 shadow-sm border border-white/70 flex items-start gap-3">
+                        <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-emerald-700">support_agent</span>
+                        </div>
+                        <div>
+                            <div class="text-base font-semibold text-on-surface leading-tight">Dedicated support</div>
+                            <div class="text-xs text-on-surface-variant mt-1">Need help? Contact our team directly from the portal.</div>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- 5 langs Card -->
-                <div class="bg-white rounded-2xl p-5 shadow-sm max-w-xs flex items-center gap-4">
-                    <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                        <span class="text-2xl">🌍</span>
-                    </div>
-                    <div>
-                        <div class="text-2xl font-young-serif text-purple">5 langs</div>
-                        <div class="text-xs text-on-surface-variant font-bold tracking-wide uppercase font-inter">ENGLISH · FRENCH · SPANISH · GERMAN · ITALIAN</div>
-                    </div>
-                </div>
-            </div>
             
             <!-- Quote -->
-            <div class="relative z-10 bg-white/40 backdrop-blur-sm border border-white/60 rounded-2xl p-6 mt-8 shadow-sm">
+            <div class="relative z-10 bg-white/40 backdrop-blur-sm border border-white/60 rounded-2xl p-5 shadow-sm max-w-sm">
                 <p class="text-on-surface-variant italic text-base leading-relaxed">
                     "Education is the kindling of a flame, not the filling of a vessel."
                 </p>
@@ -168,8 +166,8 @@
         </div>
         
         <!-- Right Side - Login Form -->
-        <div class="flex-1 flex items-center justify-center p-8 lg:p-16">
-            <div class="w-full max-w-md">
+        <div class="flex-1 flex items-center justify-center p-8 lg:p-16 lg:h-full lg:items-start lg:overflow-y-auto">
+            <div class="w-full max-w-md lg:pt-2">
                 <!-- Tabs -->
                 <div class="flex mb-8 bg-gray-100 rounded-full p-1">
                     <button id="signInTab" onclick="showSignIn()" class="flex-1 py-3 px-6 bg-primary text-white rounded-full font-semibold shadow-sm transition-all duration-300">
@@ -190,7 +188,7 @@
                     
                     <!-- Social Login Buttons -->
                     <div class="flex gap-4 mb-6">
-                        <button class="flex-1 flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                        <a href="https://accounts.google.com/" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                             <svg class="w-5 h-5" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -198,13 +196,13 @@
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                             </svg>
                             <span class="font-medium text-on-surface">Google</span>
-                        </button>
-                        <button class="flex-1 flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                        </a>
+                        <a href="https://www.linkedin.com/company/lumina-academy" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#0A66C2">
                                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                             </svg>
                             <span class="font-medium text-on-surface">LinkedIn</span>
-                        </button>
+                        </a>
                     </div>
                     
                     <!-- Divider -->
@@ -303,7 +301,7 @@
                     
                     <!-- Social Login Buttons -->
                     <div class="flex gap-4 mb-6">
-                        <button class="flex-1 flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                        <a href="https://accounts.google.com/" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                             <svg class="w-5 h-5" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -311,13 +309,13 @@
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                             </svg>
                             <span class="font-medium text-on-surface">Google</span>
-                        </button>
-                        <button class="flex-1 flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                        </a>
+                        <a href="https://www.linkedin.com/company/lumina-academy" target="_blank" rel="noopener noreferrer" class="flex-1 flex items-center justify-center gap-3 py-3 px-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#0A66C2">
                                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                             </svg>
                             <span class="font-medium text-on-surface">LinkedIn</span>
-                        </button>
+                        </a>
                     </div>
                     
                     <!-- Divider -->
@@ -564,13 +562,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
             const tab = urlParams.get('tab');
+            const shouldOpenRegisterFromServer = document.body.dataset.openRegister === '1';
             
-            // Show register tab if tab=register OR if there are registration errors (old requested_role exists)
-            @if(old('requested_role'))
-            showCreateAccount();
-            @elseif(request()->query('tab') === 'register')
-            showCreateAccount();
-            @endif
+            if (shouldOpenRegisterFromServer) {
+                showCreateAccount();
+            }
             
             if (tab === 'register') {
                 showCreateAccount();
@@ -608,7 +604,7 @@
     </script>
 
     <!-- Footer -->
-    <footer class="bg-on-surface py-6 px-8">
+    <footer class="bg-on-surface py-6 px-8 mt-auto">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <!-- Logo -->
             <div class="text-xl font-young-serif tracking-tight">
@@ -617,15 +613,15 @@
             
             <!-- Links -->
             <div class="flex items-center gap-8 text-sm text-gray-400 font-medium">
-                <a href="#" class="hover:text-primary transition-colors">PRIVACY</a>
-                <a href="#" class="hover:text-primary transition-colors">TERMS</a>
-                <a href="#" class="hover:text-primary transition-colors">CAMPUS MAP</a>
-                <a href="#" class="hover:text-primary transition-colors">DIRECTORY</a>
+                <a href="mailto:admin@speakly.com" class="hover:text-primary transition-colors">SUPPORT</a>
+                <a href="tel:+213345464654" class="hover:text-primary transition-colors">+213 345 464 654</a>
+                <a href="https://maps.google.com/?q=Algiers,+Algeria" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">ALGIERS, ALGERIA</a>
+                <a href="https://www.instagram.com/luminaacademy" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">INSTAGRAM</a>
             </div>
             
             <!-- Copyright -->
             <div class="text-sm text-gray-400">
-                © 2024 LUMINA ACADEMY
+                © 2026 LUMINA ACADEMY
             </div>
         </div>
     </footer>

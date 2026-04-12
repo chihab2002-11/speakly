@@ -23,10 +23,10 @@
         {{-- Nav Links --}}
         <div class="hidden md:flex items-center space-x-10">
             <a class="text-on-surface font-medium hover:text-primary transition-colors nav-home-link" href="{{ url('/') }}">Home</a>
-            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#pricing">About</a>
-            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#features">Features</a>
             <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#programs">Programs</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#features">Features</a>
             <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#testimonials">Reviews</a>
+            <a class="text-on-surface-variant hover:text-primary transition-colors font-medium" href="{{ url('/') }}#about">About</a>
         </div>
         
         {{-- Auth Buttons --}}
