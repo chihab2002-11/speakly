@@ -120,6 +120,21 @@ class User extends Authenticatable
         return $this->hasMany(StudentCard::class);
     }
 
+    public function tuitionPaymentsAsStudent(): HasMany
+    {
+        return $this->hasMany(TuitionPayment::class, 'student_id');
+    }
+
+    public function tuitionPaymentsAsParent(): HasMany
+    {
+        return $this->hasMany(TuitionPayment::class, 'parent_id');
+    }
+
+    public function tuitionPaymentsRecorded(): HasMany
+    {
+        return $this->hasMany(TuitionPayment::class, 'recorded_by');
+    }
+
     public function latestStudentCard(): ?StudentCard
     {
         return $this->studentCards()->latest('valid_to')->first();

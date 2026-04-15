@@ -47,6 +47,8 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .header h1 {
@@ -59,6 +61,33 @@
             margin: 0;
             color: var(--muted);
             font-size: 0.92rem;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.84rem;
+            font-weight: 600;
+            transition: 0.15s ease;
+        }
+
+        .btn-dashboard {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .btn-dashboard:hover {
+            background: #cbd5e1;
         }
 
         .alerts {
@@ -198,6 +227,14 @@
             <div>
                 <h1>Pending Approvals</h1>
                 <p class="subtitle">Review and approve or reject newly registered accounts</p>
+            </div>
+            <div class="top-actions">
+                <a
+                    href="{{ route('role.dashboard', ['role' => $currentRole]) }}"
+                    class="btn-link btn-dashboard"
+                >
+                    Back to Dashboard
+                </a>
             </div>
         </div>
 

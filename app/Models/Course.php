@@ -10,7 +10,14 @@ class Course extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'code', 'description'];
+    protected $fillable = ['name', 'code', 'price', 'description'];
+
+    protected function casts(): array
+    {
+        return [
+            'price' => 'integer',
+        ];
+    }
 
     public function classes(): HasMany
     {

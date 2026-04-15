@@ -1,14 +1,22 @@
 <?php
 
+use App\Http\Controllers\AdminClassroomController;
+use App\Http\Controllers\AdminCourseController;
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminEmployeeController;
 use App\Http\Controllers\AdminLanguageProgramController;
+use App\Http\Controllers\AdminScheduleController;
+use App\Http\Controllers\AdminTimetableHubController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ParentDashboardController;
+use App\Http\Controllers\ParentFinancialController;
 use App\Http\Controllers\SecretaryDashboardController;
+use App\Http\Controllers\SecretaryOperationsController;
 use App\Http\Controllers\SecretaryTimetableController;
 use App\Http\Controllers\StudentAcademicController;
 use App\Http\Controllers\StudentDashboardController;
+use App\Http\Controllers\StudentFinancialController;
 use App\Http\Controllers\StudentMaterialsController;
 use App\Http\Controllers\StudentSettingsController;
 use App\Http\Controllers\TeacherAttendanceController;
@@ -125,82 +133,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
         Route::get('/academic', [StudentAcademicController::class, 'index'])->name('academic');
 
         // Financial Information page
-        Route::get('/financial', function () {
-            $user = User::query()->findOrFail((int) Auth::id());
-
-            // Placeholder ledger items
-            $ledgerItems = [
-                [
-                    'name' => 'Advanced Business English - Q3',
-                    'type' => 'Course Fee',
-                    'period' => 'Jul - Sep 2024',
-                    'amount' => 1240.00,
-                    'status' => 'outstanding',
-                    'icon' => 'course',
-                ],
-                [
-                    'name' => 'TOEFL Preparation Intensive',
-                    'type' => 'Workshop Fee',
-                    'period' => 'Jun 2024',
-                    'amount' => 450.00,
-                    'status' => 'paid',
-                    'icon' => 'workshop',
-                ],
-                [
-                    'name' => 'Digital Learning Materials Bundle',
-                    'type' => 'License Fee',
-                    'period' => 'Annual',
-                    'amount' => 185.00,
-                    'status' => 'paid',
-                    'icon' => 'materials',
-                ],
-                [
-                    'name' => 'Digital Learning Materials Bundle',
-                    'type' => 'License Fee',
-                    'period' => 'Annual',
-                    'amount' => 254.00,
-                    'status' => 'paid',
-                    'icon' => 'materials',
-                ],
-            ];
-
-            // Placeholder receipts
-            $receipts = [
-                [
-                    'invoice' => 'INV-2024-082',
-                    'amount' => 450.00,
-                    'date' => 'May 12, 2024',
-                    'method' => 'Visa',
-                    'last4' => '4221',
-                ],
-                [
-                    'invoice' => 'INV-2024-045',
-                    'amount' => 1240.00,
-                    'date' => 'Feb 05, 2024',
-                    'method' => 'Bank Transfer',
-                    'last4' => null,
-                ],
-                [
-                    'invoice' => 'INV-2023-911',
-                    'amount' => 185.00,
-                    'date' => 'Nov 28, 2023',
-                    'method' => 'Visa',
-                    'last4' => '4221',
-                ],
-            ];
-
-            return view('student.financial', [
-                'user' => $user,
-                'totalOutstanding' => 1240.00,
-                'academicYear' => '2024',
-                'ledgerItems' => $ledgerItems,
-                'grossTuition' => 1458.82,
-                'scholarshipCredit' => 218.82,
-                'scholarshipDiscount' => 15,
-                'netDue' => 1240.00,
-                'receipts' => $receipts,
-            ]);
-        })->name('financial');
+        Route::get('/financial', [StudentFinancialController::class, 'index'])->name('financial');
 
         Route::get('/materials', [StudentMaterialsController::class, 'index'])->name('materials');
         Route::get('/materials/{resource}/download', [StudentMaterialsController::class, 'download'])
@@ -279,74 +212,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
         };
 
         // Parent Financial Information
-        Route::get('/financial', function () use ($getChildren) {
-            $user = User::query()->findOrFail((int) Auth::id());
-            $children = $getChildren();
-
-            // Placeholder financial data in Algerian Dinars
-            $invoices = [
-                [
-                    'id' => 'INV-2024-001',
-                    'child' => 'Alex Johnson',
-                    'description' => 'Term 3 Tuition Fee',
-                    'amount' => 122500,
-                    'dueDate' => 'April 15, 2024',
-                    'status' => 'pending',
-                ],
-                [
-                    'id' => 'INV-2024-002',
-                    'child' => 'Sophie Johnson',
-                    'description' => 'Term 3 Tuition Fee',
-                    'amount' => 122500,
-                    'dueDate' => 'April 15, 2024',
-                    'status' => 'pending',
-                ],
-                [
-                    'id' => 'INV-2024-003',
-                    'child' => 'Alex Johnson',
-                    'description' => 'Lab Materials Fee',
-                    'amount' => 15000,
-                    'dueDate' => 'April 30, 2024',
-                    'status' => 'pending',
-                ],
-            ];
-
-            $paymentHistory = [
-                [
-                    'id' => 'PAY-2024-001',
-                    'child' => 'Alex Johnson',
-                    'description' => 'Term 2 Tuition Fee',
-                    'amount' => 122500,
-                    'paidDate' => 'January 10, 2024',
-                    'method' => 'Bank Transfer',
-                ],
-                [
-                    'id' => 'PAY-2024-002',
-                    'child' => 'Sophie Johnson',
-                    'description' => 'Term 2 Tuition Fee',
-                    'amount' => 122500,
-                    'paidDate' => 'January 10, 2024',
-                    'method' => 'Bank Transfer',
-                ],
-                [
-                    'id' => 'PAY-2023-015',
-                    'child' => 'Alex Johnson',
-                    'description' => 'Term 1 Tuition Fee',
-                    'amount' => 120000,
-                    'paidDate' => 'September 5, 2023',
-                    'method' => 'Cash',
-                ],
-            ];
-
-            return view('parent.financial', [
-                'user' => $user,
-                'children' => $children,
-                'invoices' => $invoices,
-                'paymentHistory' => $paymentHistory,
-                'totalOutstanding' => 260000,
-                'totalPaid' => 365000,
-            ]);
-        })->name('financial');
+        Route::get('/financial', [ParentFinancialController::class, 'index'])->name('financial');
 
         // Parent Calendar (Timetable)
         Route::get('/calendar', function () use ($getChildren) {
@@ -490,6 +356,85 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:teacher'])
         })->name('messages.recipients');
     });
 
+Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:secretary|admin'])
+    ->prefix('secretary')
+    ->name('secretary.')
+    ->group(function () {
+        Route::get('/registrations', [SecretaryOperationsController::class, 'registrations'])->name('registrations');
+        Route::post('/registrations', [SecretaryOperationsController::class, 'storeRegistration'])->name('registrations.store');
+
+        Route::get('/payments', [SecretaryOperationsController::class, 'payments'])->name('payments');
+        Route::post('/payments', [SecretaryOperationsController::class, 'storePayment'])->name('payments.store');
+        Route::get('/groups', [SecretaryOperationsController::class, 'groups'])->name('groups');
+        Route::post('/groups', [SecretaryOperationsController::class, 'storeGroup'])->name('groups.store');
+        Route::patch('/groups/{group}', [SecretaryOperationsController::class, 'updateGroup'])
+            ->whereNumber('group')
+            ->name('groups.update');
+        Route::delete('/groups/{group}', [SecretaryOperationsController::class, 'destroyGroup'])
+            ->whereNumber('group')
+            ->name('groups.destroy');
+        Route::post('/groups/enroll', [SecretaryOperationsController::class, 'enrollStudent'])->name('groups.enroll');
+        Route::get('/accounts', [SecretaryOperationsController::class, 'accounts'])->name('accounts');
+        Route::patch('/accounts/{account}', [SecretaryOperationsController::class, 'updateAccount'])
+            ->whereNumber('account')
+            ->name('accounts.update');
+        Route::delete('/accounts/{account}', [SecretaryOperationsController::class, 'destroyAccount'])
+            ->whereNumber('account')
+            ->name('accounts.destroy');
+        Route::get('/publish-notifications', [SecretaryOperationsController::class, 'publishNotifications'])
+            ->name('publish-notifications');
+        Route::post('/publish-notifications', [SecretaryOperationsController::class, 'sendPublishedNotification'])
+            ->name('publish-notifications.send');
+        Route::get('/settings', [SecretaryOperationsController::class, 'settings'])->name('settings');
+        Route::patch('/settings', [SecretaryOperationsController::class, 'updateSettings'])->name('settings.update');
+        Route::patch('/settings/security', [SecretaryOperationsController::class, 'updateSecurity'])->name('settings.security.update');
+
+        Route::get('/notifications', function () {
+            $user = User::query()->findOrFail((int) Auth::id());
+            $notifications = $user->notifications()->latest()->get();
+
+            return view('secretary.notifications', [
+                'user' => $user,
+                'notifications' => $notifications,
+            ]);
+        })->name('notifications');
+
+        Route::post('/notifications/{id}/read', function ($id) {
+            $notification = User::query()->findOrFail((int) Auth::id())->notifications()->where('id', $id)->firstOrFail();
+            $notification->markAsRead();
+
+            return back()->with('success', 'Notification marked as read');
+        })->name('notifications.read');
+
+        Route::post('/notifications/read-all', function () {
+            User::query()->findOrFail((int) Auth::id())->unreadNotifications->markAsRead();
+
+            return back()->with('success', 'All notifications marked as read');
+        })->name('notifications.read-all');
+
+        Route::get('/messages/recipients', function () {
+            $user = User::query()->findOrFail((int) Auth::id());
+
+            $users = User::whereHas('roles', function ($query) {
+                $query->whereIn('name', ['student', 'parent', 'teacher', 'admin', 'secretary']);
+            })
+                ->where('id', '!=', $user->id)
+                ->whereNotNull('approved_at')
+                ->orderBy('name')
+                ->get()
+                ->map(function ($candidate) {
+                    return [
+                        'id' => $candidate->id,
+                        'name' => $candidate->name,
+                        'email' => $candidate->email,
+                        'role' => $candidate->roles->isNotEmpty() ? $candidate->roles->first()->name : null,
+                    ];
+                });
+
+            return response()->json(['users' => $users]);
+        })->name('messages.recipients');
+    });
+
 // ============================================================
 // Admin-specific routes (notifications)
 // ============================================================
@@ -557,6 +502,54 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
         Route::delete('/programs/{program}', [AdminLanguageProgramController::class, 'destroy'])
             ->whereNumber('program')
             ->name('programs.destroy');
+
+        Route::get('/employees', [AdminEmployeeController::class, 'index'])->name('employees.index');
+        Route::post('/employees/secretaries', [AdminEmployeeController::class, 'storeSecretary'])->name('employees.secretaries.store');
+        Route::patch('/employees/secretaries/{secretary}', [AdminEmployeeController::class, 'updateSecretary'])
+            ->whereNumber('secretary')
+            ->name('employees.secretaries.update');
+        Route::delete('/employees/secretaries/{secretary}', [AdminEmployeeController::class, 'destroySecretary'])
+            ->whereNumber('secretary')
+            ->name('employees.secretaries.destroy');
+
+        Route::post('/employees/teachers', [AdminEmployeeController::class, 'storeTeacher'])->name('employees.teachers.store');
+        Route::patch('/employees/teachers/{teacher}', [AdminEmployeeController::class, 'updateTeacher'])
+            ->whereNumber('teacher')
+            ->name('employees.teachers.update');
+        Route::patch('/employees/teachers/{teacher}/assign-language', [AdminEmployeeController::class, 'assignTeacherLanguage'])
+            ->whereNumber('teacher')
+            ->name('employees.teachers.assign-language');
+        Route::delete('/employees/teachers/{teacher}', [AdminEmployeeController::class, 'destroyTeacher'])
+            ->whereNumber('teacher')
+            ->name('employees.teachers.destroy');
+
+        Route::get('/courses', [AdminCourseController::class, 'index'])->name('courses.index');
+        Route::post('/courses', [AdminCourseController::class, 'store'])->name('courses.store');
+        Route::patch('/courses/{course}', [AdminCourseController::class, 'update'])
+            ->whereNumber('course')
+            ->name('courses.update');
+        Route::delete('/courses/{course}', [AdminCourseController::class, 'destroy'])
+            ->whereNumber('course')
+            ->name('courses.destroy');
+
+        Route::get('/classrooms', [AdminClassroomController::class, 'index'])->name('classrooms.index');
+        Route::post('/classrooms', [AdminClassroomController::class, 'store'])->name('classrooms.store');
+        Route::patch('/classrooms/{room}', [AdminClassroomController::class, 'update'])
+            ->whereNumber('room')
+            ->name('classrooms.update');
+        Route::delete('/classrooms/{room}', [AdminClassroomController::class, 'destroy'])
+            ->whereNumber('room')
+            ->name('classrooms.destroy');
+
+        Route::get('/schedule', [AdminScheduleController::class, 'index'])->name('schedule.index');
+        Route::get('/schedule/timetable-hub', [AdminTimetableHubController::class, 'index'])->name('schedule.timetable-hub');
+        Route::post('/schedule', [AdminScheduleController::class, 'store'])->name('schedule.store');
+        Route::patch('/schedule/{schedule}', [AdminScheduleController::class, 'update'])
+            ->whereNumber('schedule')
+            ->name('schedule.update');
+        Route::delete('/schedule/{schedule}', [AdminScheduleController::class, 'destroy'])
+            ->whereNumber('schedule')
+            ->name('schedule.destroy');
     });
 
 Route::get('/pending-approval', function () {
@@ -606,6 +599,21 @@ Route::middleware([
             ->whereNumber('user')
             ->name('approvals.reject');
     });
+
+Route::middleware([
+    'auth',
+    'verified',
+    EnsureApproved::class,
+    'role:admin|secretary',
+])->group(function () {
+    Route::get('/approvals', function (Request $request) {
+        return redirect()->route('approvals.index', DashboardRedirector::routeParametersFor($request->user()));
+    })->name('approvals.redirect');
+
+    Route::get('/aprovals', function (Request $request) {
+        return redirect()->route('approvals.index', DashboardRedirector::routeParametersFor($request->user()));
+    });
+});
 
 Route::middleware([
     'auth',

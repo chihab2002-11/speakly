@@ -20,6 +20,7 @@ class CourseFactory extends Factory
         return [
             'name' => fake()->sentence(3),
             'code' => fake()->unique()->bothify('???###'),
+            'price' => fake()->numberBetween(8000, 45000),
             'description' => fake()->paragraph(),
         ];
     }

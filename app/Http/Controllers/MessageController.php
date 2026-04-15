@@ -97,7 +97,7 @@ class MessageController extends Controller
 
         // Determine view based on user role
         $role = DashboardRedirector::roleFor($request->user());
-        $viewName = in_array($role, ['student', 'parent', 'admin', 'teacher']) ? "{$role}.messages" : 'messages.index';
+        $viewName = in_array($role, ['student', 'parent', 'admin', 'teacher', 'secretary']) ? "{$role}.messages" : 'messages.index';
 
         return view($viewName, [
             'user' => $request->user(),

@@ -14,12 +14,17 @@ class ApprovalController extends Controller
     {
         abort_unless($request->user()->hasAnyRole(['admin', 'secretary']), 403);
 
-        $pendingUsers = User::query()
+        $pendingUsersQuery = User::query()
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
             ->whereNotNull('requested_role')
-            ->orderBy('created_at')
-            ->get();
+            ->orderBy('created_at');
+
+        if ($request->user()->hasRole('secretary')) {
+            $pendingUsersQuery->whereIn('requested_role', ['student', 'parent', 'teacher']);
+        }
+
+        $pendingUsers = $pendingUsersQuery->get();
 
         return view('approvals.index', [
             'pendingUsers' => $pendingUsers,
@@ -48,7 +53,7 @@ class ApprovalController extends Controller
         if ($request->user()->hasRole('admin')) {
             // allowed
         } elseif ($request->user()->hasRole('secretary')) {
-            abort_unless(in_array($requestedRole, ['student', 'parent'], true), 403);
+            abort_unless(in_array($requestedRole, ['student', 'parent', 'teacher'], true), 403);
         }
 
         $user->forceFill([
@@ -87,7 +92,7 @@ class ApprovalController extends Controller
         if ($request->user()->hasRole('admin')) {
             // allowed
         } elseif ($request->user()->hasRole('secretary')) {
-            abort_unless(in_array($requestedRole, ['student', 'parent'], true), 403);
+            abort_unless(in_array($requestedRole, ['student', 'parent', 'teacher'], true), 403);
         }
 
         $user->forceFill([

@@ -1,0 +1,209 @@
+<x-layouts.secretary :title="__('Registrations')" :current-route="'secretary.registrations'">
+    <style>
+        .secretary-role-option {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #dbe3df;
+            border-radius: 0.75rem;
+            padding: 0.7rem;
+            cursor: pointer;
+            transition: all .18s ease;
+            background: #ffffff;
+        }
+
+        .secretary-role-option:hover {
+            border-color: rgba(45, 140, 94, 0.6);
+            background: rgba(45, 140, 94, 0.05);
+        }
+
+        .secretary-role-option.selected {
+            border-color: #2D8C5E;
+            background: rgba(45, 140, 94, 0.1);
+            box-shadow: 0 0 0 2px rgba(45, 140, 94, 0.18);
+        }
+
+        .secretary-role-option input[type="radio"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+    </style>
+
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <p class="inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide" style="background: #ECFDF3; color: #166534;">
+                Internal Registration Desk
+            </p>
+            <h1 class="mt-3 text-3xl font-extrabold tracking-tight md:text-4xl" style="color: var(--lumina-text-primary); letter-spacing: -0.9px;">
+                Registrations
+            </h1>
+            <p class="mt-2 text-base" style="color: var(--lumina-text-secondary);">
+                Familiar register flow inside secretary account. New accounts are created and then sent to approvals queue.
+            </p>
+        </div>
+
+        <a
+            href="{{ route('approvals.index', ['role' => 'secretary']) }}"
+            class="inline-flex items-center rounded-xl border px-4 py-2 text-sm font-semibold transition hover:bg-gray-50"
+            style="border-color: var(--lumina-border); color: var(--lumina-text-primary);"
+        >
+            Open Approvals Queue ({{ $pendingCount }})
+        </a>
+    </div>
+
+    @if(session('success'))
+        <div class="mb-4 rounded-xl border px-4 py-3 text-sm font-semibold" style="background-color: #ECFDF3; border-color: #BBF7D0; color: #166534;">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="mb-4 rounded-xl border px-4 py-3 text-sm" style="background-color: #FEF2F2; border-color: #FECACA; color: #991B1B;">
+            <p class="font-semibold">Please fix the following:</p>
+            <ul class="mt-1 list-disc pl-5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <section class="overflow-hidden rounded-3xl border" style="background: white; border-color: var(--lumina-border-light);">
+        <div class="grid gap-0 lg:grid-cols-5">
+            <div class="border-b p-6 lg:col-span-2 lg:border-b-0 lg:border-r" style="background: #E8F9F1; border-color: var(--lumina-border-light);">
+                <h2 class="text-2xl font-semibold" style="color: #1E3A2F;">Create Account</h2>
+                <p class="mt-2 text-sm" style="color: #3F4941;">
+                    Use the same fields as public registration. The created account remains pending until approved.
+                </p>
+
+                <div class="mt-6 space-y-3">
+                    <div class="rounded-xl border bg-white p-3" style="border-color: #CFE9DD;">
+                        <p class="text-xs font-semibold uppercase" style="color: #446651;">Step 1</p>
+                        <p class="mt-1 text-sm" style="color: #1E3A2F;">Enter personal info and set role.</p>
+                    </div>
+                    <div class="rounded-xl border bg-white p-3" style="border-color: #CFE9DD;">
+                        <p class="text-xs font-semibold uppercase" style="color: #446651;">Step 2</p>
+                        <p class="mt-1 text-sm" style="color: #1E3A2F;">Create account with temporary password.</p>
+                    </div>
+                    <div class="rounded-xl border bg-white p-3" style="border-color: #CFE9DD;">
+                        <p class="text-xs font-semibold uppercase" style="color: #446651;">Step 3</p>
+                        <p class="mt-1 text-sm" style="color: #1E3A2F;">Approve or reject from queue.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 lg:col-span-3">
+                <form method="POST" action="{{ route('secretary.registrations.store') }}" class="space-y-5">
+                    @csrf
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label for="name" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Full Name</label>
+                            <div class="relative">
+                                <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style="color: #94A3B8;">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                </span>
+                                <input id="name" name="name" type="text" value="{{ old('name') }}" required class="w-full rounded-xl border py-2.5 pl-9 pr-3 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="email" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Email Address</label>
+                            <div class="relative">
+                                <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style="color: #94A3B8;">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                </span>
+                                <input id="email" name="email" type="email" value="{{ old('email') }}" required class="w-full rounded-xl border py-2.5 pl-9 pr-3 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label for="password" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Password</label>
+                            <input id="password" name="password" type="password" required class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        </div>
+
+                        <div>
+                            <label for="password_confirmation" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Confirm Password</label>
+                            <input id="password_confirmation" name="password_confirmation" type="password" required class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Select Role</label>
+                        <div id="secretaryRoleGroup" class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                            <label class="secretary-role-option{{ old('requested_role', 'student') === 'student' ? ' selected' : '' }}">
+                                <input type="radio" name="requested_role" value="student"{{ old('requested_role', 'student') === 'student' ? ' checked' : '' }}>
+                                <span class="text-sm font-medium" style="color: #334155;">Student</span>
+                            </label>
+                            <label class="secretary-role-option{{ old('requested_role') === 'teacher' ? ' selected' : '' }}">
+                                <input type="radio" name="requested_role" value="teacher"{{ old('requested_role') === 'teacher' ? ' checked' : '' }}>
+                                <span class="text-sm font-medium" style="color: #334155;">Teacher</span>
+                            </label>
+                            <label class="secretary-role-option{{ old('requested_role') === 'parent' ? ' selected' : '' }}">
+                                <input type="radio" name="requested_role" value="parent"{{ old('requested_role') === 'parent' ? ' checked' : '' }}>
+                                <span class="text-sm font-medium" style="color: #334155;">Parent</span>
+                            </label>
+                            <label class="secretary-role-option{{ old('requested_role') === 'secretary' ? ' selected' : '' }}">
+                                <input type="radio" name="requested_role" value="secretary"{{ old('requested_role') === 'secretary' ? ' checked' : '' }}>
+                                <span class="text-sm font-medium" style="color: #334155;">Secretary</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid gap-4 md:grid-cols-2">
+                        <div>
+                            <label for="date_of_birth" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Date of Birth</label>
+                            <input id="date_of_birth" name="date_of_birth" type="date" value="{{ old('date_of_birth') }}" class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        </div>
+
+                        <div>
+                            <label for="parent_email" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Parent Email (Under 18 Student)</label>
+                            <input id="parent_email" name="parent_email" type="email" value="{{ old('parent_email') }}" class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="border-color: #BFDBFE; background: #EFF6FF;">
+                        <p class="text-xs" style="color: #1E3A8A;">
+                            This creates a pending account. Approval is still required before portal access.
+                        </p>
+                        <button type="submit" class="inline-flex items-center justify-center rounded-xl px-5 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-90" style="background-color: var(--lumina-primary);">
+                            Create Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        (function () {
+            const group = document.getElementById('secretaryRoleGroup');
+            if (!group) {
+                return;
+            }
+
+            const options = group.querySelectorAll('.secretary-role-option');
+            options.forEach((option) => {
+                const radio = option.querySelector('input[type="radio"]');
+                if (!radio) {
+                    return;
+                }
+
+                option.addEventListener('click', function () {
+                    options.forEach((item) => item.classList.remove('selected'));
+                    this.classList.add('selected');
+                });
+
+                radio.addEventListener('change', function () {
+                    options.forEach((item) => item.classList.remove('selected'));
+                    option.classList.add('selected');
+                });
+            });
+        })();
+    </script>
+</x-layouts.secretary>

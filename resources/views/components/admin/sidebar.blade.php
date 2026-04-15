@@ -5,20 +5,22 @@
 @php
     $navItems = [
         ['name' => 'Dashboard', 'route' => 'role.dashboard', 'routeParams' => ['role' => 'admin'], 'icon' => 'grid'],
-        ['name' => 'Manage employees', 'route' => null, 'routeParams' => [], 'icon' => 'users'],
-        ['name' => 'Academic Catalog', 'route' => null, 'routeParams' => [], 'icon' => 'book'],
-        ['name' => 'Manage Payments', 'route' => null, 'routeParams' => [], 'icon' => 'credit-card'],
-        ['name' => 'Manage Schedule', 'route' => null, 'routeParams' => [], 'icon' => 'calendar'],
-        ['name' => 'Room Allocation', 'route' => null, 'routeParams' => [], 'icon' => 'building'],
+        ['name' => 'Manage employees', 'route' => 'admin.employees.index', 'routeParams' => [], 'icon' => 'users'],
+        ['name' => 'Employees payments', 'route' => null, 'routeParams' => [], 'icon' => 'credit-card'],
+        ['name' => 'Manage Schedule', 'route' => 'admin.schedule.index', 'routeParams' => [], 'icon' => 'calendar'],
+        ['name' => 'Manage Courses', 'route' => 'admin.courses.index', 'routeParams' => [], 'icon' => 'book'],
+        ['name' => 'Manage ClassRooms', 'route' => 'admin.classrooms.index', 'routeParams' => [], 'icon' => 'building'],
     ];
 
     $secretaryItems = [
-        ['name' => 'Student Registration', 'icon' => 'user-plus'],
-        ['name' => 'Student Payments', 'icon' => 'wallet'],
-        ['name' => 'Manage Groups', 'icon' => 'layers'],
-        ['name' => 'Manage Accounts', 'icon' => 'account'],
-        ['name' => 'Publish Notifications', 'icon' => 'bell'],
+        ['name' => 'Student Registration', 'route' => 'secretary.registrations', 'icon' => 'user-plus', 'activeMatch' => fn () => request()->routeIs('secretary.registrations*')],
+        ['name' => 'Student Payments', 'route' => 'secretary.payments', 'icon' => 'wallet', 'activeMatch' => fn () => request()->routeIs('secretary.payments*')],
+        ['name' => 'Manage Groups', 'route' => 'secretary.groups', 'icon' => 'layers', 'activeMatch' => fn () => request()->routeIs('secretary.groups*') || request()->routeIs('secretary.timetable.index')],
+        ['name' => 'Manage Accounts', 'route' => 'secretary.accounts', 'icon' => 'account', 'activeMatch' => fn () => request()->routeIs('secretary.accounts*')],
+        ['name' => 'Publish Notifications', 'route' => 'secretary.publish-notifications', 'icon' => 'bell', 'activeMatch' => fn () => request()->routeIs('secretary.publish-notifications*')],
     ];
+
+    $isSecretaryContext = request()->routeIs('secretary.*') || request()->routeIs('secretary.timetable.index');
 @endphp
 
 <aside
@@ -48,7 +50,8 @@
         @foreach($navItems as $item)
             @php
                 $isActive = $item['route'] !== null
-                    ? request()->routeIs($item['route']) && request()->route('role') === 'admin'
+                    ? request()->routeIs($item['route'])
+                        || (request()->routeIs($item['route']) && request()->route('role') === 'admin')
                     : false;
             @endphp
 
@@ -127,9 +130,22 @@
         @endforeach
 
         <div class="mt-8 px-4 text-xs font-bold uppercase tracking-[1.1px]" style="color: #64748B;">Secretary Role</div>
+        @if($isSecretaryContext)
+            <div class="mx-4 mb-2 mt-2 rounded-lg border px-3 py-2 text-[11px] font-bold uppercase tracking-[1px]" style="border-color: #A7F3D0; background-color: #ECFDF5; color: #065F46;">
+                Secretary Mode
+            </div>
+        @endif
         @foreach($secretaryItems as $item)
-            <button type="button" class="group relative mr-4 flex items-center gap-4 rounded-xl px-4 py-3 text-left text-sm font-medium transition-all duration-200 hover:bg-white/30" style="color: var(--lumina-primary-dark);">
-                <span class="flex h-5 w-5 items-center justify-center transition-transform duration-200 group-hover:scale-110">
+            @php
+                $isSecretaryActive = $item['activeMatch']();
+            @endphp
+
+            <a
+                href="{{ route($item['route']) }}"
+                class="group relative flex items-center gap-4 px-4 py-3 text-sm transition-all duration-200 {{ $isSecretaryActive ? 'rounded-l-2xl bg-[#F3F8F5] font-bold' : 'mr-4 rounded-xl font-medium hover:bg-white/30' }}"
+                style="color: var(--lumina-primary-dark);"
+            >
+                <span class="flex h-5 w-5 items-center justify-center transition-transform duration-200 {{ $isSecretaryActive ? '' : 'group-hover:scale-110' }}">
                     @switch($item['icon'])
                         @case('user-plus')
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v6m3-3h-6m-6 8a6 6 0 1112 0H3zm6-10a4 4 0 100-8 4 4 0 000 8z"/></svg>
@@ -149,7 +165,7 @@
                     @endswitch
                 </span>
                 <span class="tracking-tight">{{ $item['name'] }}</span>
-            </button>
+            </a>
         @endforeach
     </nav>
 

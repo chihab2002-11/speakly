@@ -6,17 +6,13 @@ use App\Models\CourseClass;
 use App\Models\Room;
 use App\Models\Schedule;
 use App\Models\User;
-use App\Support\DashboardDataProvider;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-class SecretaryDashboardController extends Controller
+class AdminTimetableHubController extends Controller
 {
-    public function __construct(private DashboardDataProvider $dashboardDataProvider) {}
-
     public function index(Request $request): View
     {
-        $secretary = $request->user();
         $mode = in_array((string) $request->query('mode', 'rooms'), ['rooms', 'classes', 'teacher', 'student'], true)
             ? (string) $request->query('mode', 'rooms')
             : 'rooms';
@@ -32,9 +28,7 @@ class SecretaryDashboardController extends Controller
             ->get(['id', 'course_id']);
         $rooms = Room::query()->orderBy('name')->get(['id', 'name']);
 
-        $selectedTeacherId = $request->integer('teacher_id') > 0
-            ? $request->integer('teacher_id')
-            : null;
+        $selectedTeacherId = $request->integer('teacher_id') > 0 ? $request->integer('teacher_id') : null;
         $selectedStudentId = $request->integer('student_id') > 0 ? $request->integer('student_id') : null;
         $selectedClassId = $request->integer('class_id') > 0 ? $request->integer('class_id') : null;
         $selectedRoomId = $request->integer('room_id') > 0 ? $request->integer('room_id') : null;
@@ -84,8 +78,6 @@ class SecretaryDashboardController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        $visibleDays = $days;
-
         $timeSlots = $schedules
             ->sortBy('start_time')
             ->map(fn (Schedule $schedule): array => [
@@ -96,21 +88,17 @@ class SecretaryDashboardController extends Controller
             ->unique('key')
             ->values();
 
-        $indexedSchedules = $schedules->groupBy(fn (Schedule $schedule): string => (string) $schedule->day_of_week.'|'.(string) $schedule->start_time.'|'.(string) $schedule->end_time
-        );
+        $indexedSchedules = $schedules->groupBy(fn (Schedule $schedule): string => (string) $schedule->day_of_week.'|'.(string) $schedule->start_time.'|'.(string) $schedule->end_time);
 
         $scheduleGrid = [];
-
-        foreach ($visibleDays as $day) {
+        foreach ($days as $day) {
             foreach ($timeSlots as $slot) {
                 $gridKey = $day.'|'.$slot['start_time'].'|'.$slot['end_time'];
                 $scheduleGrid[$day][$slot['key']] = $indexedSchedules->get($gridKey, collect());
             }
         }
 
-        return view('dashboards.secretary', [
-            ...$this->dashboardDataProvider->forUser($secretary),
-            'user' => $secretary,
+        return view('admin.timetable-hub', [
             'mode' => $mode,
             'selectedTeacherId' => $selectedTeacherId,
             'selectedStudentId' => $selectedStudentId,
@@ -120,7 +108,7 @@ class SecretaryDashboardController extends Controller
             'students' => $students,
             'classes' => $classes,
             'rooms' => $rooms,
-            'visibleDays' => $visibleDays,
+            'visibleDays' => $days,
             'timeSlots' => $timeSlots,
             'scheduleGrid' => $scheduleGrid,
             'totalSchedules' => $schedules->count(),

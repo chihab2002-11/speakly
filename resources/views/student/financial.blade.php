@@ -64,44 +64,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php
-                            $ledgerItems = $ledgerItems ?? [
-                                [
-                                    'name' => 'Advanced Business English - Q3',
-                                    'type' => 'Course Fee',
-                                    'period' => 'Jul - Sep 2024',
-                                    'amount' => 1240.00,
-                                    'status' => 'outstanding',
-                                    'icon' => 'course',
-                                ],
-                                [
-                                    'name' => 'TOEFL Preparation Intensive',
-                                    'type' => 'Workshop Fee',
-                                    'period' => 'Jun 2024',
-                                    'amount' => 450.00,
-                                    'status' => 'paid',
-                                    'icon' => 'workshop',
-                                ],
-                                [
-                                    'name' => 'Digital Learning Materials Bundle',
-                                    'type' => 'License Fee',
-                                    'period' => 'Annual',
-                                    'amount' => 185.00,
-                                    'status' => 'paid',
-                                    'icon' => 'materials',
-                                ],
-                                [
-                                    'name' => 'Digital Learning Materials Bundle',
-                                    'type' => 'License Fee',
-                                    'period' => 'Annual',
-                                    'amount' => 254.00,
-                                    'status' => 'paid',
-                                    'icon' => 'materials',
-                                ],
-                            ];
-                        @endphp
-
-                        @foreach($ledgerItems as $item)
+                        @forelse($ledgerItems as $item)
                             <tr class="border-t" style="border-color: rgba(190, 201, 191, 0.15);">
                                 {{-- Course/Service --}}
                                 <td class="px-6 py-6">
@@ -164,7 +127,13 @@
                                     @endif
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="3" class="px-6 py-8 text-center text-sm" style="color: #3F4941;">
+                                    No financial ledger entries yet.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -246,33 +215,7 @@
 
         {{-- Receipt Cards Grid --}}
         <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            @php
-                $receipts = $receipts ?? [
-                    [
-                        'invoice' => 'INV-2024-082',
-                        'amount' => 450.00,
-                        'date' => 'May 12, 2024',
-                        'method' => 'Visa',
-                        'last4' => '4221',
-                    ],
-                    [
-                        'invoice' => 'INV-2024-045',
-                        'amount' => 1240.00,
-                        'date' => 'Feb 05, 2024',
-                        'method' => 'Bank Transfer',
-                        'last4' => null,
-                    ],
-                    [
-                        'invoice' => 'INV-2023-911',
-                        'amount' => 185.00,
-                        'date' => 'Nov 28, 2023',
-                        'method' => 'Visa',
-                        'last4' => '4221',
-                    ],
-                ];
-            @endphp
-
-            @foreach($receipts as $receipt)
+            @forelse($receipts as $receipt)
                 <div 
                     class="flex items-center justify-between rounded-xl border p-5"
                     style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.15);"
@@ -319,7 +262,11 @@
                         </a>
                     </div>
                 </div>
-            @endforeach
+            @empty
+                <div class="rounded-xl border p-6 text-center text-sm" style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.15); color: #3F4941;">
+                    No receipts available yet.
+                </div>
+            @endforelse
         </div>
     </div>
 
