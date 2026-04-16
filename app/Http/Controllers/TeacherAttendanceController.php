@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AttendanceRecord;
 use App\Models\CourseClass;
 use App\Models\User;
+use App\Notifications\StudentAttendanceSavedNotification;
 use App\Notifications\TeacherAttendanceSavedNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -109,6 +110,7 @@ class TeacherAttendanceController extends Controller
                 Rule::exists('classes', 'id')->where(fn ($query) => $query->where('teacher_id', $teacher->id)),
             ],
             'date' => ['required', 'date_format:Y-m-d'],
+            'submit_action' => ['nullable', Rule::in(['save_all', 'save_changes'])],
             'records' => ['required', 'array', 'min:1'],
             'records.*.student_id' => ['required', 'integer', 'distinct'],
             'records.*.status' => ['required', Rule::in(['present', 'late', 'absent'])],
@@ -179,12 +181,25 @@ class TeacherAttendanceController extends Controller
             $existingRecords->put($studentId, $createdRecord);
         }
 
-        $teacher->notify(new TeacherAttendanceSavedNotification(
-            classId: (int) $courseClass->id,
-            className: (string) ($courseClass->course?->name ?? 'Class #'.$courseClass->id),
-            date: $validated['date'],
-            recordsCount: $submittedStudentIds->count(),
-        ));
+        $courseClassName = (string) ($courseClass->course?->name ?? 'Class #'.$courseClass->id);
+
+        if (($validated['submit_action'] ?? 'save_changes') === 'save_all') {
+            $teacher->notify(new TeacherAttendanceSavedNotification(
+                classId: (int) $courseClass->id,
+                className: $courseClassName,
+                date: $validated['date'],
+                recordsCount: $submittedStudentIds->count(),
+            ));
+
+            $courseClass->students
+                ->filter(fn (User $student): bool => $submittedStudentIds->contains((int) $student->id))
+                ->each(function (User $student) use ($courseClassName, $validated): void {
+                    $student->notify(new StudentAttendanceSavedNotification(
+                        className: $courseClassName,
+                        date: (string) $validated['date'],
+                    ));
+                });
+        }
 
         return redirect()
             ->route('teacher.attendance', [

@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
             $this->call([
                 TeacherWorkflowSeeder::class,
                 LanguageProgramSeeder::class,
+                ReviewSeeder::class,
             ]);
         }
     }

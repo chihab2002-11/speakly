@@ -102,6 +102,8 @@
             <button 
                 type="submit"
                 form="attendanceSaveForm"
+                name="submit_action"
+                value="save_all"
                 class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                 style="background: linear-gradient(135deg, #006A41 0%, #2D8C5E 100%);"
                 @disabled(! ($hasSelectedClass && $hasStudents))
@@ -272,6 +274,8 @@
                 </p>
                 <button 
                     type="submit"
+                    name="submit_action"
+                    value="save_changes"
                     class="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-md transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]"
                     style="background: linear-gradient(135deg, #006A41 0%, #2D8C5E 100%);"
                     @disabled(! ($hasSelectedClass && $hasStudents))

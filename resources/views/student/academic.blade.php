@@ -743,7 +743,7 @@
     </div>
 
     {{-- Bottom Layout --}}
-    <div class="grid gap-6 lg:grid-cols-2">
+    <div id="academic-bottom" class="grid gap-6 lg:grid-cols-2">
         {{-- Attendance History Card (Replaces Presence Tracker) --}}
         <div class="flex flex-col gap-6">
             <div class="attendance-card">

@@ -3,6 +3,7 @@
 <html lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta name="csrf-token" content="{{ csrf_token() }}"/>
 <title>Lumina Academy | The Cognitive Gallery of Language</title>
 
 <link rel="stylesheet" href="style.css">
@@ -60,6 +61,9 @@
         ->filter(fn ($program) => $program['is_active'] ?? true)
         ->sortBy('sort_order')
         ->values();
+
+  $visitorReviews = collect($reviews ?? []);
+  $votedReviewIds = collect($votedReviewIds ?? [])->map(fn ($id) => (int) $id)->all();
 
     $languageModalData = $programs
         ->mapWithKeys(function ($program) {
@@ -407,102 +411,66 @@ Explore <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 </div>
 <div class="relative overflow-hidden">
 <div class="reviews-slider flex gap-6 transition-transform duration-300 ease-out select-none pb-4" id="reviewsSlider" style="width: fit-content;">
-<!-- Testimonial 1 -->
-<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+@forelse($visitorReviews as $review)
+@php
+  $reviewId = (int) $review->id;
+  $isVoted = in_array($reviewId, $votedReviewIds, true);
+  $studentName = (string) ($review->student_name ?: 'Lumina Student');
+  $studentInitials = \Illuminate\Support\Str::of($studentName)
+    ->explode(' ')
+    ->take(2)
+    ->map(fn ($word) => \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($word, 0, 1)))
+    ->implode('');
+  $studentGroup = (string) ($review->student_group ?: 'Group not set');
+  $uploadDate = $review->uploaded_at ?? $review->created_at;
+  $studentAvatar = (string) ($review->profile_picture_url ?? '');
+@endphp
+<article class="review-card relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96" data-review-id="{{ $reviewId }}">
 <div class="relative z-10 mb-6">
-<div class="mb-4">
-<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">5.0/5.0</span>
+<div class="mb-4 flex items-center justify-between gap-3">
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full review-rating-value">{{ number_format((float) $review->rating_score, 1) }}/5</span>
+<div class="flex items-center gap-2">
+<button class="review-vote-btn inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 text-primary transition-all hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-50" data-vote="like" {{ $isVoted ? 'disabled' : '' }}>
+<span class="material-symbols-outlined text-[16px]">thumb_up</span>
+</button>
+<button class="review-vote-btn inline-flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 text-primary transition-all hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-50" data-vote="dislike" {{ $isVoted ? 'disabled' : '' }}>
+<span class="material-symbols-outlined text-[16px]">thumb_down</span>
+</button>
 </div>
-<p class="text-on-surface-variant text-base leading-relaxed font-medium">"I went from beginner to Cambridge Advanced in just 18 months. The personalized curriculum and expert instructors made all the difference."</p>
+</div>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"{{ $review->review_text }}"</p>
 </div>
 <div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
-<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-purple flex items-center justify-center text-white font-black">SM</div>
+@if($studentAvatar !== '')
+<img src="{{ $studentAvatar }}" alt="{{ $studentName }}" class="w-14 h-14 rounded-2xl object-cover">
+@else
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-purple flex items-center justify-center text-white font-black">{{ $studentInitials !== '' ? $studentInitials : 'ST' }}</div>
+@endif
 <div>
-<p class="font-bold text-on-surface">Sarah Mitchell</p>
-<p class="text-sm text-on-surface-variant">Cambridge CAE</p>
+<p class="font-bold text-on-surface">{{ $studentName }}</p>
+<p class="text-sm text-on-surface-variant">{{ $studentGroup }}</p>
+<p class="text-xs text-on-surface-variant/80">{{ $uploadDate ? $uploadDate->format('M d, Y') : '' }}</p>
 </div>
 </div>
 </article>
-<!-- Testimonial 2 -->
-<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
+@empty
+<article class="review-card relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
 <div class="relative z-10 mb-6">
 <div class="mb-4">
-<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">4.5/5.0</span>
+<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">0.0/5</span>
 </div>
-<p class="text-on-surface-variant text-base leading-relaxed font-medium">"The cultural immersion aspect of the Spanish program helped me understand not just the language, but the people and traditions behind it."</p>
+<p class="text-on-surface-variant text-base leading-relaxed font-medium">"No reviews yet. Be the first student to share an experience."</p>
 </div>
 <div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
-<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple to-primary flex items-center justify-center text-white font-black">CR</div>
+<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-purple flex items-center justify-center text-white font-black">NA</div>
 <div>
-<p class="font-bold text-on-surface">Carlos Rodriguez</p>
-<p class="text-sm text-on-surface-variant">DELE B2</p>
+<p class="font-bold text-on-surface">Lumina Student</p>
+<p class="text-sm text-on-surface-variant">Group not set</p>
+<p class="text-xs text-on-surface-variant/80">{{ now()->format('M d, Y') }}</p>
 </div>
 </div>
 </article>
-<!-- Testimonial 3 -->
-<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
-<div class="relative z-10 mb-6">
-<div class="mb-4">
-<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">4.0/5.0</span>
-</div>
-<p class="text-on-surface-variant text-base leading-relaxed font-medium">"Lumina's cognitive progress tracking showed me exactly where I was improving, keeping me motivated throughout my learning journey."</p>
-</div>
-<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
-<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan to-primary flex items-center justify-center text-white font-black">YT</div>
-<div>
-<p class="font-bold text-on-surface">Yuki Tanaka</p>
-<p class="text-sm text-on-surface-variant">JLPT N1</p>
-</div>
-</div>
-</article>
-<!-- Testimonial 4 -->
-<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
-<div class="relative z-10 mb-6">
-<div class="mb-4">
-<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">5.0/5.0</span>
-</div>
-<p class="text-on-surface-variant text-base leading-relaxed font-medium">"The interactive digital archive is a game changer. Having historical texts at my fingertips really accelerated my understanding of Italian literature."</p>
-</div>
-<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
-<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-primary flex items-center justify-center text-white font-black">LM</div>
-<div>
-<p class="font-bold text-on-surface">Lucas Moretti</p>
-<p class="text-sm text-on-surface-variant">CELI C1</p>
-</div>
-</div>
-</article>
-<!-- Testimonial 5 -->
-<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
-<div class="relative z-10 mb-6">
-<div class="mb-4">
-<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">4.8/5.0</span>
-</div>
-<p class="text-on-surface-variant text-base leading-relaxed font-medium">"Passing the Goethe-Zertifikat was always a daunting goal. The structured progression and concierge support gave me the exact confidence I needed."</p>
-</div>
-<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
-<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-500 flex items-center justify-center text-white font-black">EW</div>
-<div>
-<p class="font-bold text-on-surface">Emma Wagner</p>
-<p class="text-sm text-on-surface-variant">Goethe B2</p>
-</div>
-</div>
-</article>
-<!-- Testimonial 6 -->
-<article class="relative bg-slate-50/95 backdrop-blur-sm rounded-[32px] p-8 border border-primary/10 shadow-[0_25px_45px_-35px_rgba(45,140,94,0.6)] hover-lift flex flex-col overflow-hidden flex-shrink-0 w-96">
-<div class="relative z-10 mb-6">
-<div class="mb-4">
-<span class="text-xs font-bold text-primary bg-primary/10 px-3 py-1 rounded-full">5.0/5.0</span>
-</div>
-<p class="text-on-surface-variant text-base leading-relaxed font-medium">"The editorial approach to learning is unlike any other platform. It feels less like studying and more like an immersive journey through French culture."</p>
-</div>
-<div class="relative z-10 flex items-center gap-4 mt-auto pt-6 border-t border-primary/10">
-<div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-white font-black">AK</div>
-<div>
-<p class="font-bold text-on-surface">Aisha Khan</p>
-<p class="text-sm text-on-surface-variant">DALF C1</p>
-</div>
-</div>
-</article>
+@endforelse
 </div>
 </div>
 </section>
@@ -892,6 +860,60 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   updateReviewArrowStates();
+
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  const reviewVoteButtons = document.querySelectorAll('.review-vote-btn');
+
+  reviewVoteButtons.forEach((button) => {
+    button.addEventListener('click', async function (event) {
+      event.preventDefault();
+
+      if (this.disabled) {
+        return;
+      }
+
+      const card = this.closest('[data-review-id]');
+      const reviewId = card?.getAttribute('data-review-id');
+      const vote = this.getAttribute('data-vote');
+
+      if (!card || !reviewId || !vote) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/reviews/${reviewId}/vote`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': csrfToken,
+          },
+          body: JSON.stringify({ vote }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 409) {
+            card.querySelectorAll('.review-vote-btn').forEach((btn) => {
+              btn.disabled = true;
+            });
+          }
+          return;
+        }
+
+        const ratingBadge = card.querySelector('.review-rating-value');
+        if (ratingBadge && result.rating) {
+          ratingBadge.textContent = `${result.rating}/5`;
+        }
+
+        card.querySelectorAll('.review-vote-btn').forEach((btn) => {
+          btn.disabled = true;
+        });
+      } catch (error) {
+      }
+    });
+  });
   
   // Modal functionality
   cards.forEach(card => {

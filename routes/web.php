@@ -11,6 +11,7 @@ use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\ParentFinancialController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SecretaryDashboardController;
 use App\Http\Controllers\SecretaryOperationsController;
 use App\Http\Controllers\SecretaryTimetableController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\TeacherTimetableController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Middleware\EnsureApproved;
 use App\Models\LanguageProgram;
+use App\Models\Review;
 use App\Models\User;
 use App\Support\DashboardRedirector;
 use Illuminate\Http\Request;
@@ -37,7 +39,7 @@ use Illuminate\Support\Facades\Schema;
 $supportedRoles = ['student', 'teacher', 'secretary', 'parent', 'admin'];
 $supportedRolesMiddleware = 'role:student|teacher|secretary|parent|admin';
 
-Route::get('/', function () {
+Route::get('/', function (Request $request) {
     // If user is logged in, redirect to appropriate page
     if (Auth::check()) {
         $user = User::query()->findOrFail((int) Auth::id());
@@ -75,10 +77,34 @@ Route::get('/', function () {
             ->all();
     }
 
+    $reviews = collect();
+    $votedReviewIds = [];
+
+    if (Schema::hasTable('reviews')) {
+        $reviews = Review::query()
+            ->with(['student:id,name'])
+            ->orderByDesc('rating_score')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $votedReviewIds = collect(json_decode((string) $request->cookie('visitor_review_votes', '[]'), true))
+            ->filter(fn ($id): bool => is_numeric($id))
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     return view('visitor', [
         'languagePrograms' => $languagePrograms,
+        'reviews' => $reviews,
+        'votedReviewIds' => $votedReviewIds,
     ]);
 })->name('home');
+
+Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])
+    ->whereNumber('review')
+    ->name('reviews.vote');
 
 Route::get('/register-login', function () {
     return view('register-login-page');
@@ -148,6 +174,8 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
 
         Route::get('/password', [StudentSettingsController::class, 'editPassword'])->name('password');
         Route::post('/password', [StudentSettingsController::class, 'updatePassword'])->name('password.update');
+
+        Route::post('/reviews', [ReviewController::class, 'store'])->name('reviews.store');
 
         // Student Notifications page
         Route::get('/notifications', function () {

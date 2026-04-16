@@ -26,6 +26,26 @@
     
     // Get unread notifications count
     $unreadNotificationsCount = $user ? $user->unreadNotifications()->count() : 0;
+
+    $assignedGroups = collect();
+
+    if ($user && method_exists($user, 'enrolledClasses')) {
+        $assignedGroups = $user->enrolledClasses()
+            ->with('course:id,name')
+            ->get()
+            ->map(function ($class): array {
+                $label = (string) ($class->course?->name ?: ('Class #'.$class->id));
+
+                return [
+                    'id' => (int) $class->id,
+                    'label' => $label,
+                ];
+            })
+            ->unique('id')
+            ->values();
+    }
+
+    $singleAssignedGroup = $assignedGroups->count() === 1 ? $assignedGroups->first() : null;
 @endphp
 
 <header 
@@ -61,6 +81,18 @@
                     </span>
                 @endif
             </a>
+
+            {{-- Submit Review Button --}}
+            <button
+                type="button"
+                id="openStudentReviewModal"
+                class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100 cursor-pointer"
+                title="Submit Review"
+            >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.295 3.985a1 1 0 00.95.69h4.19c.969 0 1.371 1.24.588 1.81l-3.39 2.463a1 1 0 00-.364 1.118l1.295 3.985c.3.921-.755 1.688-1.538 1.118l-3.39-2.463a1 1 0 00-1.176 0l-3.39 2.463c-.783.57-1.838-.197-1.539-1.118l1.296-3.985a1 1 0 00-.364-1.118L2.93 9.412c-.783-.57-.38-1.81.588-1.81h4.19a1 1 0 00.95-.69l1.391-3.985z"/>
+                </svg>
+            </button>
 
             {{-- Help Button --}}
             <button class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100 cursor-pointer">
@@ -111,3 +143,170 @@
 
     </div>
 </header>
+
+<div id="studentReviewModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" data-store-url="{{ route('student.reviews.store') }}">
+    <div id="studentReviewBackdrop" class="absolute inset-0 bg-black/45"></div>
+
+    <div class="relative z-10 w-full max-w-xl rounded-2xl border bg-white p-6 shadow-2xl" style="border-color: var(--lumina-border);">
+        <div class="mb-4 flex items-start justify-between gap-4">
+            <div>
+                <h2 class="text-xl font-bold" style="color: var(--lumina-text-primary);">Add Your Review</h2>
+                <p class="mt-1 text-sm" style="color: var(--lumina-text-secondary);">Share your learning experience for visitors.</p>
+            </div>
+            <button type="button" id="closeStudentReviewModal" class="rounded-full p-2 hover:bg-gray-100" aria-label="Close">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div id="studentReviewAlert" class="mb-4 hidden rounded-lg px-3 py-2 text-sm"></div>
+
+        <form id="studentReviewForm" class="space-y-4">
+            @csrf
+
+            @if($assignedGroups->isEmpty())
+                <div class="rounded-lg border px-3 py-2 text-sm" style="border-color: #fecaca; background-color: #fef2f2; color: #991b1b;">
+                    You are not assigned to any group yet, so review submission is currently unavailable.
+                </div>
+            @else
+                @if($singleAssignedGroup)
+                    <input type="hidden" name="class_id" value="{{ $singleAssignedGroup['id'] }}">
+                    <div>
+                        <p class="mb-1 text-sm font-semibold" style="color: var(--lumina-text-primary);">Group</p>
+                        <p class="rounded-xl border px-3 py-2 text-sm" style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);">
+                            {{ $singleAssignedGroup['label'] }}
+                        </p>
+                    </div>
+                @else
+                    <div>
+                        <label for="reviewClassId" class="mb-1 block text-sm font-semibold" style="color: var(--lumina-text-primary);">Select Group</label>
+                        <select id="reviewClassId" name="class_id" class="w-full rounded-xl border px-3 py-2 text-sm" style="border-color: var(--lumina-border);" required>
+                            <option value="">Choose your group</option>
+                            @foreach($assignedGroups as $group)
+                                <option value="{{ $group['id'] }}">{{ $group['label'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                <div>
+                    <label for="reviewTextInput" class="mb-1 block text-sm font-semibold" style="color: var(--lumina-text-primary);">Review</label>
+                    <textarea id="reviewTextInput" name="review_text" rows="5" maxlength="1200" class="w-full rounded-xl border px-3 py-2 text-sm" style="border-color: var(--lumina-border);" placeholder="Write your review..." required></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2">
+                    <button type="button" id="cancelStudentReviewModal" class="rounded-xl border px-4 py-2 text-sm font-semibold" style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);">Cancel</button>
+                    <button type="submit" class="rounded-xl px-4 py-2 text-sm font-semibold text-white" style="background-color: var(--lumina-primary);">Submit Review</button>
+                </div>
+            @endif
+        </form>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const openBtn = document.getElementById('openStudentReviewModal');
+        const modal = document.getElementById('studentReviewModal');
+        const backdrop = document.getElementById('studentReviewBackdrop');
+        const closeBtn = document.getElementById('closeStudentReviewModal');
+        const cancelBtn = document.getElementById('cancelStudentReviewModal');
+        const form = document.getElementById('studentReviewForm');
+        const alertBox = document.getElementById('studentReviewAlert');
+        const storeUrl = modal.dataset.storeUrl || '';
+
+        if (!openBtn || !modal || !form) {
+            return;
+        }
+
+        const hasGroupWarning = form.querySelector('input[name="class_id"], select[name="class_id"]');
+
+        function showModal() {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function hideModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function showAlert(message, type) {
+            if (!alertBox) {
+                return;
+            }
+
+            alertBox.textContent = message;
+            alertBox.classList.remove('hidden');
+
+            if (type === 'success') {
+                alertBox.style.backgroundColor = '#ecfdf3';
+                alertBox.style.color = '#166534';
+                alertBox.style.border = '1px solid #99f6bf';
+            } else {
+                alertBox.style.backgroundColor = '#fef2f2';
+                alertBox.style.color = '#991b1b';
+                alertBox.style.border = '1px solid #fecaca';
+            }
+        }
+
+        openBtn.addEventListener('click', function () {
+            showModal();
+        });
+
+        [backdrop, closeBtn, cancelBtn].forEach(function (el) {
+            if (!el) {
+                return;
+            }
+
+            el.addEventListener('click', function () {
+                hideModal();
+            });
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !modal.classList.contains('hidden')) {
+                hideModal();
+            }
+        });
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            if (!hasGroupWarning) {
+                showAlert('You must be assigned to at least one group to submit a review.', 'error');
+                return;
+            }
+
+            const csrf = form.querySelector('input[name="_token"]')?.value || '';
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(storeUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrf,
+                        'Accept': 'application/json',
+                    },
+                    body: formData,
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    showAlert(result.message || 'Unable to submit your review.', 'error');
+                    return;
+                }
+
+                form.reset();
+                showAlert(result.message || 'Review submitted successfully.', 'success');
+
+                setTimeout(function () {
+                    hideModal();
+                }, 700);
+            } catch (error) {
+                showAlert('Unexpected error while submitting review.', 'error');
+            }
+        });
+    })();
+</script>

@@ -83,12 +83,17 @@
 
                         {{-- Action Button (if URL provided) --}}
                         @if(!empty($notification->data['url']))
+                            @php
+                                $actionLabel = (isset($notification->data['type']) && $notification->data['type'] === 'attendance')
+                                    ? 'View Attendance'
+                                    : 'View Message';
+                            @endphp
                             <a 
                                 href="{{ $notification->data['url'] }}"
                                 class="text-xs font-semibold transition-colors hover:underline"
                                 style="color: var(--lumina-primary);"
                             >
-                                View Message →
+                                {{ $actionLabel }} →
                             </a>
                         @endif
 
