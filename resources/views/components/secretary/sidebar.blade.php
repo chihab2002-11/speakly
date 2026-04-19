@@ -16,41 +16,6 @@
             'activeMatch' => fn () => request()->routeIs('role.dashboard') && request()->route('role') === $sharedRole,
         ],
         [
-            'name' => 'Registrations',
-            'route' => 'secretary.registrations',
-            'routeParams' => [],
-            'icon' => 'user-plus',
-            'activeMatch' => fn () => request()->routeIs('secretary.registrations*'),
-        ],
-        [
-            'name' => 'Student Payments',
-            'route' => 'secretary.payments',
-            'routeParams' => [],
-            'icon' => 'wallet',
-            'activeMatch' => fn () => request()->routeIs('secretary.payments'),
-        ],
-        [
-            'name' => 'Manage Groups',
-            'route' => 'secretary.groups',
-            'routeParams' => [],
-            'icon' => 'layers',
-            'activeMatch' => fn () => request()->routeIs('secretary.groups') || request()->routeIs('secretary.timetable.index'),
-        ],
-        [
-            'name' => 'Manage Accounts',
-            'route' => 'secretary.accounts',
-            'routeParams' => [],
-            'icon' => 'account',
-            'activeMatch' => fn () => request()->routeIs('secretary.accounts'),
-        ],
-        [
-            'name' => 'Publish Notifications',
-            'route' => 'secretary.publish-notifications',
-            'routeParams' => [],
-            'icon' => 'megaphone',
-            'activeMatch' => fn () => request()->routeIs('secretary.publish-notifications*'),
-        ],
-        [
             'name' => 'Messages',
             'route' => 'role.messages.index',
             'routeParams' => ['role' => $sharedRole],
@@ -58,6 +23,56 @@
             'activeMatch' => fn () => request()->routeIs('role.messages.*') && request()->route('role') === $sharedRole,
         ],
     ];
+
+    if ($user?->can('registrations.manage')) {
+        $navItems[] = [
+            'name' => 'Registrations',
+            'route' => 'secretary.registrations',
+            'routeParams' => [],
+            'icon' => 'user-plus',
+            'activeMatch' => fn () => request()->routeIs('secretary.registrations*'),
+        ];
+    }
+
+    if ($user?->can('payments.manage')) {
+        $navItems[] = [
+            'name' => 'Student Payments',
+            'route' => 'secretary.payments',
+            'routeParams' => [],
+            'icon' => 'wallet',
+            'activeMatch' => fn () => request()->routeIs('secretary.payments'),
+        ];
+    }
+
+    if ($user?->can('groups.manage')) {
+        $navItems[] = [
+            'name' => 'Manage Groups',
+            'route' => 'secretary.groups',
+            'routeParams' => [],
+            'icon' => 'layers',
+            'activeMatch' => fn () => request()->routeIs('secretary.groups') || request()->routeIs('secretary.timetable.index'),
+        ];
+    }
+
+    if ($user?->can('accounts.manage')) {
+        $navItems[] = [
+            'name' => 'Manage Accounts',
+            'route' => 'secretary.accounts',
+            'routeParams' => [],
+            'icon' => 'account',
+            'activeMatch' => fn () => request()->routeIs('secretary.accounts'),
+        ];
+    }
+
+    if ($user?->can('announcements.publish')) {
+        $navItems[] = [
+            'name' => 'Publish Notifications',
+            'route' => 'secretary.publish-notifications',
+            'routeParams' => [],
+            'icon' => 'megaphone',
+            'activeMatch' => fn () => request()->routeIs('secretary.publish-notifications*'),
+        ];
+    }
 @endphp
 
 <aside

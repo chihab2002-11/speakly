@@ -6,22 +6,14 @@ use App\Models\Room;
 use App\Models\Schedule;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
-// Helper to create all required roles
-function createAllRoles(): void
-{
-    Role::create(['name' => 'admin', 'guard_name' => 'web']);
-    Role::create(['name' => 'secretary', 'guard_name' => 'web']);
-    Role::create(['name' => 'teacher', 'guard_name' => 'web']);
-    Role::create(['name' => 'student', 'guard_name' => 'web']);
-}
+beforeEach(function () {
+    seedAuthorizationFixtures();
+});
 
 test('secretary can access timetable explorer', function () {
-    createAllRoles();
-
     // Create a secretary user
     $secretary = User::factory()->create(['approved_at' => now()]);
     $secretary->assignRole('secretary');
@@ -33,8 +25,6 @@ test('secretary can access timetable explorer', function () {
 });
 
 test('student cannot access secretary timetable explorer', function () {
-    createAllRoles();
-
     // Create a student user
     $student = User::factory()->create(['approved_at' => now()]);
     $student->assignRole('student');
@@ -45,8 +35,6 @@ test('student cannot access secretary timetable explorer', function () {
 });
 
 test('secretary timetable explorer returns required data', function () {
-    createAllRoles();
-
     // Create a secretary user
     $secretary = User::factory()->create(['approved_at' => now()]);
     $secretary->assignRole('secretary');
@@ -63,8 +51,6 @@ test('secretary timetable explorer returns required data', function () {
 });
 
 test('secretary timetable explorer filters by teacher_id', function () {
-    createAllRoles();
-
     $secretary = User::factory()->create(['approved_at' => now()]);
     $secretary->assignRole('secretary');
 

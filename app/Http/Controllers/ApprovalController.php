@@ -10,19 +10,26 @@ use Illuminate\Http\Request;
 
 class ApprovalController extends Controller
 {
+    /**
+     * @var array<string, list<string>>
+     */
+    private const APPROVAL_SCOPES = [
+        'standard' => ['student', 'parent', 'teacher'],
+        'office' => ['secretary'],
+    ];
+
     public function index(Request $request, string $role)
     {
-        abort_unless($request->user()->hasAnyRole(['admin', 'secretary']), 403);
+        $manageableRequestedRoles = $this->manageableRequestedRoles($request);
+
+        abort_if($manageableRequestedRoles === [], 403);
 
         $pendingUsersQuery = User::query()
             ->whereNull('approved_at')
             ->whereNull('rejected_at')
             ->whereNotNull('requested_role')
+            ->whereIn('requested_role', $manageableRequestedRoles)
             ->orderBy('created_at');
-
-        if ($request->user()->hasRole('secretary')) {
-            $pendingUsersQuery->whereIn('requested_role', ['student', 'parent', 'teacher']);
-        }
 
         $pendingUsers = $pendingUsersQuery->get();
 
@@ -34,8 +41,6 @@ class ApprovalController extends Controller
 
     public function approve(Request $request, string $role, User $user)
     {
-        abort_unless($request->user()->hasAnyRole(['admin', 'secretary']), 403);
-
         if ($user->approved_at !== null) {
             return redirect()->route('approvals.index', $this->approvalsRouteParameters($request, $role));
         }
@@ -50,11 +55,7 @@ class ApprovalController extends Controller
             return back()->with('error', 'User has no requested role.');
         }
 
-        if ($request->user()->hasRole('admin')) {
-            // allowed
-        } elseif ($request->user()->hasRole('secretary')) {
-            abort_unless(in_array($requestedRole, ['student', 'parent', 'teacher'], true), 403);
-        }
+        abort_unless($this->canManageRequestedRole($request, $requestedRole, 'approve'), 403);
 
         $user->forceFill([
             'approved_at' => now(),
@@ -73,8 +74,6 @@ class ApprovalController extends Controller
 
     public function reject(Request $request, string $role, User $user)
     {
-        abort_unless($request->user()->hasAnyRole(['admin', 'secretary']), 403);
-
         if ($user->approved_at !== null) {
             return back()->with('error', 'User is already approved.');
         }
@@ -89,11 +88,7 @@ class ApprovalController extends Controller
             return back()->with('error', 'User has no requested role.');
         }
 
-        if ($request->user()->hasRole('admin')) {
-            // allowed
-        } elseif ($request->user()->hasRole('secretary')) {
-            abort_unless(in_array($requestedRole, ['student', 'parent', 'teacher'], true), 403);
-        }
+        abort_unless($this->canManageRequestedRole($request, $requestedRole, 'reject'), 403);
 
         $user->forceFill([
             'rejected_at' => now(),
@@ -118,6 +113,51 @@ class ApprovalController extends Controller
         }
 
         return DashboardRedirector::roleFor($request->user());
+    }
+
+    private function canManageRequestedRole(Request $request, ?string $requestedRole, string $action): bool
+    {
+        if ($requestedRole === null) {
+            return false;
+        }
+
+        $permission = $this->permissionForRequestedRole($requestedRole, $action);
+
+        if ($permission === null) {
+            return false;
+        }
+
+        return $request->user()->can($permission);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function manageableRequestedRoles(Request $request): array
+    {
+        $manageableRequestedRoles = [];
+
+        foreach (self::APPROVAL_SCOPES as $scope => $requestedRoles) {
+            if (
+                $request->user()->can("approvals.approve.{$scope}")
+                || $request->user()->can("approvals.reject.{$scope}")
+            ) {
+                $manageableRequestedRoles = [...$manageableRequestedRoles, ...$requestedRoles];
+            }
+        }
+
+        return array_values(array_unique($manageableRequestedRoles));
+    }
+
+    private function permissionForRequestedRole(string $requestedRole, string $action): ?string
+    {
+        foreach (self::APPROVAL_SCOPES as $scope => $requestedRoles) {
+            if (in_array($requestedRole, $requestedRoles, true)) {
+                return "approvals.{$action}.{$scope}";
+            }
+        }
+
+        return null;
     }
 
     /**

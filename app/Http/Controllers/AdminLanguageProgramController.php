@@ -51,7 +51,7 @@ class AdminLanguageProgramController extends Controller
 
     public function toggleStatus(Request $request, LanguageProgram $program): RedirectResponse
     {
-        abort_unless($request->user()?->hasRole('admin'), 403);
+        abort_unless($request->user()?->can('language-programs.manage'), 403);
 
         $program->update([
             'is_active' => ! $program->is_active,
@@ -75,7 +75,7 @@ class AdminLanguageProgramController extends Controller
 
     public function move(Request $request, LanguageProgram $program, string $direction): RedirectResponse
     {
-        abort_unless($request->user()?->hasRole('admin'), 403);
+        abort_unless($request->user()?->can('language-programs.manage'), 403);
 
         if (! in_array($direction, ['up', 'down'], true)) {
             return back();

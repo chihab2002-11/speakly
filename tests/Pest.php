@@ -1,5 +1,11 @@
 <?php
 
+use Database\Seeders\PermissionSeeder;
+use Database\Seeders\RoleSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\PermissionRegistrar;
+use Tests\TestCase;
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -11,8 +17,8 @@
 |
 */
 
-pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -44,4 +50,12 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+function seedAuthorizationFixtures(): void
+{
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    (new PermissionSeeder)->run();
+    (new RoleSeeder)->run();
 }

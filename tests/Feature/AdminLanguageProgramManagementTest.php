@@ -3,12 +3,11 @@
 use App\Models\LanguageProgram;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::findOrCreate('admin', 'web');
+    seedAuthorizationFixtures();
 });
 
 function createAdminUser(): User

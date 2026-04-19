@@ -19,9 +19,6 @@ class SecretaryTimetableController extends Controller
      */
     public function index(Request $request)
     {
-        // ✅ Only secretaries can view this timetable
-        abort_unless($request->user()->hasAnyRole(['admin', 'secretary']), 403);
-
         // 🔍 Start from Schedule model with eager loading
         $query = Schedule::with([
             'class.course',

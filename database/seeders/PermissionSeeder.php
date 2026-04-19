@@ -9,22 +9,37 @@ use Spatie\Permission\PermissionRegistrar;
 class PermissionSeeder extends Seeder
 {
     /**
+     * @return list<string>
+     */
+    public static function permissions(): array
+    {
+        return [
+            'approvals.approve.standard',
+            'approvals.reject.standard',
+            'approvals.approve.office',
+            'approvals.reject.office',
+            'language-programs.manage',
+            'employees.manage',
+            'courses.manage',
+            'classrooms.manage',
+            'schedules.manage',
+            'timetables.explore',
+            'registrations.manage',
+            'payments.manage',
+            'groups.manage',
+            'accounts.manage',
+            'announcements.publish',
+        ];
+    }
+
+    /**
      * Run the database seeds.
      */
     public function run(): void
     {
-        // Clear Spatie permission cache
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $permissions = [
-            // Approvals
-            'approve.staff', // admin approves teacher/secretary
-            'approve.users', // secretary approves parent/student
-
-            // (Later you'll add module permissions like students.create, attendance.manage, etc.)
-        ];
-
-        foreach ($permissions as $permissionName) {
+        foreach (self::permissions() as $permissionName) {
             Permission::firstOrCreate([
                 'name' => $permissionName,
                 'guard_name' => 'web',

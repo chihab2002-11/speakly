@@ -4,12 +4,12 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
     public function run(): void
     {
-        // Roles
         $roles = ['admin', 'teacher', 'student', 'parent', 'secretary'];
 
         foreach ($roles as $roleName) {
@@ -19,14 +19,27 @@ class RoleSeeder extends Seeder
             ]);
         }
 
-        // Attach permissions to roles
-        Role::findByName('admin', 'web')->givePermissionTo([
-            'approve.staff',
-            'approve.users',
-        ]);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        Role::findByName('secretary', 'web')->givePermissionTo([
-            'approve.users',
-        ]);
+        $rolePermissions = [
+            'admin' => PermissionSeeder::permissions(),
+            'secretary' => [
+                'approvals.approve.standard',
+                'approvals.reject.standard',
+                'timetables.explore',
+                'registrations.manage',
+                'payments.manage',
+                'groups.manage',
+                'accounts.manage',
+                'announcements.publish',
+            ],
+            'teacher' => [],
+            'student' => [],
+            'parent' => [],
+        ];
+
+        foreach ($rolePermissions as $roleName => $permissions) {
+            Role::findByName($roleName, 'web')->syncPermissions($permissions);
+        }
     }
 }

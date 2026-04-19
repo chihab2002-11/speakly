@@ -9,15 +9,12 @@ use App\Models\User;
 use App\Notifications\SecretaryAnnouncementNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    foreach (['secretary', 'student', 'parent', 'teacher', 'admin'] as $role) {
-        Role::findOrCreate($role, 'web');
-    }
+    seedAuthorizationFixtures();
 });
 
 function createApprovedSecretaryForOperations(): User

@@ -2,15 +2,12 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    foreach (['admin', 'secretary', 'student', 'parent', 'teacher'] as $role) {
-        Role::findOrCreate($role, 'web');
-    }
+    seedAuthorizationFixtures();
 });
 
 test('admin can access secretary operations pages', function () {

@@ -2,17 +2,12 @@
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::findOrCreate('admin', 'web');
-    Role::findOrCreate('secretary', 'web');
-    Role::findOrCreate('student', 'web');
-    Role::findOrCreate('teacher', 'web');
-    Role::findOrCreate('parent', 'web');
+    seedAuthorizationFixtures();
 });
 
 function createApprovedUserWithRole(string $role): User
@@ -70,4 +65,44 @@ it('allows secretary to approve teacher requests', function () {
 
     expect($pendingTeacher->approved_at)->not->toBeNull();
     expect($pendingTeacher->hasRole('teacher'))->toBeTrue();
+});
+
+it('prevents secretary from approving office requests', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedUserWithRole('secretary');
+
+    $pendingSecretary = User::factory()->create([
+        'approved_at' => null,
+        'rejected_at' => null,
+        'requested_role' => 'secretary',
+    ]);
+
+    $this->actingAs($secretary)
+        ->post(route('approvals.approve', ['role' => 'secretary', 'user' => $pendingSecretary]))
+        ->assertForbidden();
+
+    $pendingSecretary->refresh();
+
+    expect($pendingSecretary->approved_at)->toBeNull();
+    expect($pendingSecretary->hasRole('secretary'))->toBeFalse();
+});
+
+it('allows admin to approve office requests', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+
+    $pendingSecretary = User::factory()->create([
+        'approved_at' => null,
+        'rejected_at' => null,
+        'requested_role' => 'secretary',
+    ]);
+
+    $this->actingAs($admin)
+        ->post(route('approvals.approve', ['role' => 'admin', 'user' => $pendingSecretary]))
+        ->assertRedirect(route('approvals.index', ['role' => 'admin']));
+
+    $pendingSecretary->refresh();
+
+    expect($pendingSecretary->approved_at)->not->toBeNull();
+    expect($pendingSecretary->hasRole('secretary'))->toBeTrue();
 });

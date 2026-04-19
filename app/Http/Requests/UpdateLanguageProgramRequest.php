@@ -13,7 +13,7 @@ class UpdateLanguageProgramRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()?->hasRole('admin') ?? false;
+        return $this->user()?->can('language-programs.manage') ?? false;
     }
 
     /**

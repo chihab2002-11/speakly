@@ -4,13 +4,12 @@ use App\Models\Course;
 use App\Models\CourseClass;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::findOrCreate('admin', 'web');
+    seedAuthorizationFixtures();
 });
 
 function createAdminForCourseTests(): User

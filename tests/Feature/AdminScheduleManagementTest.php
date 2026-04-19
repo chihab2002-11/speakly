@@ -6,15 +6,12 @@ use App\Models\Room;
 use App\Models\Schedule;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    foreach (['admin', 'teacher', 'secretary', 'student'] as $role) {
-        Role::findOrCreate($role, 'web');
-    }
+    seedAuthorizationFixtures();
 });
 
 function createApprovedAdmin(): User

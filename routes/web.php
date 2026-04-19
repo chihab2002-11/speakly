@@ -388,31 +388,45 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:secretary|ad
     ->prefix('secretary')
     ->name('secretary.')
     ->group(function () {
-        Route::get('/registrations', [SecretaryOperationsController::class, 'registrations'])->name('registrations');
-        Route::post('/registrations', [SecretaryOperationsController::class, 'storeRegistration'])->name('registrations.store');
+        Route::middleware('permission:registrations.manage')->group(function () {
+            Route::get('/registrations', [SecretaryOperationsController::class, 'registrations'])->name('registrations');
+            Route::post('/registrations', [SecretaryOperationsController::class, 'storeRegistration'])->name('registrations.store');
+        });
 
-        Route::get('/payments', [SecretaryOperationsController::class, 'payments'])->name('payments');
-        Route::post('/payments', [SecretaryOperationsController::class, 'storePayment'])->name('payments.store');
-        Route::get('/groups', [SecretaryOperationsController::class, 'groups'])->name('groups');
-        Route::post('/groups', [SecretaryOperationsController::class, 'storeGroup'])->name('groups.store');
-        Route::patch('/groups/{group}', [SecretaryOperationsController::class, 'updateGroup'])
-            ->whereNumber('group')
-            ->name('groups.update');
-        Route::delete('/groups/{group}', [SecretaryOperationsController::class, 'destroyGroup'])
-            ->whereNumber('group')
-            ->name('groups.destroy');
-        Route::post('/groups/enroll', [SecretaryOperationsController::class, 'enrollStudent'])->name('groups.enroll');
-        Route::get('/accounts', [SecretaryOperationsController::class, 'accounts'])->name('accounts');
-        Route::patch('/accounts/{account}', [SecretaryOperationsController::class, 'updateAccount'])
-            ->whereNumber('account')
-            ->name('accounts.update');
-        Route::delete('/accounts/{account}', [SecretaryOperationsController::class, 'destroyAccount'])
-            ->whereNumber('account')
-            ->name('accounts.destroy');
-        Route::get('/publish-notifications', [SecretaryOperationsController::class, 'publishNotifications'])
-            ->name('publish-notifications');
-        Route::post('/publish-notifications', [SecretaryOperationsController::class, 'sendPublishedNotification'])
-            ->name('publish-notifications.send');
+        Route::middleware('permission:payments.manage')->group(function () {
+            Route::get('/payments', [SecretaryOperationsController::class, 'payments'])->name('payments');
+            Route::post('/payments', [SecretaryOperationsController::class, 'storePayment'])->name('payments.store');
+        });
+
+        Route::middleware('permission:groups.manage')->group(function () {
+            Route::get('/groups', [SecretaryOperationsController::class, 'groups'])->name('groups');
+            Route::post('/groups', [SecretaryOperationsController::class, 'storeGroup'])->name('groups.store');
+            Route::patch('/groups/{group}', [SecretaryOperationsController::class, 'updateGroup'])
+                ->whereNumber('group')
+                ->name('groups.update');
+            Route::delete('/groups/{group}', [SecretaryOperationsController::class, 'destroyGroup'])
+                ->whereNumber('group')
+                ->name('groups.destroy');
+            Route::post('/groups/enroll', [SecretaryOperationsController::class, 'enrollStudent'])->name('groups.enroll');
+        });
+
+        Route::middleware('permission:accounts.manage')->group(function () {
+            Route::get('/accounts', [SecretaryOperationsController::class, 'accounts'])->name('accounts');
+            Route::patch('/accounts/{account}', [SecretaryOperationsController::class, 'updateAccount'])
+                ->whereNumber('account')
+                ->name('accounts.update');
+            Route::delete('/accounts/{account}', [SecretaryOperationsController::class, 'destroyAccount'])
+                ->whereNumber('account')
+                ->name('accounts.destroy');
+        });
+
+        Route::middleware('permission:announcements.publish')->group(function () {
+            Route::get('/publish-notifications', [SecretaryOperationsController::class, 'publishNotifications'])
+                ->name('publish-notifications');
+            Route::post('/publish-notifications', [SecretaryOperationsController::class, 'sendPublishedNotification'])
+                ->name('publish-notifications.send');
+        });
+
         Route::get('/settings', [SecretaryOperationsController::class, 'settings'])->name('settings');
         Route::patch('/settings', [SecretaryOperationsController::class, 'updateSettings'])->name('settings.update');
         Route::patch('/settings/security', [SecretaryOperationsController::class, 'updateSecurity'])->name('settings.security.update');
@@ -515,69 +529,79 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
             ]);
         })->name('messages.new');
 
-        Route::post('/programs', [AdminLanguageProgramController::class, 'store'])->name('programs.store');
-        Route::patch('/programs/reorder', [AdminLanguageProgramController::class, 'reorder'])->name('programs.reorder');
-        Route::patch('/programs/{program}', [AdminLanguageProgramController::class, 'update'])
-            ->whereNumber('program')
-            ->name('programs.update');
-        Route::patch('/programs/{program}/toggle', [AdminLanguageProgramController::class, 'toggleStatus'])
-            ->whereNumber('program')
-            ->name('programs.toggle');
-        Route::patch('/programs/{program}/move/{direction}', [AdminLanguageProgramController::class, 'move'])
-            ->whereNumber('program')
-            ->whereIn('direction', ['up', 'down'])
-            ->name('programs.move');
-        Route::delete('/programs/{program}', [AdminLanguageProgramController::class, 'destroy'])
-            ->whereNumber('program')
-            ->name('programs.destroy');
+        Route::middleware('permission:language-programs.manage')->group(function () {
+            Route::post('/programs', [AdminLanguageProgramController::class, 'store'])->name('programs.store');
+            Route::patch('/programs/reorder', [AdminLanguageProgramController::class, 'reorder'])->name('programs.reorder');
+            Route::patch('/programs/{program}', [AdminLanguageProgramController::class, 'update'])
+                ->whereNumber('program')
+                ->name('programs.update');
+            Route::patch('/programs/{program}/toggle', [AdminLanguageProgramController::class, 'toggleStatus'])
+                ->whereNumber('program')
+                ->name('programs.toggle');
+            Route::patch('/programs/{program}/move/{direction}', [AdminLanguageProgramController::class, 'move'])
+                ->whereNumber('program')
+                ->whereIn('direction', ['up', 'down'])
+                ->name('programs.move');
+            Route::delete('/programs/{program}', [AdminLanguageProgramController::class, 'destroy'])
+                ->whereNumber('program')
+                ->name('programs.destroy');
+        });
 
-        Route::get('/employees', [AdminEmployeeController::class, 'index'])->name('employees.index');
-        Route::post('/employees/secretaries', [AdminEmployeeController::class, 'storeSecretary'])->name('employees.secretaries.store');
-        Route::patch('/employees/secretaries/{secretary}', [AdminEmployeeController::class, 'updateSecretary'])
-            ->whereNumber('secretary')
-            ->name('employees.secretaries.update');
-        Route::delete('/employees/secretaries/{secretary}', [AdminEmployeeController::class, 'destroySecretary'])
-            ->whereNumber('secretary')
-            ->name('employees.secretaries.destroy');
+        Route::middleware('permission:employees.manage')->group(function () {
+            Route::get('/employees', [AdminEmployeeController::class, 'index'])->name('employees.index');
+            Route::post('/employees/secretaries', [AdminEmployeeController::class, 'storeSecretary'])->name('employees.secretaries.store');
+            Route::patch('/employees/secretaries/{secretary}', [AdminEmployeeController::class, 'updateSecretary'])
+                ->whereNumber('secretary')
+                ->name('employees.secretaries.update');
+            Route::delete('/employees/secretaries/{secretary}', [AdminEmployeeController::class, 'destroySecretary'])
+                ->whereNumber('secretary')
+                ->name('employees.secretaries.destroy');
 
-        Route::post('/employees/teachers', [AdminEmployeeController::class, 'storeTeacher'])->name('employees.teachers.store');
-        Route::patch('/employees/teachers/{teacher}', [AdminEmployeeController::class, 'updateTeacher'])
-            ->whereNumber('teacher')
-            ->name('employees.teachers.update');
-        Route::patch('/employees/teachers/{teacher}/assign-language', [AdminEmployeeController::class, 'assignTeacherLanguage'])
-            ->whereNumber('teacher')
-            ->name('employees.teachers.assign-language');
-        Route::delete('/employees/teachers/{teacher}', [AdminEmployeeController::class, 'destroyTeacher'])
-            ->whereNumber('teacher')
-            ->name('employees.teachers.destroy');
+            Route::post('/employees/teachers', [AdminEmployeeController::class, 'storeTeacher'])->name('employees.teachers.store');
+            Route::patch('/employees/teachers/{teacher}', [AdminEmployeeController::class, 'updateTeacher'])
+                ->whereNumber('teacher')
+                ->name('employees.teachers.update');
+            Route::patch('/employees/teachers/{teacher}/assign-language', [AdminEmployeeController::class, 'assignTeacherLanguage'])
+                ->whereNumber('teacher')
+                ->name('employees.teachers.assign-language');
+            Route::delete('/employees/teachers/{teacher}', [AdminEmployeeController::class, 'destroyTeacher'])
+                ->whereNumber('teacher')
+                ->name('employees.teachers.destroy');
+        });
 
-        Route::get('/courses', [AdminCourseController::class, 'index'])->name('courses.index');
-        Route::post('/courses', [AdminCourseController::class, 'store'])->name('courses.store');
-        Route::patch('/courses/{course}', [AdminCourseController::class, 'update'])
-            ->whereNumber('course')
-            ->name('courses.update');
-        Route::delete('/courses/{course}', [AdminCourseController::class, 'destroy'])
-            ->whereNumber('course')
-            ->name('courses.destroy');
+        Route::middleware('permission:courses.manage')->group(function () {
+            Route::get('/courses', [AdminCourseController::class, 'index'])->name('courses.index');
+            Route::post('/courses', [AdminCourseController::class, 'store'])->name('courses.store');
+            Route::patch('/courses/{course}', [AdminCourseController::class, 'update'])
+                ->whereNumber('course')
+                ->name('courses.update');
+            Route::delete('/courses/{course}', [AdminCourseController::class, 'destroy'])
+                ->whereNumber('course')
+                ->name('courses.destroy');
+        });
 
-        Route::get('/classrooms', [AdminClassroomController::class, 'index'])->name('classrooms.index');
-        Route::post('/classrooms', [AdminClassroomController::class, 'store'])->name('classrooms.store');
-        Route::patch('/classrooms/{room}', [AdminClassroomController::class, 'update'])
-            ->whereNumber('room')
-            ->name('classrooms.update');
-        Route::delete('/classrooms/{room}', [AdminClassroomController::class, 'destroy'])
-            ->whereNumber('room')
-            ->name('classrooms.destroy');
+        Route::middleware('permission:classrooms.manage')->group(function () {
+            Route::get('/classrooms', [AdminClassroomController::class, 'index'])->name('classrooms.index');
+            Route::post('/classrooms', [AdminClassroomController::class, 'store'])->name('classrooms.store');
+            Route::patch('/classrooms/{room}', [AdminClassroomController::class, 'update'])
+                ->whereNumber('room')
+                ->name('classrooms.update');
+            Route::delete('/classrooms/{room}', [AdminClassroomController::class, 'destroy'])
+                ->whereNumber('room')
+                ->name('classrooms.destroy');
+        });
 
-        Route::get('/schedule', [AdminScheduleController::class, 'index'])->name('schedule.index');
-        Route::get('/schedule/timetable-hub', [AdminTimetableHubController::class, 'index'])->name('schedule.timetable-hub');
-        Route::post('/schedule', [AdminScheduleController::class, 'store'])->name('schedule.store');
-        Route::patch('/schedule/{schedule}', [AdminScheduleController::class, 'update'])
-            ->whereNumber('schedule')
-            ->name('schedule.update');
-        Route::delete('/schedule/{schedule}', [AdminScheduleController::class, 'destroy'])
-            ->whereNumber('schedule')
-            ->name('schedule.destroy');
+        Route::middleware('permission:schedules.manage')->group(function () {
+            Route::get('/schedule', [AdminScheduleController::class, 'index'])->name('schedule.index');
+            Route::get('/schedule/timetable-hub', [AdminTimetableHubController::class, 'index'])->name('schedule.timetable-hub');
+            Route::post('/schedule', [AdminScheduleController::class, 'store'])->name('schedule.store');
+            Route::patch('/schedule/{schedule}', [AdminScheduleController::class, 'update'])
+                ->whereNumber('schedule')
+                ->name('schedule.update');
+            Route::delete('/schedule/{schedule}', [AdminScheduleController::class, 'destroy'])
+                ->whereNumber('schedule')
+                ->name('schedule.destroy');
+        });
     });
 
 Route::get('/pending-approval', function () {
@@ -604,6 +628,7 @@ Route::middleware([
         ->name('timetable.teacher');
 
     Route::get('/secretary/timetable', [SecretaryTimetableController::class, 'index'])
+        ->middleware('permission:timetables.explore')
         ->name('secretary.timetable.index');
 });
 
@@ -617,13 +642,16 @@ Route::middleware([
     ->whereIn('role', ['admin', 'secretary'])
     ->group(function () {
         Route::get('/approvals', [ApprovalController::class, 'index'])
+            ->middleware('permission:approvals.approve.standard|approvals.reject.standard|approvals.approve.office|approvals.reject.office')
             ->name('approvals.index');
 
         Route::post('/approvals/{user}/approve', [ApprovalController::class, 'approve'])
+            ->middleware('permission:approvals.approve.standard|approvals.approve.office')
             ->whereNumber('user')
             ->name('approvals.approve');
 
         Route::post('/approvals/{user}/reject', [ApprovalController::class, 'reject'])
+            ->middleware('permission:approvals.reject.standard|approvals.reject.office')
             ->whereNumber('user')
             ->name('approvals.reject');
     });
@@ -633,6 +661,7 @@ Route::middleware([
     'verified',
     EnsureApproved::class,
     'role:admin|secretary',
+    'permission:approvals.approve.standard|approvals.reject.standard|approvals.approve.office|approvals.reject.office',
 ])->group(function () {
     Route::get('/approvals', function (Request $request) {
         return redirect()->route('approvals.index', DashboardRedirector::routeParametersFor($request->user()));

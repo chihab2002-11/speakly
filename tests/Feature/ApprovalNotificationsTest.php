@@ -5,13 +5,11 @@ use App\Notifications\AccountApprovedNotification;
 use App\Notifications\AccountRejectedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
-use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::findOrCreate('admin');
-    Role::findOrCreate('student');
+    seedAuthorizationFixtures();
 });
 
 it('sends approved notification when admin approves a pending user', function () {
