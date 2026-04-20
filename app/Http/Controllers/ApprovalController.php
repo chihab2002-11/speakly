@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\StudentTuition;
 use App\Models\User;
 use App\Notifications\AccountApprovedNotification;
 use App\Notifications\AccountRejectedNotification;
 use App\Support\DashboardRedirector;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ApprovalController extends Controller
 {
@@ -29,6 +31,7 @@ class ApprovalController extends Controller
             ->whereNull('rejected_at')
             ->whereNotNull('requested_role')
             ->whereIn('requested_role', $manageableRequestedRoles)
+            ->with('requestedCourse:id,name,code,price')
             ->orderBy('created_at');
 
         $pendingUsers = $pendingUsersQuery->get();
@@ -57,12 +60,20 @@ class ApprovalController extends Controller
 
         abort_unless($this->canManageRequestedRole($request, $requestedRole, 'approve'), 403);
 
-        $user->forceFill([
-            'approved_at' => now(),
-            'approved_by' => $request->user()->id,
-        ])->save();
+        if ($requestedRole === 'student' && ! $this->studentCourseCanBeApproved($user)) {
+            return back()->with('error', 'Selected course must have a valid price before approval.');
+        }
 
-        $user->syncRoles([$requestedRole]);
+        DB::transaction(function () use ($request, $requestedRole, $user): void {
+            $user->forceFill([
+                'approved_at' => now(),
+                'approved_by' => $request->user()->id,
+            ])->save();
+
+            $user->syncRoles([$requestedRole]);
+
+            $this->syncApprovedStudentTuition($user);
+        });
 
         // ✅ notify approved user
         $user->notify(new AccountApprovedNotification);
@@ -158,6 +169,38 @@ class ApprovalController extends Controller
         }
 
         return null;
+    }
+
+    private function syncApprovedStudentTuition(User $user): void
+    {
+        if ($user->requested_role !== 'student' || $user->requested_course_id === null) {
+            return;
+        }
+
+        $user->loadMissing('requestedCourse');
+
+        if ($user->requestedCourse === null) {
+            return;
+        }
+
+        StudentTuition::query()->updateOrCreate(
+            ['student_id' => $user->id],
+            [
+                'course_id' => $user->requestedCourse->id,
+                'course_price' => (int) $user->requestedCourse->price,
+            ],
+        );
+    }
+
+    private function studentCourseCanBeApproved(User $user): bool
+    {
+        if ($user->requested_role !== 'student' || $user->requested_course_id === null) {
+            return false;
+        }
+
+        $user->loadMissing('requestedCourse');
+
+        return $user->requestedCourse !== null && (int) $user->requestedCourse->price > 0;
     }
 
     /**

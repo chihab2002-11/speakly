@@ -13,17 +13,6 @@ beforeEach(function () {
     }
 });
 
-function createApprovedUserWithRole(string $role): User
-{
-    $user = User::factory()->create([
-        'approved_at' => now(),
-    ]);
-
-    $user->assignRole($role);
-
-    return $user;
-}
-
 it('teacher can send to allowed roles only', function (string $recipientRole) {
     $teacher = createApprovedUserWithRole('teacher');
     $recipient = createApprovedUserWithRole($recipientRole);

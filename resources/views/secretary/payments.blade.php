@@ -125,12 +125,11 @@
                     <thead style="background-color: #F8FAFC;">
                         <tr>
                             <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Student</th>
-                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Year</th>
-                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Net Due</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Selected Course</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Course Price</th>
                             <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Paid</th>
-                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Balance</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Remaining</th>
                             <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Status</th>
-                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Due Date</th>
                             <th class="px-4 py-3 text-right font-semibold" style="color: var(--lumina-text-muted);">Record Payment</th>
                         </tr>
                     </thead>
@@ -144,8 +143,13 @@
                                     <p class="font-semibold" style="color: var(--lumina-text-primary);">{{ $student->name }}</p>
                                     <p class="text-xs" style="color: var(--lumina-text-muted);">{{ $student->email }}</p>
                                 </td>
-                                <td class="px-4 py-4" style="color: var(--lumina-text-secondary);">{{ $payment['academic_year'] }}</td>
-                                <td class="px-4 py-4 font-semibold" style="color: var(--lumina-text-primary);">{{ number_format($payment['net_due']) }} DA</td>
+                                <td class="px-4 py-4">
+                                    <p class="font-semibold" style="color: var(--lumina-text-primary);">{{ $payment['selected_course_name'] }}</p>
+                                    <p class="text-xs" style="color: var(--lumina-text-muted);">
+                                        {{ $payment['selected_course_code'] ?: $payment['academic_year'] }}
+                                    </p>
+                                </td>
+                                <td class="px-4 py-4 font-semibold" style="color: var(--lumina-text-primary);">{{ number_format($payment['course_price']) }} DA</td>
                                 <td class="px-4 py-4" style="color: #15803D;">{{ number_format($payment['amount_paid']) }} DA</td>
                                 <td class="px-4 py-4 font-semibold" style="color: #B45309;">{{ number_format($payment['balance']) }} DA</td>
                                 <td class="px-4 py-4">
@@ -158,9 +162,6 @@
                                             Pending
                                         </span>
                                     @endif
-                                </td>
-                                <td class="px-4 py-4" style="color: var(--lumina-text-secondary);">
-                                    {{ $payment['due_date']->format('M j, Y') }}
                                 </td>
                                 <td class="px-4 py-4">
                                     <form method="POST" action="{{ route('secretary.payments.store') }}" class="flex justify-end gap-2">

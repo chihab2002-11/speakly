@@ -4,9 +4,11 @@ namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
+use App\Models\Course;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -16,17 +18,28 @@ class CreateNewUser implements CreatesNewUsers
     /**
      * Validate and create a newly registered user.
      *
-     * @param  array<string, string>  $input
+     * @param  array<string, mixed>  $input
      */
     public function create(array $input): User
     {
-        $validator = Validator::make($input, [
-            ...$this->profileRules(),
-            'requested_role' => ['required', 'string', 'in:student,teacher,secretary,parent'],
-            'date_of_birth' => ['nullable', 'date', 'before:today'],
-            'parent_email' => ['nullable', 'email'],
-            'password' => $this->passwordRules(),
-        ]);
+        $validator = Validator::make(
+            $input,
+            [
+                ...$this->profileRules(),
+                'requested_role' => ['required', 'string', 'in:student,teacher,secretary,parent'],
+                'date_of_birth' => ['nullable', 'date', 'before:today'],
+                'parent_email' => ['nullable', 'email'],
+                'course_id' => [
+                    'nullable',
+                    'integer',
+                    Rule::exists('courses', 'id')->where(fn ($query) => $query->where('price', '>', 0)),
+                ],
+                'password' => $this->passwordRules(),
+            ],
+            [
+                'course_id.exists' => 'Selected course is not available for registration.',
+            ],
+        );
 
         $validator->after(function ($validator) use ($input) {
             if (($input['requested_role'] ?? null) !== 'student') {
@@ -59,6 +72,16 @@ class CreateNewUser implements CreatesNewUsers
                     $validator->errors()->add('parent_email', 'Parent account must exist and be approved.');
                 }
             }
+
+            if (empty($input['course_id'])) {
+                $validator->errors()->add('course_id', 'Please select a course for student registration.');
+
+                return;
+            }
+
+            if (! Course::query()->available()->whereKey((int) $input['course_id'])->exists()) {
+                $validator->errors()->add('course_id', 'Selected course is not available for registration.');
+            }
         });
 
         $validator->validate();
@@ -86,6 +109,9 @@ class CreateNewUser implements CreatesNewUsers
             'requested_role' => $input['requested_role'],
             'date_of_birth' => $input['date_of_birth'] ?? null,
             'parent_id' => $parentId,
+            'requested_course_id' => ($input['requested_role'] ?? null) === 'student'
+                ? (int) $input['course_id']
+                : null,
             'password' => $input['password'], // User model has 'hashed' cast
             // approved_at / approved_by stay null until approval
         ]);

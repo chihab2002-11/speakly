@@ -167,6 +167,21 @@
                         </div>
                     </div>
 
+                    <div id="secretaryCourseField">
+                        <label for="secretary_course_id" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Course Selection</label>
+                        <select id="secretary_course_id" name="course_id" class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                            <option value="">Select a course</option>
+                            @foreach ($availableCourses as $course)
+                                <option value="{{ $course->id }}" @selected((string) old('course_id') === (string) $course->id)>
+                                    {{ $course->name }} ({{ number_format($course->price) }} DA)
+                                </option>
+                            @endforeach
+                        </select>
+                        <p class="mt-2 text-xs" style="color: var(--lumina-text-secondary);">
+                            Required for student registrations only. The selected course will be copied into the student payment workflow after approval.
+                        </p>
+                    </div>
+
                     <div class="flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style="border-color: #BFDBFE; background: #EFF6FF;">
                         <p class="text-xs" style="color: #1E3A8A;">
                             This creates a pending account. Approval is still required before portal access.
@@ -202,8 +217,24 @@
                 radio.addEventListener('change', function () {
                     options.forEach((item) => item.classList.remove('selected'));
                     option.classList.add('selected');
+                    toggleSecretaryCourseField(this.value);
                 });
             });
+
+            toggleSecretaryCourseField(group.querySelector('input[type="radio"]:checked')?.value ?? 'student');
         })();
+
+        function toggleSecretaryCourseField(role) {
+            const field = document.getElementById('secretaryCourseField');
+            const select = document.getElementById('secretary_course_id');
+
+            if (!field || !select) {
+                return;
+            }
+
+            const isStudent = role === 'student';
+            field.style.display = isStudent ? 'block' : 'none';
+            select.disabled = !isStudent;
+        }
     </script>
 </x-layouts.secretary>

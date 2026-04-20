@@ -88,15 +88,15 @@ class StudentTimetableTestSeeder extends Seeder
         $courses = [
             Course::query()->updateOrCreate(
                 ['code' => 'ENG-B2-TT'],
-                ['name' => 'English B2', 'description' => 'Student timetable test course.']
+                ['name' => 'English B2', 'price' => 18000, 'description' => 'Student timetable test course.']
             ),
             Course::query()->updateOrCreate(
                 ['code' => 'SPA-A2-TT'],
-                ['name' => 'Spanish A2', 'description' => 'Student timetable test course.']
+                ['name' => 'Spanish A2', 'price' => 15000, 'description' => 'Student timetable test course.']
             ),
             Course::query()->updateOrCreate(
                 ['code' => 'FRE-B1-TT'],
-                ['name' => 'French B1', 'description' => 'Student timetable test course.']
+                ['name' => 'French B1', 'price' => 17000, 'description' => 'Student timetable test course.']
             ),
         ];
 

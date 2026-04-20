@@ -37,6 +37,9 @@ class SecretaryOperationsController extends Controller
                 ->whereNull('rejected_at')
                 ->whereNotNull('requested_role')
                 ->count(),
+            'availableCourses' => Schema::hasTable('courses')
+                ? Course::query()->available()->orderBy('name')->get(['id', 'name', 'code', 'price'])
+                : collect(),
         ]);
     }
 
@@ -144,6 +147,10 @@ class SecretaryOperationsController extends Controller
     private function studentPaymentRelations(): array
     {
         $relations = ['enrolledClasses.course'];
+
+        if (Schema::hasTable('student_tuitions')) {
+            $relations[] = 'studentTuition.course';
+        }
 
         if (Schema::hasTable('tuition_payments')) {
             $relations['tuitionPaymentsAsStudent'] = fn ($query) => $query->orderByDesc('paid_on')->orderByDesc('id');
@@ -438,10 +445,17 @@ class SecretaryOperationsController extends Controller
             'email' => $validated['email'],
             'requested_role' => $validated['requested_role'],
             'date_of_birth' => $validated['date_of_birth'] ?? null,
+            'requested_course_id' => $validated['requested_role'] === 'student'
+                ? $account->requested_course_id
+                : null,
         ])->save();
 
         if ($account->approved_at !== null) {
             $account->syncRoles([$validated['requested_role']]);
+        }
+
+        if ($validated['requested_role'] !== 'student' && Schema::hasTable('student_tuitions')) {
+            $account->studentTuition()->delete();
         }
 
         return redirect()
@@ -475,6 +489,10 @@ class SecretaryOperationsController extends Controller
         }
 
         $account->enrolledClasses()->detach();
+
+        if (Schema::hasTable('student_tuitions')) {
+            $account->studentTuition()->delete();
+        }
 
         if (Schema::hasTable('tuition_payments')) {
             $account->tuitionPaymentsAsStudent()->delete();

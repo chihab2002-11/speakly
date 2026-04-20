@@ -257,6 +257,7 @@
                     <th>Name</th>
                     <th>Email</th>
                     <th>Requested role</th>
+                    <th>Selected course</th>
                     <th>Action</th>
                 </tr>
                 </thead>
@@ -266,6 +267,16 @@
                         <td>{{ $u->name }}</td>
                         <td>{{ $u->email }}</td>
                         <td><span class="role-badge">{{ $u->requested_role }}</span></td>
+                        <td>
+                            @if ($u->requested_role === 'student' && $u->requestedCourse)
+                                <div>{{ $u->requestedCourse->name }}</div>
+                                <div style="color: var(--muted); font-size: 0.8rem;">
+                                    {{ $u->requestedCourse->code }} - {{ number_format($u->requestedCourse->price) }} DA
+                                </div>
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td>
                             <div class="actions">
                                 <form method="POST" action="{{ route('approvals.approve', ['role' => $currentRole, 'user' => $u]) }}">

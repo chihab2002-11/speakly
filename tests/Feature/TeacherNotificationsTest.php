@@ -143,10 +143,12 @@ it('creates an attendance notification when teacher saves attendance', function 
     $class->students()->attach([$student->id]);
 
     $date = '2026-04-08';
+    scheduleClassOnDate($class, $date);
 
     $response = $this->actingAs($teacher)->post(route('teacher.attendance.store'), [
         'class_id' => $class->id,
         'date' => $date,
+        'submit_action' => 'save_all',
         'records' => [
             [
                 'student_id' => $student->id,

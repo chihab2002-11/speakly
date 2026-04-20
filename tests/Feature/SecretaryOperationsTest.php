@@ -4,6 +4,7 @@ use App\Models\Course;
 use App\Models\CourseClass;
 use App\Models\Room;
 use App\Models\Schedule;
+use App\Models\StudentTuition;
 use App\Models\TuitionPayment;
 use App\Models\User;
 use App\Notifications\SecretaryAnnouncementNotification;
@@ -66,6 +67,7 @@ it('creates pending account from secretary registrations form', function () {
 it('secretary-created registration appears in approvals queue', function () {
     /** @var TestCase $this */
     $secretary = createApprovedSecretaryForOperations();
+    $course = Course::factory()->create(['name' => 'German A1', 'price' => 18000]);
 
     $this->actingAs($secretary)
         ->post(route('secretary.registrations.store'), [
@@ -75,6 +77,7 @@ it('secretary-created registration appears in approvals queue', function () {
             'password_confirmation' => 'Password123!',
             'requested_role' => 'student',
             'date_of_birth' => '2001-03-14',
+            'course_id' => $course->id,
         ])
         ->assertRedirect(route('secretary.registrations'));
 
@@ -82,33 +85,48 @@ it('secretary-created registration appears in approvals queue', function () {
         ->get(route('approvals.index', ['role' => 'secretary']))
         ->assertOk()
         ->assertViewIs('approvals.index')
-        ->assertSee('queue.student@example.com');
+        ->assertSee('queue.student@example.com')
+        ->assertSee('German A1');
 });
 
 it('renders secretary payments page', function () {
     /** @var TestCase $this */
     $secretary = createApprovedSecretaryForOperations();
+    $course = Course::factory()->create(['name' => 'English B1', 'price' => 22000]);
 
     $student = User::factory()->create([
         'approved_at' => now(),
     ]);
     $student->assignRole('student');
+    StudentTuition::factory()->create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'course_price' => 22000,
+    ]);
 
     $response = $this->actingAs($secretary)->get(route('secretary.payments'));
 
     $response->assertOk();
     $response->assertViewIs('secretary.payments');
     $response->assertSee('Student Payments');
+    $response->assertSee('English B1');
+    $response->assertSee('22,000 DA');
 });
 
 it('records a student payment from secretary payments page', function () {
     /** @var TestCase $this */
     $secretary = createApprovedSecretaryForOperations();
+    $course = Course::factory()->create(['price' => 16000]);
 
     $student = User::factory()->create([
         'approved_at' => now(),
     ]);
     $student->assignRole('student');
+    StudentTuition::factory()->create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'course_price' => 16000,
+    ]);
 
     $this->actingAs($secretary)
         ->post(route('secretary.payments.store'), [
@@ -128,6 +146,67 @@ it('records a student payment from secretary payments page', function () {
     ]);
 
     expect(TuitionPayment::query()->count())->toBe(1);
+});
+
+it('approval creates locked tuition record and payment entry for selected course', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $course = Course::factory()->create([
+        'name' => 'Spanish B2',
+        'price' => 19500,
+    ]);
+
+    $student = User::factory()->create([
+        'name' => 'Approved Student',
+        'email' => 'approved.student@example.com',
+        'approved_at' => null,
+        'rejected_at' => null,
+        'requested_role' => 'student',
+        'requested_course_id' => $course->id,
+    ]);
+
+    $this->actingAs($secretary)
+        ->post(route('approvals.approve', ['role' => 'secretary', 'user' => $student]))
+        ->assertRedirect(route('approvals.index', ['role' => 'secretary']));
+
+    $this->assertDatabaseHas('student_tuitions', [
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'course_price' => 19500,
+    ]);
+
+    $course->update(['price' => 25000]);
+
+    $this->actingAs($secretary)
+        ->get(route('secretary.payments'))
+        ->assertOk()
+        ->assertSee('Approved Student')
+        ->assertSee('Spanish B2')
+        ->assertSee('19,500 DA')
+        ->assertDontSee('25,000 DA');
+});
+
+it('approval rejects student registration when selected course has no valid price', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $course = Course::factory()->create([
+        'price' => 0,
+    ]);
+
+    $student = User::factory()->create([
+        'approved_at' => null,
+        'rejected_at' => null,
+        'requested_role' => 'student',
+        'requested_course_id' => $course->id,
+    ]);
+
+    $this->actingAs($secretary)
+        ->post(route('approvals.approve', ['role' => 'secretary', 'user' => $student]))
+        ->assertSessionHas('error', 'Selected course must have a valid price before approval.');
+
+    $this->assertDatabaseMissing('student_tuitions', [
+        'student_id' => $student->id,
+    ]);
 });
 
 it('renders secretary groups page with group data', function () {

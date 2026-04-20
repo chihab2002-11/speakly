@@ -238,6 +238,7 @@ class TeacherWorkflowSeeder extends Seeder
             ['code' => 'ENG-B2'],
             [
                 'name' => 'English B2 - Grammar',
+                'price' => 22000,
                 'description' => 'Upper-intermediate grammar and writing skills.',
             ]
         );
@@ -246,6 +247,7 @@ class TeacherWorkflowSeeder extends Seeder
             ['code' => 'ENG-A2'],
             [
                 'name' => 'English A2 - Conversation',
+                'price' => 16000,
                 'description' => 'Beginner conversation and vocabulary practice.',
             ]
         );
@@ -254,6 +256,7 @@ class TeacherWorkflowSeeder extends Seeder
             ['code' => 'IELTS-PREP'],
             [
                 'name' => 'IELTS Preparation',
+                'price' => 26000,
                 'description' => 'Comprehensive preparation for IELTS reading, writing, and speaking.',
             ]
         );

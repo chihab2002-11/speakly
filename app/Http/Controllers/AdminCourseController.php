@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -35,7 +36,7 @@ class AdminCourseController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'price' => ['required', 'integer', 'min:0', 'max:100000000'],
+            'price' => ['required', 'integer', 'min:1', 'max:100000000'],
             'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
@@ -55,7 +56,7 @@ class AdminCourseController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
-            'price' => ['required', 'integer', 'min:0', 'max:100000000'],
+            'price' => ['required', 'integer', 'min:1', 'max:100000000'],
             'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
@@ -76,6 +77,15 @@ class AdminCourseController extends Controller
             return redirect()
                 ->route('admin.courses.index')
                 ->with('error', 'Cannot delete course with existing classes/schedules.');
+        }
+
+        if (
+            User::query()->where('requested_course_id', $course->id)->exists()
+            || $course->studentTuitions()->exists()
+        ) {
+            return redirect()
+                ->route('admin.courses.index')
+                ->with('error', 'Cannot delete course linked to pending or approved student registrations.');
         }
 
         $course->delete();

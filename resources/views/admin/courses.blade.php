@@ -71,7 +71,7 @@
 
                 <div>
                     <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Price (DZD)</label>
-                    <input type="number" min="0" step="1" name="price" value="{{ old('price', 0) }}" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;" placeholder="12000">
+                    <input type="number" min="1" step="1" name="price" value="{{ old('price') }}" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;" placeholder="12000">
                 </div>
 
                 <div class="md:col-span-2">
@@ -169,7 +169,7 @@
 
                 <div>
                     <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Price (DZD)</label>
-                    <input id="edit_course_price" name="price" type="number" min="0" step="1" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;">
+                    <input id="edit_course_price" name="price" type="number" min="1" step="1" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;">
                 </div>
 
                 <div>

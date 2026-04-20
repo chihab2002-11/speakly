@@ -417,6 +417,32 @@
                             </div>
                             <p class="mt-2 text-xs text-on-surface-variant">Required when registering a student under 18.</p>
                         </div>
+
+                        <div id="publicCourseField">
+                            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">COURSE SELECTION</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5 4.462 5 2 6.343 2 8v10c0-1.657 2.462-3 5.5-3 1.746 0 3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c3.038 0 5.5 1.343 5.5 3v10c0-1.657-2.462-3-5.5-3-1.746 0-3.332.477-4.5 1.253"/>
+                                    </svg>
+                                </span>
+                                <select
+                                    id="publicCourseSelect"
+                                    name="course_id"
+                                    class="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface"
+                                >
+                                    <option value="">Select a course</option>
+                                    @foreach ($availableCourses as $course)
+                                        <option value="{{ $course->id }}" @selected((string) old('course_id') === (string) $course->id)>
+                                            {{ $course->name }} ({{ number_format($course->price) }} DA)
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <p class="mt-2 text-xs text-on-surface-variant">
+                                Students must choose one admin-created course before the registration can be approved.
+                            </p>
+                        </div>
                         
                         <!-- Password -->
                         <div>
@@ -598,8 +624,26 @@
                 radio.addEventListener('change', function() {
                     options.forEach(opt => opt.classList.remove('selected'));
                     this.closest('.role-option').classList.add('selected');
+                    toggleStudentOnlyFields(this.value, 'publicCourseField', 'publicCourseSelect');
                 });
             });
+
+            const selectedRole = group.querySelector('input[type="radio"]:checked')?.value ?? 'student';
+            toggleStudentOnlyFields(selectedRole, 'publicCourseField', 'publicCourseSelect');
+        }
+
+        function toggleStudentOnlyFields(role, fieldId, selectId) {
+            const field = document.getElementById(fieldId);
+            const select = document.getElementById(selectId);
+
+            if (!field || !select) {
+                return;
+            }
+
+            const isStudent = role === 'student';
+
+            field.style.display = isStudent ? 'block' : 'none';
+            select.disabled = !isStudent;
         }
     </script>
 

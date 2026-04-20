@@ -10,16 +10,6 @@ beforeEach(function () {
     seedAuthorizationFixtures();
 });
 
-function createApprovedUserWithRole(string $role): User
-{
-    $user = User::factory()->create([
-        'approved_at' => now(),
-    ]);
-    $user->assignRole($role);
-
-    return $user;
-}
-
 it('redirects admin /approvals shortcut to role-scoped approvals', function () {
     /** @var TestCase $this */
     $admin = createApprovedUserWithRole('admin');

@@ -27,6 +27,7 @@ use App\Http\Controllers\TeacherSettingsController;
 use App\Http\Controllers\TeacherTimetableController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Middleware\EnsureApproved;
+use App\Models\Course;
 use App\Models\LanguageProgram;
 use App\Models\Review;
 use App\Models\User;
@@ -107,7 +108,11 @@ Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])
     ->name('reviews.vote');
 
 Route::get('/register-login', function () {
-    return view('register-login-page');
+    return view('register-login-page', [
+        'availableCourses' => Schema::hasTable('courses')
+            ? Course::query()->available()->orderBy('name')->get(['id', 'name', 'code', 'price'])
+            : collect(),
+    ]);
 })->middleware('guest')->name('register-login');
 
 Route::get('/dashboard', function (Request $request) {

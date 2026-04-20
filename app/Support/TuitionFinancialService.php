@@ -13,6 +13,8 @@ class TuitionFinancialService
 
     private ?bool $hasCoursePriceColumn = null;
 
+    private ?bool $hasStudentTuitionsTable = null;
+
     public function canRecordPayments(): bool
     {
         return $this->hasTuitionPaymentsTable();
@@ -101,7 +103,7 @@ class TuitionFinancialService
             $invoices[] = [
                 'id' => 'INV-'.now()->format('Y').'-'.str_pad((string) $child->id, 4, '0', STR_PAD_LEFT),
                 'child' => $child->name,
-                'description' => 'Course Tuition Balance',
+                'description' => ($summary['selected_course_name'] ?? 'Course').' Tuition Balance',
                 'amount' => $summary['balance'],
                 'dueDate' => now()->endOfMonth()->format('F j, Y'),
                 'status' => 'pending',
@@ -130,8 +132,8 @@ class TuitionFinancialService
             return [
                 'id' => $payment->reference ?: 'PAY-'.str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT),
                 'child' => $payment->student?->name ?? 'Student',
-                'description' => $studentSummary && $studentSummary['enrolled_classes_count'] > 0
-                    ? 'Tuition Payment ('.$studentSummary['enrolled_classes_count'].' class(es))'
+                'description' => $studentSummary && ! empty($studentSummary['selected_course_name'])
+                    ? 'Tuition Payment ('.$studentSummary['selected_course_name'].')'
                     : 'Tuition Payment',
                 'amount' => (int) $payment->amount,
                 'paidDate' => $payment->paid_on?->format('F j, Y') ?? '-',
@@ -160,6 +162,9 @@ class TuitionFinancialService
             'academic_year' => $summary['academic_year'],
             'gross_due' => $summary['gross_due'],
             'net_due' => $summary['net_due'],
+            'selected_course_name' => $summary['selected_course_name'],
+            'selected_course_code' => $summary['selected_course_code'],
+            'course_price' => $summary['course_price'],
             'amount_paid' => $summary['amount_paid'],
             'balance' => $summary['balance'],
             'status' => $summary['status'],
@@ -176,14 +181,49 @@ class TuitionFinancialService
     {
         $student->loadMissing($this->studentFinancialRelations());
 
+        $payments = $this->hasTuitionPaymentsTable()
+            ? $student->tuitionPaymentsAsStudent
+            : collect();
+        $amountPaid = (int) $payments->sum('amount');
+        $academicYear = $this->academicYearLabel();
+        $studentTuition = $this->hasStudentTuitionsTable() ? $student->studentTuition : null;
+
+        if ($studentTuition !== null) {
+            $courseName = (string) ($studentTuition->course?->name ?? 'Selected Course');
+            $courseCode = $studentTuition->course?->code;
+            $coursePrice = max(0, (int) $studentTuition->course_price);
+            $balance = max($coursePrice - $amountPaid, 0);
+            $status = $balance === 0 ? 'paid' : 'pending';
+
+            return [
+                'academic_year' => $academicYear,
+                'gross_due' => $coursePrice,
+                'discount' => 0,
+                'net_due' => $coursePrice,
+                'course_price' => $coursePrice,
+                'selected_course_name' => $courseName,
+                'selected_course_code' => $courseCode,
+                'amount_paid' => $amountPaid,
+                'balance' => $balance,
+                'status' => $status,
+                'last_payment_at' => $payments->first()?->paid_on,
+                'enrolled_classes_count' => 1,
+                'ledger_items' => [[
+                    'name' => $courseName,
+                    'type' => 'Course Fee',
+                    'period' => $academicYear,
+                    'amount' => $coursePrice,
+                    'status' => $status === 'paid' ? 'paid' : 'outstanding',
+                    'icon' => 'course',
+                ]],
+                'receipts' => $this->buildReceipts($payments),
+            ];
+        }
+
         $classes = $student->enrolledClasses
             ->filter(fn ($courseClass): bool => $courseClass->course !== null)
             ->sortBy(fn ($courseClass): string => (string) $courseClass->course->name)
             ->values();
-
-        $payments = $this->hasTuitionPaymentsTable()
-            ? $student->tuitionPaymentsAsStudent
-            : collect();
 
         $grossDue = (int) $classes->sum(function ($courseClass): int {
             $course = $courseClass->course;
@@ -198,10 +238,8 @@ class TuitionFinancialService
 
             return max(0, (int) ($course->price ?? 0));
         });
-        $amountPaid = (int) $payments->sum('amount');
         $balance = max($grossDue - $amountPaid, 0);
         $status = $balance === 0 ? 'paid' : 'pending';
-        $academicYear = $this->academicYearLabel();
 
         $remainingPaid = $amountPaid;
 
@@ -226,36 +264,29 @@ class TuitionFinancialService
                 'icon' => 'course',
             ];
         })->all();
-
-        $receipts = $payments->map(function (TuitionPayment $payment): array {
-            $referenceDigits = preg_replace('/\D+/', '', (string) $payment->reference);
-            $last4 = null;
-
-            if ((string) $payment->method === 'card' && $referenceDigits !== null && strlen($referenceDigits) >= 4) {
-                $last4 = substr($referenceDigits, -4);
-            }
-
-            return [
-                'invoice' => $payment->reference ?: 'PAY-'.str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT),
-                'amount' => (float) $payment->amount,
-                'date' => $payment->paid_on?->format('M d, Y') ?? '-',
-                'method' => $this->methodLabel((string) $payment->method),
-                'last4' => $last4,
-            ];
-        })->all();
+        $selectedCourse = $classes->count() === 1 ? $classes->first()?->course : null;
 
         return [
             'academic_year' => $academicYear,
             'gross_due' => $grossDue,
             'discount' => 0,
             'net_due' => $grossDue,
+            'course_price' => $classes->count() === 1
+                ? max(0, (int) ($selectedCourse?->price ?? 0))
+                : $grossDue,
+            'selected_course_name' => $classes->isEmpty()
+                ? 'No course selected'
+                : ($classes->count() === 1
+                    ? (string) $selectedCourse?->name
+                    : $classes->pluck('course.name')->implode(', ')),
+            'selected_course_code' => $classes->count() === 1 ? $selectedCourse?->code : null,
             'amount_paid' => $amountPaid,
             'balance' => $balance,
             'status' => $status,
             'last_payment_at' => $payments->first()?->paid_on,
             'enrolled_classes_count' => (int) $classes->count(),
             'ledger_items' => $ledgerItems,
-            'receipts' => $receipts,
+            'receipts' => $this->buildReceipts($payments),
         ];
     }
 
@@ -284,6 +315,10 @@ class TuitionFinancialService
     {
         $relations = ['enrolledClasses.course'];
 
+        if ($this->hasStudentTuitionsTable()) {
+            $relations[] = 'studentTuition.course';
+        }
+
         if ($this->hasTuitionPaymentsTable()) {
             $relations['tuitionPaymentsAsStudent'] = fn ($query) => $query->orderByDesc('paid_on')->orderByDesc('id');
         }
@@ -299,5 +334,34 @@ class TuitionFinancialService
     private function hasCoursePriceColumn(): bool
     {
         return $this->hasCoursePriceColumn ??= Schema::hasTable('courses') && Schema::hasColumn('courses', 'price');
+    }
+
+    /**
+     * @param  Collection<int, TuitionPayment>  $payments
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildReceipts(Collection $payments): array
+    {
+        return $payments->map(function (TuitionPayment $payment): array {
+            $referenceDigits = preg_replace('/\D+/', '', (string) $payment->reference);
+            $last4 = null;
+
+            if ((string) $payment->method === 'card' && $referenceDigits !== null && strlen($referenceDigits) >= 4) {
+                $last4 = substr($referenceDigits, -4);
+            }
+
+            return [
+                'invoice' => $payment->reference ?: 'PAY-'.str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT),
+                'amount' => (float) $payment->amount,
+                'date' => $payment->paid_on?->format('M d, Y') ?? '-',
+                'method' => $this->methodLabel((string) $payment->method),
+                'last4' => $last4,
+            ];
+        })->all();
+    }
+
+    private function hasStudentTuitionsTable(): bool
+    {
+        return $this->hasStudentTuitionsTable ??= Schema::hasTable('student_tuitions');
     }
 }

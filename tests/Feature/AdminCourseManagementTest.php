@@ -89,3 +89,32 @@ test('admin cannot delete course with existing classes', function () {
 
     $this->assertDatabaseHas('courses', ['id' => $course->id]);
 });
+
+test('admin cannot create course without a positive price', function () {
+    /** @var TestCase $this */
+    $admin = createAdminForCourseTests();
+
+    $this->actingAs($admin)
+        ->post(route('admin.courses.store'), [
+            'name' => 'Zero Price Course',
+            'price' => 0,
+            'description' => 'Invalid course price.',
+        ])
+        ->assertSessionHasErrors('price');
+});
+
+test('admin cannot update course to zero price', function () {
+    /** @var TestCase $this */
+    $admin = createAdminForCourseTests();
+    $course = Course::factory()->create([
+        'price' => 12000,
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('admin.courses.update', $course), [
+            'name' => $course->name,
+            'price' => 0,
+            'description' => $course->description,
+        ])
+        ->assertSessionHasErrors('price');
+});
