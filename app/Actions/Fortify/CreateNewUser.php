@@ -29,14 +29,24 @@ class CreateNewUser implements CreatesNewUsers
                 'requested_role' => ['required', 'string', 'in:student,teacher,secretary,parent'],
                 'date_of_birth' => ['nullable', 'date', 'before:today'],
                 'parent_email' => ['nullable', 'email'],
+                'program_id' => [
+                    'nullable',
+                    'integer',
+                    Rule::exists('language_programs', 'id')->where(fn ($query) => $query->where('is_active', true)),
+                ],
                 'course_id' => [
                     'nullable',
                     'integer',
-                    Rule::exists('courses', 'id')->where(fn ($query) => $query->where('price', '>', 0)),
+                    Rule::exists('courses', 'id')->where(function ($query) {
+                        $query
+                            ->where('price', '>', 0)
+                            ->whereNotNull('program_id');
+                    }),
                 ],
                 'password' => $this->passwordRules(),
             ],
             [
+                'program_id.exists' => 'Selected program is not available for registration.',
                 'course_id.exists' => 'Selected course is not available for registration.',
             ],
         );
@@ -79,8 +89,40 @@ class CreateNewUser implements CreatesNewUsers
                 return;
             }
 
-            if (! Course::query()->available()->whereKey((int) $input['course_id'])->exists()) {
+            if (empty($input['program_id'])) {
+                $validator->errors()->add('program_id', 'Please select a program for student registration.');
+
+                return;
+            }
+
+            $selectedProgramId = (int) $input['program_id'];
+            $selectedCourseId = (int) $input['course_id'];
+
+            $selectedCourseIsAvailable = Course::query()
+                ->available()
+                ->whereKey($selectedCourseId)
+                ->whereHas('program', function ($query): void {
+                    $query->where('is_active', true);
+                })
+                ->exists();
+
+            if (! $selectedCourseIsAvailable) {
                 $validator->errors()->add('course_id', 'Selected course is not available for registration.');
+
+                return;
+            }
+
+            $courseMatchesProgram = Course::query()
+                ->available()
+                ->whereKey($selectedCourseId)
+                ->where('program_id', $selectedProgramId)
+                ->whereHas('program', function ($query): void {
+                    $query->where('is_active', true);
+                })
+                ->exists();
+
+            if (! $courseMatchesProgram) {
+                $validator->errors()->add('course_id', 'Selected course does not belong to the selected program.');
             }
         });
 

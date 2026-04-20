@@ -167,15 +167,25 @@
                         </div>
                     </div>
 
-                    <div id="secretaryCourseField">
-                        <label for="secretary_course_id" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Course Selection</label>
-                        <select id="secretary_course_id" name="course_id" class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
-                            <option value="">Select a course</option>
-                            @foreach ($availableCourses as $course)
-                                <option value="{{ $course->id }}" @selected((string) old('course_id') === (string) $course->id)>
-                                    {{ $course->name }} ({{ number_format($course->price) }} DA)
+                    <div id="secretaryProgramField">
+                        <label for="secretary_program_id" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Program Selection</label>
+                        <select id="secretary_program_id" name="program_id" class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                            <option value="">Select a program</option>
+                            @foreach ($availablePrograms as $program)
+                                <option value="{{ $program->id }}" @selected((string) old('program_id') === (string) $program->id)>
+                                    {{ $program->name }}
                                 </option>
                             @endforeach
+                        </select>
+                        <p class="mt-2 text-xs" style="color: var(--lumina-text-secondary);">
+                            Choose the language program first, then the student course.
+                        </p>
+                    </div>
+
+                    <div id="secretaryCourseField">
+                        <label for="secretary_course_id" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Course Selection</label>
+                        <select id="secretary_course_id" name="course_id" data-selected-course="{{ old('course_id') }}" class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                            <option value="">Select a program first</option>
                         </select>
                         <p class="mt-2 text-xs" style="color: var(--lumina-text-secondary);">
                             Required for student registrations only. The selected course will be copied into the student payment workflow after approval.
@@ -194,6 +204,10 @@
             </div>
         </div>
     </section>
+
+    <script id="secretaryRegistrationCoursesData" type="application/json">
+        @json(($availableCourses ?? collect())->values()->toArray())
+    </script>
 
     <script>
         (function () {
@@ -221,20 +235,70 @@
                 });
             });
 
+            const programSelect = document.getElementById('secretary_program_id');
+            if (programSelect) {
+                programSelect.addEventListener('change', function () {
+                    setSecretaryCourseOptions(this.value, '');
+                });
+            }
+
             toggleSecretaryCourseField(group.querySelector('input[type="radio"]:checked')?.value ?? 'student');
         })();
 
         function toggleSecretaryCourseField(role) {
-            const field = document.getElementById('secretaryCourseField');
-            const select = document.getElementById('secretary_course_id');
+            const programField = document.getElementById('secretaryProgramField');
+            const programSelect = document.getElementById('secretary_program_id');
+            const courseField = document.getElementById('secretaryCourseField');
+            const courseSelect = document.getElementById('secretary_course_id');
 
-            if (!field || !select) {
+            if (!programField || !programSelect || !courseField || !courseSelect) {
                 return;
             }
 
             const isStudent = role === 'student';
-            field.style.display = isStudent ? 'block' : 'none';
-            select.disabled = !isStudent;
+            const selectedCourseId = courseSelect.dataset.selectedCourse ?? '';
+
+            programField.style.display = isStudent ? 'block' : 'none';
+            courseField.style.display = isStudent ? 'block' : 'none';
+            programSelect.disabled = !isStudent;
+
+            if (!isStudent) {
+                programSelect.value = '';
+                setSecretaryCourseOptions('', selectedCourseId);
+                courseSelect.disabled = true;
+
+                return;
+            }
+
+            setSecretaryCourseOptions(programSelect.value, selectedCourseId);
+        }
+
+        function setSecretaryCourseOptions(programId, selectedCourseId) {
+            const select = document.getElementById('secretary_course_id');
+            if (!select) {
+                return;
+            }
+
+            const courses = JSON.parse(document.getElementById('secretaryRegistrationCoursesData')?.textContent ?? '[]');
+            const filteredCourses = courses.filter((course) => String(course.program_id) === String(programId));
+            const placeholder = !programId
+                ? 'Select a program first'
+                : filteredCourses.length === 0
+                    ? 'No available courses for this program'
+                    : 'Select a course';
+
+            select.innerHTML = '';
+            select.appendChild(new Option(placeholder, ''));
+
+            filteredCourses.forEach((course) => {
+                const option = new Option(`${course.name} (${Number(course.price).toLocaleString()} DA)`, String(course.id));
+                select.appendChild(option);
+            });
+
+            const courseExists = filteredCourses.some((course) => String(course.id) === String(selectedCourseId));
+            select.value = courseExists ? String(selectedCourseId) : '';
+            select.disabled = filteredCourses.length === 0;
+            select.dataset.selectedCourse = select.value;
         }
     </script>
 </x-layouts.secretary>

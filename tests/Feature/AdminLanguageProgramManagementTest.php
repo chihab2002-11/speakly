@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Course;
 use App\Models\LanguageProgram;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -105,5 +106,39 @@ test('admin can update and delete a language program', function () {
 
     $this->assertDatabaseMissing('language_programs', [
         'id' => $program->id,
+    ]);
+});
+
+test('deleting a language program nulls assigned course program_id', function () {
+    $admin = createAdminUser();
+
+    $program = LanguageProgram::query()->create([
+        'code' => 'de',
+        'locale_code' => 'DE-DE',
+        'name' => 'German',
+        'title' => 'German Track',
+        'description' => 'Program description',
+        'full_description' => 'Long program description',
+        'flag_url' => 'https://flagcdn.com/w80/de.png',
+        'sort_order' => 1,
+        'is_active' => true,
+        'certifications' => [],
+    ]);
+
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->delete(route('admin.programs.destroy', $program))
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('language_programs', [
+        'id' => $program->id,
+    ]);
+
+    $this->assertDatabaseHas('courses', [
+        'id' => $course->id,
+        'program_id' => null,
     ]);
 });

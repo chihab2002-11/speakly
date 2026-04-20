@@ -109,8 +109,21 @@ Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])
 
 Route::get('/register-login', function () {
     return view('register-login-page', [
-        'availableCourses' => Schema::hasTable('courses')
-            ? Course::query()->available()->orderBy('name')->get(['id', 'name', 'code', 'price'])
+        'availablePrograms' => Schema::hasTable('language_programs')
+            ? LanguageProgram::query()
+                ->ordered()
+                ->where('is_active', true)
+                ->get(['id', 'name', 'code'])
+            : collect(),
+        'availableCourses' => Schema::hasTable('courses') && Schema::hasTable('language_programs')
+            ? Course::query()
+                ->available()
+                ->whereNotNull('program_id')
+                ->whereHas('program', function ($query): void {
+                    $query->where('is_active', true);
+                })
+                ->orderBy('name')
+                ->get(['id', 'program_id', 'name', 'code', 'price'])
             : collect(),
     ]);
 })->middleware('guest')->name('register-login');

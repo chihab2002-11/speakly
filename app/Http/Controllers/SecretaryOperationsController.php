@@ -7,6 +7,7 @@ use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\Course;
 use App\Models\CourseClass;
+use App\Models\LanguageProgram;
 use App\Models\Message;
 use App\Models\TuitionPayment;
 use App\Models\User;
@@ -37,8 +38,21 @@ class SecretaryOperationsController extends Controller
                 ->whereNull('rejected_at')
                 ->whereNotNull('requested_role')
                 ->count(),
-            'availableCourses' => Schema::hasTable('courses')
-                ? Course::query()->available()->orderBy('name')->get(['id', 'name', 'code', 'price'])
+            'availablePrograms' => Schema::hasTable('language_programs')
+                ? LanguageProgram::query()
+                    ->ordered()
+                    ->where('is_active', true)
+                    ->get(['id', 'name', 'code'])
+                : collect(),
+            'availableCourses' => Schema::hasTable('courses') && Schema::hasTable('language_programs')
+                ? Course::query()
+                    ->available()
+                    ->whereNotNull('program_id')
+                    ->whereHas('program', function ($query): void {
+                        $query->where('is_active', true);
+                    })
+                    ->orderBy('name')
+                    ->get(['id', 'program_id', 'name', 'code', 'price'])
                 : collect(),
         ]);
     }

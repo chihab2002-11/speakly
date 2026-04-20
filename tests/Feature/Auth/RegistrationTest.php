@@ -1,12 +1,32 @@
 <?php
 
 use App\Models\Course;
+use App\Models\LanguageProgram;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     Role::findOrCreate('parent', 'web');
 });
+
+function createLanguageProgramForRegistration(array $attributes = []): LanguageProgram
+{
+    static $sequence = 1;
+
+    $programNumber = $sequence++;
+
+    return LanguageProgram::query()->create(array_merge([
+        'code' => 'REG'.$programNumber,
+        'locale_code' => 'reg-'.$programNumber,
+        'name' => 'Program '.$programNumber,
+        'title' => 'Program '.$programNumber,
+        'description' => 'Registration test language program '.$programNumber,
+        'full_description' => 'Registration test language program '.$programNumber.' full description.',
+        'flag_url' => 'https://example.com/flags/program-'.$programNumber.'.svg',
+        'sort_order' => $programNumber,
+        'is_active' => true,
+    ], $attributes));
+}
 
 test('registration screen can be rendered', function () {
     // /register now redirects to the custom /register-login page
@@ -19,25 +39,55 @@ test('registration screen can be rendered', function () {
     $response->assertOk();
 });
 
-test('registration screen only shows courses with valid prices', function () {
+test('registration screen only shows active programs and courses with valid prices', function () {
+    $activeProgram = createLanguageProgramForRegistration([
+        'name' => 'English Program',
+    ]);
+
+    $inactiveProgram = createLanguageProgramForRegistration([
+        'code' => 'REGI',
+        'locale_code' => 'reg-inactive',
+        'name' => 'Inactive Program',
+        'title' => 'Inactive Program',
+        'is_active' => false,
+    ]);
+
     Course::factory()->create([
         'name' => 'Priced Course',
         'price' => 12000,
+        'program_id' => $activeProgram->id,
     ]);
 
     Course::factory()->create([
         'name' => 'Unpriced Course',
         'price' => 0,
+        'program_id' => $activeProgram->id,
+    ]);
+
+    Course::factory()->create([
+        'name' => 'Inactive Program Course',
+        'price' => 14500,
+        'program_id' => $inactiveProgram->id,
     ]);
 
     $this->get(route('register-login'))
         ->assertOk()
+        ->assertSee('English Program')
+        ->assertDontSee('Inactive Program')
         ->assertSee('Priced Course')
-        ->assertDontSee('Unpriced Course');
+        ->assertDontSee('Unpriced Course')
+        ->assertDontSee('Inactive Program Course');
 });
 
 test('new users can register', function () {
-    $course = Course::factory()->create(['name' => 'English A1']);
+    $program = createLanguageProgramForRegistration([
+        'name' => 'English Program',
+    ]);
+
+    $course = Course::factory()->create([
+        'name' => 'English A1',
+        'program_id' => $program->id,
+    ]);
 
     $response = $this->post(route('register.store'), [
         'name' => 'John Doe',
@@ -46,6 +96,7 @@ test('new users can register', function () {
         'password' => 'password',
         'password_confirmation' => 'password',
         'requested_role' => 'student',
+        'program_id' => $program->id,
         'course_id' => $course->id,
     ]);
 
@@ -61,7 +112,10 @@ test('new users can register', function () {
 });
 
 test('underage students must provide parent email', function () {
-    $course = Course::factory()->create();
+    $program = createLanguageProgramForRegistration();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
 
     $response = $this->post(route('register.store'), [
         'name' => 'Minor Student',
@@ -70,6 +124,7 @@ test('underage students must provide parent email', function () {
         'password' => 'password',
         'password_confirmation' => 'password',
         'requested_role' => 'student',
+        'program_id' => $program->id,
         'course_id' => $course->id,
     ]);
 
@@ -77,7 +132,10 @@ test('underage students must provide parent email', function () {
 });
 
 test('underage student is connected to parent account', function () {
-    $course = Course::factory()->create();
+    $program = createLanguageProgramForRegistration();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
 
     $parent = User::factory()->create([
         'email' => 'parent@example.com',
@@ -93,6 +151,7 @@ test('underage student is connected to parent account', function () {
         'password' => 'password',
         'password_confirmation' => 'password',
         'requested_role' => 'student',
+        'program_id' => $program->id,
         'course_id' => $course->id,
     ]);
 
@@ -107,7 +166,10 @@ test('underage student is connected to parent account', function () {
 });
 
 test('underage student cannot be linked to unapproved parent account', function () {
-    $course = Course::factory()->create();
+    $program = createLanguageProgramForRegistration();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
 
     $parent = User::factory()->create([
         'email' => 'pending-parent@example.com',
@@ -123,6 +185,7 @@ test('underage student cannot be linked to unapproved parent account', function 
         'password' => 'password',
         'password_confirmation' => 'password',
         'requested_role' => 'student',
+        'program_id' => $program->id,
         'course_id' => $course->id,
     ]);
 
@@ -132,7 +195,28 @@ test('underage student cannot be linked to unapproved parent account', function 
     ]);
 });
 
+test('student registration requires a program selection', function () {
+    $program = createLanguageProgramForRegistration();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
+
+    $response = $this->post(route('register.store'), [
+        'name' => 'No Program Student',
+        'email' => 'no-program@example.com',
+        'date_of_birth' => '2000-01-01',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'requested_role' => 'student',
+        'course_id' => $course->id,
+    ]);
+
+    $response->assertSessionHasErrors('program_id');
+});
+
 test('student registration requires a course selection', function () {
+    $program = createLanguageProgramForRegistration();
+
     $response = $this->post(route('register.store'), [
         'name' => 'No Course Student',
         'email' => 'no-course@example.com',
@@ -140,14 +224,18 @@ test('student registration requires a course selection', function () {
         'password' => 'password',
         'password_confirmation' => 'password',
         'requested_role' => 'student',
+        'program_id' => $program->id,
     ]);
 
     $response->assertSessionHasErrors('course_id');
 });
 
 test('student registration rejects a course without a valid price', function () {
+    $program = createLanguageProgramForRegistration();
+
     $course = Course::factory()->create([
         'price' => 0,
+        'program_id' => $program->id,
     ]);
 
     $response = $this->post(route('register.store'), [
@@ -157,10 +245,43 @@ test('student registration rejects a course without a valid price', function () 
         'password' => 'password',
         'password_confirmation' => 'password',
         'requested_role' => 'student',
+        'program_id' => $program->id,
         'course_id' => $course->id,
     ]);
 
     $response->assertSessionHasErrors([
         'course_id' => 'Selected course is not available for registration.',
+    ]);
+});
+
+test('student registration rejects a course outside the selected program', function () {
+    $englishProgram = createLanguageProgramForRegistration([
+        'name' => 'English Program',
+    ]);
+    $frenchProgram = createLanguageProgramForRegistration([
+        'code' => 'REGF',
+        'locale_code' => 'reg-fr',
+        'name' => 'French Program',
+        'title' => 'French Program',
+    ]);
+
+    $course = Course::factory()->create([
+        'name' => 'French A1',
+        'program_id' => $frenchProgram->id,
+    ]);
+
+    $response = $this->post(route('register.store'), [
+        'name' => 'Wrong Program Student',
+        'email' => 'wrong-program@example.com',
+        'date_of_birth' => '2000-01-01',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'requested_role' => 'student',
+        'program_id' => $englishProgram->id,
+        'course_id' => $course->id,
+    ]);
+
+    $response->assertSessionHasErrors([
+        'course_id' => 'Selected course does not belong to the selected program.',
     ]);
 });

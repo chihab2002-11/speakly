@@ -418,6 +418,32 @@
                             <p class="mt-2 text-xs text-on-surface-variant">Required when registering a student under 18.</p>
                         </div>
 
+                        <div id="publicProgramField">
+                            <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">PROGRAM SELECTION</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M6 12h12M9 17h6"/>
+                                    </svg>
+                                </span>
+                                <select
+                                    id="publicProgramSelect"
+                                    name="program_id"
+                                    class="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface"
+                                >
+                                    <option value="">Select a program</option>
+                                    @foreach ($availablePrograms as $program)
+                                        <option value="{{ $program->id }}" @selected((string) old('program_id') === (string) $program->id)>
+                                            {{ $program->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <p class="mt-2 text-xs text-on-surface-variant">
+                                Start by choosing the language program, then select one course from that program.
+                            </p>
+                        </div>
+
                         <div id="publicCourseField">
                             <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">COURSE SELECTION</label>
                             <div class="relative">
@@ -429,18 +455,14 @@
                                 <select
                                     id="publicCourseSelect"
                                     name="course_id"
+                                    data-selected-course="{{ old('course_id') }}"
                                     class="w-full pl-12 pr-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface"
                                 >
-                                    <option value="">Select a course</option>
-                                    @foreach ($availableCourses as $course)
-                                        <option value="{{ $course->id }}" @selected((string) old('course_id') === (string) $course->id)>
-                                            {{ $course->name }} ({{ number_format($course->price) }} DA)
-                                        </option>
-                                    @endforeach
+                                    <option value="">Select a program first</option>
                                 </select>
                             </div>
                             <p class="mt-2 text-xs text-on-surface-variant">
-                                Students must choose one admin-created course before the registration can be approved.
+                                Students must choose one admin-created course from the selected program before the registration can be approved.
                             </p>
                         </div>
                         
@@ -533,6 +555,10 @@
         </div>
     </main>
 
+    <script id="publicRegistrationCoursesData" type="application/json">
+        @json(($availableCourses ?? collect())->values()->toArray())
+    </script>
+
     <!-- JavaScript for Tab Switching and Password Toggle -->
     <script>
         function showSignIn() {
@@ -600,6 +626,13 @@
             
             // Initialize role selection handlers for registration form
             initRoleSelection('registerRoleGroup');
+
+            const programSelect = document.getElementById('publicProgramSelect');
+            if (programSelect) {
+                programSelect.addEventListener('change', function () {
+                    setCourseOptions(document.getElementById('publicCourseSelect'), this.value, '');
+                });
+            }
         });
         
         // Role selection handler
@@ -624,26 +657,67 @@
                 radio.addEventListener('change', function() {
                     options.forEach(opt => opt.classList.remove('selected'));
                     this.closest('.role-option').classList.add('selected');
-                    toggleStudentOnlyFields(this.value, 'publicCourseField', 'publicCourseSelect');
+                    toggleStudentOnlyFields(this.value);
                 });
             });
 
             const selectedRole = group.querySelector('input[type="radio"]:checked')?.value ?? 'student';
-            toggleStudentOnlyFields(selectedRole, 'publicCourseField', 'publicCourseSelect');
+            toggleStudentOnlyFields(selectedRole);
         }
 
-        function toggleStudentOnlyFields(role, fieldId, selectId) {
-            const field = document.getElementById(fieldId);
-            const select = document.getElementById(selectId);
+        function toggleStudentOnlyFields(role) {
+            const programField = document.getElementById('publicProgramField');
+            const programSelect = document.getElementById('publicProgramSelect');
+            const courseField = document.getElementById('publicCourseField');
+            const courseSelect = document.getElementById('publicCourseSelect');
 
-            if (!field || !select) {
+            if (!programField || !programSelect || !courseField || !courseSelect) {
                 return;
             }
 
             const isStudent = role === 'student';
+            const selectedCourseId = courseSelect.dataset.selectedCourse ?? '';
 
-            field.style.display = isStudent ? 'block' : 'none';
-            select.disabled = !isStudent;
+            programField.style.display = isStudent ? 'block' : 'none';
+            courseField.style.display = isStudent ? 'block' : 'none';
+            programSelect.disabled = !isStudent;
+
+            if (!isStudent) {
+                programSelect.value = '';
+                setCourseOptions(courseSelect, '', selectedCourseId);
+                courseSelect.disabled = true;
+
+                return;
+            }
+
+            setCourseOptions(courseSelect, programSelect.value, selectedCourseId);
+        }
+
+        function setCourseOptions(select, programId, selectedCourseId) {
+            if (!select) {
+                return;
+            }
+
+            const courses = JSON.parse(document.getElementById('publicRegistrationCoursesData')?.textContent ?? '[]');
+            const filteredCourses = courses.filter((course) => String(course.program_id) === String(programId));
+            const placeholder = !programId
+                ? 'Select a program first'
+                : filteredCourses.length === 0
+                    ? 'No available courses for this program'
+                    : 'Select a course';
+
+            select.innerHTML = '';
+            select.appendChild(new Option(placeholder, ''));
+
+            filteredCourses.forEach((course) => {
+                const option = new Option(`${course.name} (${Number(course.price).toLocaleString()} DA)`, String(course.id));
+                select.appendChild(option);
+            });
+
+            const courseExists = filteredCourses.some((course) => String(course.id) === String(selectedCourseId));
+            select.value = courseExists ? String(selectedCourseId) : '';
+            select.disabled = filteredCourses.length === 0;
+            select.dataset.selectedCourse = select.value;
         }
     </script>
 

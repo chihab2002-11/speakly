@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Course;
+use App\Models\LanguageProgram;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AdminCourseController extends Controller
@@ -14,6 +16,7 @@ class AdminCourseController extends Controller
     public function index(): View
     {
         $courses = Course::query()
+            ->with('program:id,name')
             ->withCount('classes')
             ->orderBy('name')
             ->get();
@@ -29,6 +32,7 @@ class AdminCourseController extends Controller
             'totalClasses' => $totalClasses,
             'totalTuition' => $totalTuition,
             'avgCoursePrice' => $avgCoursePrice,
+            'programs' => LanguageProgram::query()->ordered()->get(['id', 'name', 'code']),
         ]);
     }
 
@@ -37,6 +41,7 @@ class AdminCourseController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'price' => ['required', 'integer', 'min:1', 'max:100000000'],
+            'program_id' => ['nullable', 'integer', Rule::exists('language_programs', 'id')],
             'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
@@ -44,6 +49,7 @@ class AdminCourseController extends Controller
             'name' => $validated['name'],
             'code' => $this->generateCourseCode($validated['name']),
             'price' => (int) $validated['price'],
+            'program_id' => isset($validated['program_id']) ? (int) $validated['program_id'] : null,
             'description' => $validated['description'] ?? null,
         ]);
 
@@ -57,12 +63,14 @@ class AdminCourseController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
             'price' => ['required', 'integer', 'min:1', 'max:100000000'],
+            'program_id' => ['nullable', 'integer', Rule::exists('language_programs', 'id')],
             'description' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $course->update([
             'name' => $validated['name'],
             'price' => (int) $validated['price'],
+            'program_id' => isset($validated['program_id']) ? (int) $validated['program_id'] : null,
             'description' => $validated['description'] ?? null,
         ]);
 
