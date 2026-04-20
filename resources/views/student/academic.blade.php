@@ -1,4 +1,4 @@
-<x-layouts.student :title="__('Academic Information')" :currentRoute="'academic'">
+<x-dynamic-component :component="$layoutComponent ?? 'layouts.student'" :title="__('Academic Information')" :currentRoute="$currentRoute ?? 'academic'" :pageTitle="'Child Academic Information'" :user="$user ?? null" :portalParent="$portalParent ?? null" :portalChildren="$portalChildren ?? []" :portalSelectedChild="$portalSelectedChild ?? null">
     {{-- Page Header --}}
     <div class="mb-8 flex flex-col gap-2">
         <h1 class="font-inter text-3xl font-extrabold tracking-tight md:text-4xl" style="color: var(--lumina-text-primary); letter-spacing: -0.9px;">
@@ -1079,4 +1079,4 @@
         handleWeekChange();
     </script>
     {{-- Attendance History END --}}
-</x-layouts.student>
+</x-dynamic-component>

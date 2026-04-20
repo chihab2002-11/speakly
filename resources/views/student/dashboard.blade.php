@@ -1,4 +1,8 @@
-<x-layouts.student :title="__('Dashboard')" :currentRoute="'dashboard'">
+<x-dynamic-component :component="$layoutComponent ?? 'layouts.student'" :title="__('Dashboard')" :currentRoute="$currentRoute ?? 'dashboard'" :pageTitle="'Child Dashboard'" :user="$user ?? null" :portalParent="$portalParent ?? null" :portalChildren="$portalChildren ?? []" :portalSelectedChild="$portalSelectedChild ?? null">
+    @php
+        $dashboardMessageCenterRouteName = $dashboardMessageCenterRouteName ?? 'role.messages.index';
+        $dashboardMessageCenterRouteParams = $dashboardMessageCenterRouteParams ?? ['role' => 'student'];
+    @endphp
     {{-- Welcome Hero Section --}}
     <div class="mb-8 flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
         {{-- Welcome Text --}}
@@ -352,7 +356,7 @@
 
             <div class="pt-4">
                 <a
-                    href="{{ route('role.messages.index', ['role' => 'student']) }}"
+                    href="{{ route($dashboardMessageCenterRouteName, $dashboardMessageCenterRouteParams) }}"
                     class="inline-flex items-center gap-2 text-sm font-bold transition-colors hover:opacity-80"
                     style="color: var(--lumina-primary);"
                     wire:navigate
@@ -482,12 +486,12 @@
     </div>
 
     <script id="studentProficiencyGroups" type="application/json">@json($proficiencyGroups ?? [])</script>
-    <script id="studentMentorsData" type="application/json">@json(($mentors ?? collect())->values())</script>
+    <script id="studentMentorsData" type="application/json">@json(collect($mentors ?? [])->values())</script>
     <script>
         const PROFICIENCY_GROUPS = JSON.parse(document.getElementById('studentProficiencyGroups')?.textContent || '[]');
         const DEFAULT_PROFICIENCY_GROUP = "{{ $selectedProficiencyGroup ?? 'all' }}";
         const MENTORS_DATA = JSON.parse(document.getElementById('studentMentorsData')?.textContent || '[]');
-        const MENTOR_FALLBACK_MESSAGE_URL = "{{ route('role.messages.index', ['role' => 'student']) }}";
+        const MENTOR_FALLBACK_MESSAGE_URL = "{{ route($dashboardMessageCenterRouteName, $dashboardMessageCenterRouteParams) }}";
         const mentorModal = document.getElementById('mentorModal');
         const mentorModalClose = document.getElementById('mentorModalClose');
 
@@ -643,4 +647,4 @@
             setInterval(tick, 1000);
         })();
     </script>
-</x-layouts.student>
+</x-dynamic-component>

@@ -69,10 +69,11 @@
             :currentRoute="$currentRoute ?? 'dashboard'" 
             :children="$children ?? []"
             :selectedChild="$selectedChild ?? null"
+            :hideFinancial="$hideFinancial ?? false"
         />
 
         {{-- Main Content Area --}}
-        <div class="flex flex-1 flex-col lg:ml-0">
+        <div class="flex flex-1 flex-col lg:ml-64">
             {{-- Top Navigation Header --}}
             <x-parent.header :user="$user ?? auth()->user()" :pageTitle="$pageTitle ?? 'Dashboard'" />
 
@@ -99,6 +100,10 @@
         function toggleChildSelector() {
             const dropdown = document.getElementById('child-selector-dropdown');
             const icon = document.getElementById('child-selector-icon');
+
+            if (!dropdown || !icon) {
+                return;
+            }
             
             dropdown.classList.toggle('hidden');
             icon.classList.toggle('rotate-180');

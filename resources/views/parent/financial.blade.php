@@ -3,6 +3,7 @@
     :pageTitle="'Financial Information'"
     :currentRoute="'financial'"
     :user="$user ?? null"
+    :children="$children ?? []"
 >
     {{-- Page Header --}}
     <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

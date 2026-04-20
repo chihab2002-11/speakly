@@ -29,86 +29,87 @@
     $unreadNotificationsCount = $user ? $user->unreadNotifications()->count() : 0;
 @endphp
 
-{{-- Top Navigation Header --}}
 <header 
-    class="sticky top-0 z-30 flex items-center justify-between px-8 py-4"
-    style="background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(6px); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);"
+    class="sticky top-0 z-30 flex items-center justify-between border-b px-4 py-3 md:px-8"
+    style="background: rgba(255, 255, 255, 0.85); border-color: rgba(226, 232, 240, 0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);"
 >
-    {{-- Page Title --}}
-    <h1 class="text-xl font-black" style="color: #065F46;">
-        {{ $pageTitle }}
-    </h1>
-
-    {{-- Right Side: Search, Icons, Profile --}}
-    <div class="flex items-center gap-6">
-        {{-- Search Bar --}}
-        <div 
-            class="hidden items-center gap-2 rounded-full px-4 py-2 md:flex"
-            style="background-color: #F1F5F9; width: 373px;"
+    {{-- Left Side: Mobile Menu Toggle --}}
+    <div class="flex items-center gap-4">
+        <button 
+            onclick="toggleSidebar()"
+            class="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:bg-gray-100 active:scale-95 lg:hidden"
+            aria-label="Toggle sidebar"
         >
-            <svg class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #94A3B8;">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="m21 21-4.35-4.35"/>
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
-            <input 
-                type="text" 
-                placeholder="Search data..." 
-                class="flex-1 border-none bg-transparent text-sm outline-none placeholder:text-gray-500"
-            >
-        </div>
+        </button>
+    </div>
 
-        {{-- Action Icons --}}
-        <div class="flex items-center gap-4">
-            {{-- Notifications --}}
-            <a href="{{ route('parent.notifications') }}" class="relative opacity-80 transition-opacity hover:opacity-100">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #475569;">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    {{-- Right Side: Actions & User Profile --}}
+    <div class="flex items-center gap-4 md:gap-6">
+        <div class="flex items-center gap-2 md:gap-4">
+            {{-- Notifications Button --}}
+            <a 
+                href="{{ Route::has('parent.notifications') ? route('parent.notifications') : '#' }}" 
+                class="relative flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:bg-gray-100 active:scale-95"
+                wire:navigate
+            >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                 </svg>
-                {{-- Notification Badge (only show if unread) --}}
                 @if($unreadNotificationsCount > 0)
-                    <span class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    <span class="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white animate-pulse" style="background-color: var(--lumina-accent-red);">
                         {{ $unreadNotificationsCount > 9 ? '9+' : $unreadNotificationsCount }}
                     </span>
                 @endif
             </a>
 
-            {{-- Settings --}}
-            <a href="{{ route('parent.settings') }}" class="opacity-80 transition-opacity hover:opacity-100" title="Settings">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #475569;">
-                    <circle cx="12" cy="12" r="3"/>
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            {{-- Help Button --}}
+            <button class="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:bg-gray-100 active:scale-95">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </button>
+            
+            {{-- Settings Button --}}
+            <a 
+                href="{{ Route::has('parent.settings') ? route('parent.settings') : '#' }}" 
+                class="flex h-9 w-9 items-center justify-center rounded-full transition-all duration-200 hover:bg-gray-100 active:scale-95"
+                wire:navigate
+            >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
             </a>
         </div>
 
-        {{-- Profile Section --}}
-        <div class="flex items-center gap-3">
-            {{-- User Info --}}
-            <div class="hidden flex-col items-end sm:flex">
+        <div class="hidden h-8 w-px md:block" style="background-color: var(--lumina-border);"></div>
+
+        <a 
+            href="{{ Route::has('parent.settings') ? route('parent.settings') : '#' }}" 
+            class="flex items-center gap-3 rounded-xl p-2 transition-all duration-200 hover:bg-gray-50"
+            wire:navigate
+        >
+            <div class="hidden flex-col items-end md:flex">
                 <span class="text-xs font-medium" style="color: #0F172A;">
                     {{ $user->name ?? 'Sarah Henderson' }}
                 </span>
-                <span class="text-[10px] font-medium" style="color: #64748B;">
+                <span class="text-[10px] font-medium" style="color: var(--lumina-text-muted);">
                     {{ $userRole }}
                 </span>
             </div>
-
-            {{-- Profile Avatar --}}
-            <div 
-                class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full"
-                style="border: 2px solid #D1FAE5;"
-            >
+            
+            <div class="relative h-10 w-10 overflow-hidden rounded-full border-2 transition-all duration-200 hover:border-emerald-300" style="border-color: var(--lumina-border);">
                 @if($user && $user->avatar)
                     <img src="{{ $user->avatar }}" alt="{{ $user->name }}" class="h-full w-full object-cover">
                 @else
-                    <div class="flex h-full w-full items-center justify-center" style="background-color: var(--lumina-primary);">
-                        <span class="text-xs font-bold text-white">
-                            {{ $user ? strtoupper(substr($user->name, 0, 1)) : 'S' }}
-                        </span>
+                    <div class="flex h-full w-full items-center justify-center text-sm font-semibold" style="background-color: var(--lumina-accent-green-light); color: var(--lumina-accent-green-dark);">
+                        {{ $user ? strtoupper(substr($user->name, 0, 1)) : 'S' }}
                     </div>
                 @endif
             </div>
-        </div>
+        </a>
     </div>
 </header>

@@ -1,4 +1,4 @@
-<x-layouts.student :title="__('Account Settings')" :currentRoute="'settings'">
+<x-dynamic-component :component="$layoutComponent ?? 'layouts.student'" :title="__('Account Settings')" :currentRoute="$currentRoute ?? 'settings'" :pageTitle="'Child Account Settings'" :user="$user ?? null" :portalParent="$portalParent ?? null" :portalChildren="$portalChildren ?? []" :portalSelectedChild="$portalSelectedChild ?? null">
     {{-- Page Header --}}
     <div class="mb-8">
         <h1 class="font-inter text-3xl font-extrabold tracking-tight md:text-4xl" style="color: var(--lumina-text-primary); letter-spacing: -0.9px;">
@@ -124,7 +124,7 @@
                 </div>
 
                 {{-- Form Fields --}}
-                <form class="flex flex-col gap-5" method="POST" action="{{ route('student.settings.update') }}">
+                <form class="flex flex-col gap-5" method="POST" action="{{ route($settingsUpdateRouteName ?? 'student.settings.update', $settingsUpdateRouteParams ?? []) }}">
                     @csrf
                     <div class="grid gap-5 sm:grid-cols-2">
                         {{-- Full Name --}}
@@ -276,7 +276,7 @@
                         </div>
                     </div>
                     <a 
-                        href="{{ route('student.password') }}" 
+                        href="{{ route($passwordRouteName ?? 'student.password', $passwordRouteParams ?? []) }}" 
                         class="text-sm font-bold cursor-pointer transition-opacity hover:opacity-80"
                         style="color: var(--lumina-primary);"
                         wire:navigate
@@ -340,4 +340,4 @@
             </div>
         </div>
     </div>
-</x-layouts.student>
+</x-dynamic-component>

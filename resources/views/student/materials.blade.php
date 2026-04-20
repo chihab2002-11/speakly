@@ -1,4 +1,4 @@
-<x-layouts.student :title="__('Learning Materials')" :currentRoute="'materials'">
+<x-dynamic-component :component="$layoutComponent ?? 'layouts.student'" :title="__('Learning Materials')" :currentRoute="$currentRoute ?? 'materials'" :pageTitle="'Child Learning Materials'" :user="$user ?? null" :portalParent="$portalParent ?? null" :portalChildren="$portalChildren ?? []" :portalSelectedChild="$portalSelectedChild ?? null">
     <style>
         .mat-main-card { background: #fff; border-radius: 16px; border: 1px solid #e5e7eb; box-shadow: 0 1px 4px rgba(0, 0, 0, .07); overflow: hidden; }
         .mat-header { padding: 20px 24px 16px; border-bottom: 1px solid #f3f4f6; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -328,4 +328,4 @@
         renderMaterials();
         markMaterialsAsSeen();
     </script>
-</x-layouts.student>
+</x-dynamic-component>

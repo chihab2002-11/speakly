@@ -1,4 +1,10 @@
-<x-layouts.student :title="__('Notifications')" :currentRoute="'notifications'">
+<x-dynamic-component :component="$layoutComponent ?? 'layouts.student'" :title="__('Notifications')" :currentRoute="$currentRoute ?? 'notifications'" :pageTitle="'Child Notifications'" :user="$user ?? null" :portalParent="$portalParent ?? null" :portalChildren="$portalChildren ?? []" :portalSelectedChild="$portalSelectedChild ?? null">
+    @php
+        $notificationsReadAllRouteName = $notificationsReadAllRouteName ?? 'student.notifications.read-all';
+        $notificationsReadAllRouteParams = $notificationsReadAllRouteParams ?? [];
+        $notificationsReadRouteName = $notificationsReadRouteName ?? 'student.notifications.read';
+        $notificationsReadRouteParams = $notificationsReadRouteParams ?? [];
+    @endphp
     {{-- Page Header --}}
     <div class="mb-6 flex items-center justify-between">
         <div>
@@ -12,7 +18,7 @@
 
         {{-- Mark All as Read Button --}}
         @if($notifications->where('read_at', null)->count() > 0)
-            <form method="POST" action="{{ route('student.notifications.read-all') }}">
+            <form method="POST" action="{{ route($notificationsReadAllRouteName, $notificationsReadAllRouteParams) }}">
                 @csrf
                 <button 
                     type="submit" 
@@ -99,7 +105,7 @@
 
                         {{-- Mark as Read Button --}}
                         @if(!$notification->read_at)
-                            <form method="POST" action="{{ route('student.notifications.read', $notification->id) }}" class="ml-auto">
+                            <form method="POST" action="{{ route($notificationsReadRouteName, array_merge($notificationsReadRouteParams, ['id' => $notification->id])) }}" class="ml-auto">
                                 @csrf
                                 <button 
                                     type="submit"
@@ -143,4 +149,4 @@
             <p class="text-sm font-semibold">{{ session('success') }}</p>
         </div>
     @endif
-</x-layouts.student>
+</x-dynamic-component>

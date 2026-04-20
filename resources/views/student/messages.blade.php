@@ -1,6 +1,13 @@
-<x-layouts.student :title="__('Messages')" :currentRoute="'messages'">
+<x-dynamic-component :component="$layoutComponent ?? 'layouts.student'" :title="__('Messages')" :currentRoute="$currentRoute ?? 'messages'" :pageTitle="'Child Messages'" :user="$user ?? null" :portalParent="$portalParent ?? null" :portalChildren="$portalChildren ?? []" :portalSelectedChild="$portalSelectedChild ?? null">
     @php
         $currentRole = \App\Support\DashboardRedirector::roleFor(auth()->user());
+        $messageActor = $messageActor ?? auth()->user();
+        $messageIndexRouteName = $messageIndexRouteName ?? 'role.messages.index';
+        $messageIndexRouteParams = $messageIndexRouteParams ?? ['role' => $currentRole];
+        $messageConversationRouteName = $messageConversationRouteName ?? 'role.messages.conversation';
+        $messageConversationRouteParams = $messageConversationRouteParams ?? ['role' => $currentRole];
+        $messageStoreRouteName = $messageStoreRouteName ?? 'role.messages.store';
+        $messageStoreRouteParams = $messageStoreRouteParams ?? ['role' => $currentRole];
     @endphp
 
     <style>
@@ -143,7 +150,7 @@
 
             {{-- Search --}}
             <div class="p-4">
-                <form method="GET" action="{{ route('role.messages.index', ['role' => $currentRole]) }}">
+                <form method="GET" action="{{ route($messageIndexRouteName, $messageIndexRouteParams) }}">
                     @if($selectedUser)
                         <input type="hidden" name="user_id" value="{{ $selectedUser->id }}">
                     @endif
@@ -161,7 +168,7 @@
             <div class="flex-1 overflow-y-auto">
                 @forelse($conversations ?? [] as $conv)
                     <a 
-                        href="{{ route('role.messages.conversation', ['role' => $currentRole, 'conversation' => $conv['user']->id]) }}"
+                        href="{{ route($messageConversationRouteName, array_merge($messageConversationRouteParams, ['conversation' => $conv['user']->id])) }}"
                         class="msg-conv-item {{ $selectedUser && $selectedUser->id === $conv['user']->id ? 'active' : '' }}"
                     >
                         {{-- Avatar --}}
@@ -197,7 +204,7 @@
                             </p>
                             @if($conv['lastMessage'])
                                 <p class="mt-1 truncate text-[13px] {{ $conv['unreadCount'] > 0 ? 'font-semibold' : '' }}" style="color: var(--lumina-text-secondary);">
-                                    @if($conv['lastMessage']->sender_id === auth()->id())
+                                    @if($conv['lastMessage']->sender_id === ($messageActor->id ?? auth()->id()))
                                         You: 
                                     @endif
                                     {{ $conv['lastMessage']->body }}
@@ -227,7 +234,7 @@
                     <div class="flex items-center gap-3">
                         {{-- Back button for mobile --}}
                         <a 
-                            href="{{ route('role.messages.index', ['role' => $currentRole]) }}"
+                            href="{{ route($messageIndexRouteName, $messageIndexRouteParams) }}"
                             class="rounded-lg px-2 py-1 text-sm font-semibold hover:bg-gray-100 md:hidden"
                             style="color: var(--lumina-text-secondary);"
                         >
@@ -255,7 +262,7 @@
                 <div class="flex-1 overflow-y-auto p-6" id="messages-container">
                     <div class="msg-thread">
                         @forelse($selectedConversation ?? [] as $message)
-                            @if($message->sender_id === auth()->id())
+                            @if($message->sender_id === ($messageActor->id ?? auth()->id()))
                                 {{-- My Message (Right) --}}
                                 <div class="flex justify-end">
                                     <div class="flex items-end gap-3">
@@ -273,10 +280,10 @@
                                         </p>
                                         </div>
                                         <div class="msg-mini-avatar">
-                                            @if(auth()->user()?->avatar)
-                                                <img src="{{ auth()->user()->avatar }}" alt="Your avatar">
+                                            @if($messageActor?->avatar)
+                                                <img src="{{ $messageActor->avatar }}" alt="Your avatar">
                                             @else
-                                                {{ substr(auth()->user()->name ?? 'Y', 0, 1) }}
+                                                {{ substr($messageActor->name ?? 'Y', 0, 1) }}
                                             @endif
                                         </div>
                                     </div>
@@ -320,7 +327,7 @@
 
                 {{-- Message Input --}}
                 <div class="border-t bg-white p-4" style="border-color: var(--lumina-border);">
-                    <form action="{{ route('role.messages.store', ['role' => $currentRole]) }}" method="POST">
+                    <form action="{{ route($messageStoreRouteName, $messageStoreRouteParams) }}" method="POST">
                         @csrf
                         <input type="hidden" name="receiver_id" value="{{ $selectedUser->id }}">
                         
@@ -391,4 +398,4 @@
             });
         </script>
     @endif
-</x-layouts.student>
+</x-dynamic-component>

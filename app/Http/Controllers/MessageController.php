@@ -99,8 +99,35 @@ class MessageController extends Controller
         $role = DashboardRedirector::roleFor($request->user());
         $viewName = in_array($role, ['student', 'parent', 'admin', 'teacher', 'secretary']) ? "{$role}.messages" : 'messages.index';
 
+        $children = [];
+        if ($role === 'parent') {
+            $children = User::query()
+                ->where('parent_id', $currentUserId)
+                ->whereNotNull('approved_at')
+                ->whereHas('roles', fn ($query) => $query->where('name', 'student'))
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->values()
+                ->map(function (User $child, int $index): array {
+                    $theme = $index % 2 === 0
+                        ? ['color' => 'var(--lumina-child-1)', 'textColor' => 'var(--lumina-child-1-text)']
+                        : ['color' => 'var(--lumina-child-2)', 'textColor' => 'var(--lumina-child-2-text)'];
+
+                    return [
+                        'id' => $child->id,
+                        'name' => $child->name,
+                        'initials' => $child->initials(),
+                        'grade' => 'Student',
+                        'color' => $theme['color'],
+                        'textColor' => $theme['textColor'],
+                    ];
+                })
+                ->all();
+        }
+
         return view($viewName, [
             'user' => $request->user(),
+            'children' => $children,
             'conversations' => $conversations,
             'selectedUser' => $selectedUser,
             'selectedConversation' => $selectedConversation,
