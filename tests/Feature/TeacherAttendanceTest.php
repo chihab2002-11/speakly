@@ -160,6 +160,7 @@ it('saves and upserts attendance evaluation records for a teachers own class', f
     $studentTwo = createApprovedStudentForAttendance('Student Two');
 
     $class->students()->attach([$studentOne->id, $studentTwo->id]);
+    scheduleClassOnDate($class, $date);
 
     $this->actingAs($teacher)->post(route('teacher.attendance.store'), [
         'class_id' => $class->id,

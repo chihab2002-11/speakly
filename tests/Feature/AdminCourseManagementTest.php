@@ -2,6 +2,7 @@
 
 use App\Models\Course;
 use App\Models\CourseClass;
+use App\Models\LanguageProgram;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -35,11 +36,24 @@ test('admin can view manage courses page', function () {
 test('admin can create course with auto code', function () {
     /** @var TestCase $this */
     $admin = createAdminForCourseTests();
+    $program = LanguageProgram::query()->create([
+        'code' => 'en',
+        'locale_code' => 'EN-GB',
+        'name' => 'English',
+        'title' => 'English Mastery',
+        'description' => 'English language program.',
+        'full_description' => 'English language program full description.',
+        'flag_url' => 'https://flagcdn.com/w80/gb.png',
+        'sort_order' => 1,
+        'is_active' => true,
+        'certifications' => [],
+    ]);
 
     $this->actingAs($admin)
         ->post(route('admin.courses.store'), [
             'name' => 'English Conversation B1',
             'price' => 18000,
+            'program_id' => $program->id,
             'description' => 'Conversation-focused course.',
         ])
         ->assertRedirect(route('admin.courses.index'));
@@ -49,11 +63,24 @@ test('admin can create course with auto code', function () {
     expect($course)->not->toBeNull();
     expect((string) $course?->code)->toMatch('/^[A-Z]{3}\d{3}$/');
     expect((int) $course?->price)->toBe(18000);
+    expect($course?->program_id)->toBe($program->id);
 });
 
 test('admin can update course details', function () {
     /** @var TestCase $this */
     $admin = createAdminForCourseTests();
+    $program = LanguageProgram::query()->create([
+        'code' => 'fr',
+        'locale_code' => 'FR-FR',
+        'name' => 'French',
+        'title' => 'French Excellence',
+        'description' => 'French language program.',
+        'full_description' => 'French language program full description.',
+        'flag_url' => 'https://flagcdn.com/w80/fr.png',
+        'sort_order' => 1,
+        'is_active' => true,
+        'certifications' => [],
+    ]);
     $course = Course::factory()->create([
         'name' => 'French A1',
         'price' => 12000,
@@ -64,6 +91,7 @@ test('admin can update course details', function () {
         ->patch(route('admin.courses.update', $course), [
             'name' => 'French A1 Updated',
             'price' => 25000,
+            'program_id' => $program->id,
             'description' => 'Updated description',
         ])
         ->assertRedirect(route('admin.courses.index'));
@@ -71,6 +99,7 @@ test('admin can update course details', function () {
     $course->refresh();
     expect($course->name)->toBe('French A1 Updated');
     expect((int) $course->price)->toBe(25000);
+    expect($course->program_id)->toBe($program->id);
     expect($course->description)->toBe('Updated description');
 });
 
@@ -88,4 +117,33 @@ test('admin cannot delete course with existing classes', function () {
         ->assertSessionHas('error');
 
     $this->assertDatabaseHas('courses', ['id' => $course->id]);
+});
+
+test('admin cannot create course without a positive price', function () {
+    /** @var TestCase $this */
+    $admin = createAdminForCourseTests();
+
+    $this->actingAs($admin)
+        ->post(route('admin.courses.store'), [
+            'name' => 'Zero Price Course',
+            'price' => 0,
+            'description' => 'Invalid course price.',
+        ])
+        ->assertSessionHasErrors('price');
+});
+
+test('admin cannot update course to zero price', function () {
+    /** @var TestCase $this */
+    $admin = createAdminForCourseTests();
+    $course = Course::factory()->create([
+        'price' => 12000,
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('admin.courses.update', $course), [
+            'name' => $course->name,
+            'price' => 0,
+            'description' => $course->description,
+        ])
+        ->assertSessionHasErrors('price');
 });

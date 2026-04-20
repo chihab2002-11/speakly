@@ -88,15 +88,15 @@ class StudentAttendanceHistoryTestSeeder extends Seeder
 
         $english = Course::query()->updateOrCreate(
             ['code' => 'ENG-B2-TT'],
-            ['name' => 'English B2', 'description' => 'Attendance history test course.']
+            ['name' => 'English B2', 'price' => 18000, 'description' => 'Attendance history test course.']
         );
         $spanish = Course::query()->updateOrCreate(
             ['code' => 'SPA-A2-TT'],
-            ['name' => 'Spanish A2', 'description' => 'Attendance history test course.']
+            ['name' => 'Spanish A2', 'price' => 15000, 'description' => 'Attendance history test course.']
         );
         $french = Course::query()->updateOrCreate(
             ['code' => 'FRE-B1-TT'],
-            ['name' => 'French B1', 'description' => 'Attendance history test course.']
+            ['name' => 'French B1', 'price' => 17000, 'description' => 'Attendance history test course.']
         );
 
         $englishClass = $this->resolveClassForStudent($student, $english, $teacher);

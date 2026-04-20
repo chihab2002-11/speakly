@@ -1,8 +1,12 @@
 <?php
 
+use App\Models\CourseClass;
+use App\Models\Schedule;
+use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -58,4 +62,24 @@ function seedAuthorizationFixtures(): void
 
     (new PermissionSeeder)->run();
     (new RoleSeeder)->run();
+}
+
+function createApprovedUserWithRole(string $role): User
+{
+    $user = User::factory()->create([
+        'approved_at' => now(),
+    ]);
+    $user->assignRole($role);
+
+    return $user;
+}
+
+function scheduleClassOnDate(CourseClass $courseClass, string $date): Schedule
+{
+    $dayOfWeek = strtolower(Carbon::createFromFormat('Y-m-d', $date)->format('l'));
+
+    return Schedule::factory()->create([
+        'class_id' => $courseClass->id,
+        'day_of_week' => $dayOfWeek,
+    ]);
 }

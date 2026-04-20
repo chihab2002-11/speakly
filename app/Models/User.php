@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -35,6 +36,7 @@ class User extends Authenticatable
         'requested_role',
         'date_of_birth',
         'parent_id',
+        'requested_course_id',
         'approved_at',
         'approved_by',
         'rejected_at',
@@ -105,6 +107,11 @@ class User extends Authenticatable
         return $this->belongsTo(self::class, 'parent_id');
     }
 
+    public function requestedCourse(): BelongsTo
+    {
+        return $this->belongsTo(Course::class, 'requested_course_id');
+    }
+
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
@@ -133,6 +140,11 @@ class User extends Authenticatable
     public function tuitionPaymentsRecorded(): HasMany
     {
         return $this->hasMany(TuitionPayment::class, 'recorded_by');
+    }
+
+    public function studentTuition(): HasOne
+    {
+        return $this->hasOne(StudentTuition::class, 'student_id');
     }
 
     public function latestStudentCard(): ?StudentCard

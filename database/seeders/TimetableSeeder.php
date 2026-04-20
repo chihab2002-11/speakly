@@ -27,6 +27,7 @@ class TimetableSeeder extends Seeder
             ['code' => 'MATH101'],
             [
                 'name' => 'Mathematics',
+                'price' => 15000,
                 'description' => 'Introduction to algebra and geometry',
             ]
         );

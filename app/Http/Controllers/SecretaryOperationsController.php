@@ -7,6 +7,7 @@ use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\Course;
 use App\Models\CourseClass;
+use App\Models\LanguageProgram;
 use App\Models\Message;
 use App\Models\TuitionPayment;
 use App\Models\User;
@@ -37,6 +38,22 @@ class SecretaryOperationsController extends Controller
                 ->whereNull('rejected_at')
                 ->whereNotNull('requested_role')
                 ->count(),
+            'availablePrograms' => Schema::hasTable('language_programs')
+                ? LanguageProgram::query()
+                    ->ordered()
+                    ->where('is_active', true)
+                    ->get(['id', 'name', 'code'])
+                : collect(),
+            'availableCourses' => Schema::hasTable('courses') && Schema::hasTable('language_programs')
+                ? Course::query()
+                    ->available()
+                    ->whereNotNull('program_id')
+                    ->whereHas('program', function ($query): void {
+                        $query->where('is_active', true);
+                    })
+                    ->orderBy('name')
+                    ->get(['id', 'program_id', 'name', 'code', 'price'])
+                : collect(),
         ]);
     }
 
@@ -144,6 +161,10 @@ class SecretaryOperationsController extends Controller
     private function studentPaymentRelations(): array
     {
         $relations = ['enrolledClasses.course'];
+
+        if (Schema::hasTable('student_tuitions')) {
+            $relations[] = 'studentTuition.course';
+        }
 
         if (Schema::hasTable('tuition_payments')) {
             $relations['tuitionPaymentsAsStudent'] = fn ($query) => $query->orderByDesc('paid_on')->orderByDesc('id');
@@ -438,10 +459,17 @@ class SecretaryOperationsController extends Controller
             'email' => $validated['email'],
             'requested_role' => $validated['requested_role'],
             'date_of_birth' => $validated['date_of_birth'] ?? null,
+            'requested_course_id' => $validated['requested_role'] === 'student'
+                ? $account->requested_course_id
+                : null,
         ])->save();
 
         if ($account->approved_at !== null) {
             $account->syncRoles([$validated['requested_role']]);
+        }
+
+        if ($validated['requested_role'] !== 'student' && Schema::hasTable('student_tuitions')) {
+            $account->studentTuition()->delete();
         }
 
         return redirect()
@@ -475,6 +503,10 @@ class SecretaryOperationsController extends Controller
         }
 
         $account->enrolledClasses()->detach();
+
+        if (Schema::hasTable('student_tuitions')) {
+            $account->studentTuition()->delete();
+        }
 
         if (Schema::hasTable('tuition_payments')) {
             $account->tuitionPaymentsAsStudent()->delete();

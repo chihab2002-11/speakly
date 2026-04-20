@@ -61,7 +61,7 @@
         <section class="rounded-2xl border p-5" style="background-color: #FFFFFF; border-color: #F1F5F9; box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);">
             <h2 class="mb-4 text-xl font-bold" style="color: #181D19;">Add Course</h2>
 
-            <form method="POST" action="{{ route('admin.courses.store') }}" class="grid gap-4 md:grid-cols-4">
+            <form method="POST" action="{{ route('admin.courses.store') }}" class="grid gap-4 md:grid-cols-5">
                 @csrf
 
                 <div>
@@ -71,12 +71,24 @@
 
                 <div>
                     <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Price (DZD)</label>
-                    <input type="number" min="0" step="1" name="price" value="{{ old('price', 0) }}" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;" placeholder="12000">
+                    <input type="number" min="1" step="1" name="price" value="{{ old('price') }}" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;" placeholder="12000">
                 </div>
 
                 <div class="md:col-span-2">
                     <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Description</label>
                     <input type="text" name="description" value="{{ old('description') }}" class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;" placeholder="Beginner communication course">
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Program</label>
+                    <select name="program_id" class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;">
+                        <option value="">No program</option>
+                        @foreach($programs as $program)
+                            <option value="{{ $program->id }}" @selected((string) old('program_id') === (string) $program->id)>
+                                {{ $program->name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div>
@@ -99,6 +111,7 @@
                         <tr style="background-color: #F0F5EE;">
                             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #3F4941;">Name</th>
                             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #3F4941;">Code</th>
+                            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #3F4941;">Program</th>
                             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #3F4941;">Price</th>
                             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #3F4941;">Description</th>
                             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #3F4941;">Classes</th>
@@ -110,6 +123,7 @@
                             <tr class="border-t" style="border-color: #F1F5F9;">
                                 <td class="px-6 py-5 text-sm font-semibold" style="color: #181D19;">{{ $course->name }}</td>
                                 <td class="px-6 py-5 text-sm font-mono" style="color: #3F4941;">{{ $course->code }}</td>
+                                <td class="px-6 py-5 text-sm" style="color: #3F4941;">{{ $course->program?->name ?? 'Unassigned' }}</td>
                                 <td class="px-6 py-5 text-sm font-semibold" style="color: #181D19;">{{ number_format($course->price) }} DZD</td>
                                 <td class="px-6 py-5 text-sm" style="color: #3F4941;">{{ $course->description ?: 'No description' }}</td>
                                 <td class="px-6 py-5 text-sm" style="color: #3F4941;">{{ $course->classes_count }}</td>
@@ -121,6 +135,7 @@
                                             data-id="{{ $course->id }}"
                                             data-name="{{ $course->name }}"
                                             data-price="{{ $course->price }}"
+                                            data-program-id="{{ $course->program_id }}"
                                             data-description="{{ $course->description }}"
                                             class="inline-flex h-8 w-8 items-center justify-center rounded-lg transition hover:bg-gray-100"
                                             title="Edit"
@@ -140,7 +155,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-sm" style="color: #64748B;">No courses yet.</td>
+                                <td colspan="7" class="px-6 py-12 text-center text-sm" style="color: #64748B;">No courses yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -169,7 +184,17 @@
 
                 <div>
                     <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Price (DZD)</label>
-                    <input id="edit_course_price" name="price" type="number" min="0" step="1" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;">
+                    <input id="edit_course_price" name="price" type="number" min="1" step="1" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;">
+                </div>
+
+                <div>
+                    <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Program</label>
+                    <select id="edit_course_program_id" name="program_id" class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;">
+                        <option value="">No program</option>
+                        @foreach($programs as $program)
+                            <option value="{{ $program->id }}">{{ $program->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 <div>
@@ -199,6 +224,7 @@
 
             document.getElementById('edit_course_name').value = button.getAttribute('data-name') || '';
             document.getElementById('edit_course_price').value = button.getAttribute('data-price') || '0';
+            document.getElementById('edit_course_program_id').value = button.getAttribute('data-program-id') || '';
             document.getElementById('edit_course_description').value = button.getAttribute('data-description') || '';
 
             modal.classList.remove('hidden');
