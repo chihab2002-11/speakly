@@ -6,7 +6,7 @@
     $navItems = [
         ['name' => 'Dashboard', 'route' => 'role.dashboard', 'routeParams' => ['role' => 'admin'], 'icon' => 'grid'],
         ['name' => 'Manage employees', 'route' => 'admin.employees.index', 'routeParams' => [], 'icon' => 'users'],
-        ['name' => 'Employees payments', 'route' => null, 'routeParams' => [], 'icon' => 'credit-card'],
+        ['name' => 'Employees payments', 'route' => 'admin.employee-payments.index', 'routeParams' => [], 'icon' => 'credit-card'],
         ['name' => 'Manage Schedule', 'route' => 'admin.schedule.index', 'routeParams' => [], 'icon' => 'calendar'],
         ['name' => 'Manage Courses', 'route' => 'admin.courses.index', 'routeParams' => [], 'icon' => 'book'],
         ['name' => 'Manage ClassRooms', 'route' => 'admin.classrooms.index', 'routeParams' => [], 'icon' => 'building'],

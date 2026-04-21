@@ -142,6 +142,16 @@ class User extends Authenticatable
         return $this->hasMany(TuitionPayment::class, 'recorded_by');
     }
 
+    public function employeePayment(): HasOne
+    {
+        return $this->hasOne(EmployeePayment::class, 'employee_id');
+    }
+
+    public function employeePaymentsRecorded(): HasMany
+    {
+        return $this->hasMany(EmployeePayment::class, 'recorded_by');
+    }
+
     public function studentTuition(): HasOne
     {
         return $this->hasOne(StudentTuition::class, 'student_id');

@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminClassroomController;
 use App\Http\Controllers\AdminCourseController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminEmployeeController;
+use App\Http\Controllers\AdminEmployeePaymentController;
 use App\Http\Controllers\AdminLanguageProgramController;
 use App\Http\Controllers\AdminScheduleController;
 use App\Http\Controllers\AdminTimetableHubController;
@@ -570,6 +571,11 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
 
         Route::middleware('permission:employees.manage')->group(function () {
             Route::get('/employees', [AdminEmployeeController::class, 'index'])->name('employees.index');
+            Route::get('/employee-payments', [AdminEmployeePaymentController::class, 'index'])->name('employee-payments.index');
+            Route::patch('/employee-payments/{employee}', [AdminEmployeePaymentController::class, 'update'])
+                ->whereNumber('employee')
+                ->name('employee-payments.update');
+
             Route::post('/employees/secretaries', [AdminEmployeeController::class, 'storeSecretary'])->name('employees.secretaries.store');
             Route::patch('/employees/secretaries/{secretary}', [AdminEmployeeController::class, 'updateSecretary'])
                 ->whereNumber('secretary')
