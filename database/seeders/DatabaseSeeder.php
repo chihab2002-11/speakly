@@ -43,6 +43,7 @@ class DatabaseSeeder extends Seeder
                 LanguageProgramSeeder::class,
                 ReviewSeeder::class,
                 ParentDashboardLinkedChildrenSeeder::class,
+                ParentFinancialScholarshipSeeder::class,
             ]);
         }
     }

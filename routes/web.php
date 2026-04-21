@@ -266,6 +266,11 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
 
         // Parent Financial Information
         Route::get('/financial', [ParentFinancialController::class, 'index'])->name('financial');
+        Route::post('/financial/scholarships/activate', [ParentFinancialController::class, 'activateScholarship'])
+            ->name('financial.scholarships.activate');
+        Route::get('/financial/receipts/{payment}/download', [ParentFinancialController::class, 'downloadReceipt'])
+            ->whereNumber('payment')
+            ->name('financial.receipts.download');
 
         // Parent Child Portal (student experience without financial page)
         Route::get('/children/{child}/dashboard', [ParentChildPortalController::class, 'dashboard'])

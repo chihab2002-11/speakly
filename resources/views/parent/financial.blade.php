@@ -1,307 +1,335 @@
-<x-layouts.parent 
+<x-layouts.parent
     :title="'Financial Information'"
     :pageTitle="'Financial Information'"
     :currentRoute="'financial'"
     :user="$user ?? null"
     :children="$children ?? []"
 >
-    {{-- Page Header --}}
-    <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div class="flex flex-col gap-1">
-            <h2 
-                class="text-3xl font-black"
-                style="color: var(--lumina-text-primary); letter-spacing: -0.9px;"
-            >
-                Financial Information
-            </h2>
-            <p class="text-sm" style="color: var(--lumina-text-muted);">
-                Manage tuition payments and view transaction history
-            </p>
+    @php
+        $offers = collect($scholarshipOffers ?? [])->values();
+        $selectedOffer = is_array($selectedScholarshipOffer ?? null) ? $selectedScholarshipOffer : $offers->first();
+        $initialOfferKey = $selectedOffer['key'] ?? ($offers->first()['key'] ?? null);
+        $initialChildId = isset($children[0]['id']) ? (int) $children[0]['id'] : null;
+        $activeDiscountPercent = (int) ($scholarshipDiscount ?? 0);
+    @endphp
+
+    <style>
+        .lumina-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #94d3bb #edf7f1;
+        }
+        .lumina-scrollbar::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        .lumina-scrollbar::-webkit-scrollbar-track {
+            background: #edf7f1;
+            border-radius: 999px;
+        }
+        .lumina-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #16a34a 0%, #0f766e 100%);
+            border-radius: 999px;
+            border: 2px solid #edf7f1;
+        }
+    </style>
+
+    @if(session('success'))
+        <div class="mb-4 rounded-xl border px-4 py-3 text-sm font-semibold" style="background-color: #D1FAE5; border-color: #A7F3D0; color: #065F46;">
+            {{ session('success') }}
         </div>
-        
-        {{-- Quick Stats --}}
-        <div class="flex gap-4">
-            <div class="rounded-2xl border p-4" style="background-color: #FFFFFF; border-color: var(--lumina-border-light);">
-                <span class="text-xs font-medium" style="color: var(--lumina-text-muted);">Total Outstanding</span>
-                <p class="text-2xl font-black" style="color: var(--lumina-accent-red);">
-                    {{ number_format($totalOutstanding ?? 260000, 0, ',', ' ') }} DZD
-                </p>
-            </div>
-            <div class="rounded-2xl border p-4" style="background-color: #FFFFFF; border-color: var(--lumina-border-light);">
-                <span class="text-xs font-medium" style="color: var(--lumina-text-muted);">Total Paid (This Year)</span>
-                <p class="text-2xl font-black" style="color: var(--lumina-primary);">
-                    {{ number_format($totalPaid ?? 365000, 0, ',', ' ') }} DZD
-                </p>
-            </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-4 rounded-xl border px-4 py-3 text-sm font-semibold" style="background-color: #FEF2F2; border-color: #FECACA; color: #991B1B;">
+            {{ session('error') }}
         </div>
-    </div>
+    @endif
 
-    {{-- Main Content Grid --}}
-    <div class="grid gap-6 lg:grid-cols-3">
-        {{-- Pending Invoices (2 columns) --}}
-        <div class="lg:col-span-2">
-            <div 
-                class="rounded-3xl border"
-                style="background-color: #FFFFFF; border-color: var(--lumina-border-light);"
-            >
-                {{-- Section Header --}}
-                <div class="flex items-center justify-between border-b p-6" style="border-color: var(--lumina-border);">
-                    <div class="flex items-center gap-3">
-                        <div 
-                            class="flex h-10 w-10 items-center justify-center rounded-xl"
-                            style="background-color: rgba(186, 26, 26, 0.1);"
-                        >
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-accent-red);">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold" style="color: var(--lumina-text-primary);">
-                                Pending Invoices
-                            </h3>
-                            <p class="text-xs" style="color: var(--lumina-text-muted);">
-                                {{ count($invoices ?? []) }} invoice(s) awaiting payment
-                            </p>
-                        </div>
-                    </div>
-                    <button 
-                        class="rounded-xl px-4 py-2 text-sm font-bold transition-all hover:opacity-90"
-                        style="background-color: var(--lumina-primary); color: white;"
-                    >
-                        Pay All
-                    </button>
-                </div>
-
-                {{-- Invoices List --}}
-                <div class="divide-y" style="border-color: var(--lumina-border);">
-                    @forelse($invoices ?? [] as $invoice)
-                        <div class="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
-                            <div class="flex items-start gap-4">
-                                <div 
-                                    class="flex h-12 w-12 items-center justify-center rounded-xl"
-                                    style="background-color: var(--lumina-bg-card);"
-                                >
-                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-secondary);">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                                    </svg>
-                                </div>
-                                <div class="flex flex-col gap-1">
-                                    <span class="text-xs font-semibold" style="color: var(--lumina-text-muted);">
-                                        {{ $invoice['id'] }}
-                                    </span>
-                                    <h4 class="font-bold" style="color: var(--lumina-text-primary);">
-                                        {{ $invoice['description'] }}
-                                    </h4>
-                                    <span class="text-sm" style="color: var(--lumina-text-secondary);">
-                                        {{ $invoice['child'] }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="flex flex-col items-end gap-2">
-                                <span class="text-lg font-black" style="color: var(--lumina-text-primary);">
-                                    {{ number_format($invoice['amount'], 0, ',', ' ') }} DZD
-                                </span>
-                                <span class="text-xs" style="color: var(--lumina-accent-red);">
-                                    Due: {{ $invoice['dueDate'] }}
-                                </span>
-                                <button 
-                                    class="rounded-lg px-4 py-1.5 text-xs font-bold transition-all hover:opacity-90"
-                                    style="background-color: var(--lumina-dark-green); color: white;"
-                                >
-                                    Pay Now
-                                </button>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="flex flex-col items-center justify-center p-12 text-center">
-                            <svg class="mb-4 h-16 w-16 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-primary);">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <h4 class="text-lg font-bold" style="color: var(--lumina-text-primary);">All Caught Up!</h4>
-                            <p class="text-sm" style="color: var(--lumina-text-muted);">No pending invoices at this time.</p>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-
-        {{-- Payment Methods Card --}}
-        <div class="flex flex-col gap-6">
-            {{-- Payment Options --}}
-            <div 
-                class="rounded-3xl border p-6"
-                style="background-color: #FFFFFF; border-color: var(--lumina-border-light);"
-            >
-                <h3 class="mb-4 text-lg font-bold" style="color: var(--lumina-text-primary);">
-                    Payment Methods
-                </h3>
-                <div class="flex flex-col gap-3">
-                    <div class="flex items-center gap-3 rounded-xl p-3" style="background-color: var(--lumina-bg-card);">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-lg" style="background-color: #EEF2FF;">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #4F46E5;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <span class="text-sm font-semibold" style="color: var(--lumina-text-primary);">CIB Card</span>
-                            <p class="text-xs" style="color: var(--lumina-text-muted);">Secure online payment</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-3 rounded-xl p-3" style="background-color: var(--lumina-bg-card);">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-lg" style="background-color: #FEF3C7;">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #D97706;">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <span class="text-sm font-semibold" style="color: var(--lumina-text-primary);">Bank Transfer</span>
-                            <p class="text-xs" style="color: var(--lumina-text-muted);">BNA, CPA, BADR</p>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-3 rounded-xl p-3" style="background-color: var(--lumina-bg-card);">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-lg" style="background-color: #D1FAE5;">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-primary);">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                        </div>
-                        <div>
-                            <span class="text-sm font-semibold" style="color: var(--lumina-text-primary);">Cash at Office</span>
-                            <p class="text-xs" style="color: var(--lumina-text-muted);">Mon-Fri, 8AM-4PM</p>
-                        </div>
-                    </div>
-                </div>
+    <div class="mb-8 flex flex-col gap-6">
+        <div class="flex flex-col gap-3">
+            <div class="inline-flex w-fit items-center gap-2 rounded-full px-3 py-1" style="background-color: #DDE1FF; box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);">
+                <svg class="h-3 w-3" fill="currentColor" style="color: #001453;" viewBox="0 0 24 24">
+                    <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                </svg>
+                <span class="text-xs font-bold" style="color: #001453; letter-spacing: 0.3px;">Verified Parent Account</span>
             </div>
 
-            {{-- Bank Details --}}
-            <div 
-                class="rounded-3xl border p-6"
-                style="background-color: var(--lumina-dark-green);"
-            >
-                <h3 class="mb-4 text-lg font-bold text-white">
-                    Bank Transfer Details
-                </h3>
-                <div class="flex flex-col gap-3 text-sm">
-                    <div class="flex justify-between">
-                        <span style="color: #A7F3D0;">Bank Name:</span>
-                        <span class="font-semibold text-white">BNA Algeria</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span style="color: #A7F3D0;">Account Name:</span>
-                        <span class="font-semibold text-white">Lumina Academy</span>
-                    </div>
-                    <div class="flex justify-between">
-                        <span style="color: #A7F3D0;">RIB:</span>
-                        <span class="font-semibold text-white">001 00000 0123456789 01</span>
-                    </div>
-                    <div class="mt-2 rounded-lg p-3" style="background-color: rgba(255,255,255,0.1);">
-                        <p class="text-xs" style="color: #A7F3D0;">
-                            Please include student name and invoice number in the transfer reference.
-                        </p>
-                    </div>
-                </div>
+            <h1 class="text-5xl font-extrabold" style="color: #181D19; letter-spacing: -2.4px;">Financial Ledger</h1>
+            <p class="text-base font-medium" style="color: #3F4941;">Lumina Academy Central Billing Portal</p>
+
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-sm" style="color: #3F4941;">
+                <span class="rounded-full px-3 py-1" style="background-color: #E5E9E3;">Outstanding before discount: {{ number_format($totalOutstandingBeforeDiscount ?? 0, 0, ',', ' ') }} DZD</span>
+                <span class="rounded-full px-3 py-1" style="background-color: #D1FAE5; color: #065F46;">Active discount: {{ $activeDiscountPercent }}%</span>
+                <span class="rounded-full px-3 py-1" style="background-color: #F0F5EE;">Discount amount: {{ number_format($discountAmount ?? 0, 0, ',', ' ') }} DZD</span>
             </div>
         </div>
     </div>
 
-    {{-- Payment History --}}
-    <div 
-        class="mt-6 rounded-3xl border"
-        style="background-color: #FFFFFF; border-color: var(--lumina-border-light);"
-    >
-        {{-- Section Header --}}
-        <div class="flex items-center justify-between border-b p-6" style="border-color: var(--lumina-border);">
-            <div class="flex items-center gap-3">
-                <div 
-                    class="flex h-10 w-10 items-center justify-center rounded-xl"
-                    style="background-color: var(--lumina-accent-green-bg);"
-                >
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-primary);">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold" style="color: var(--lumina-text-primary);">
-                        Payment History
-                    </h3>
-                    <p class="text-xs" style="color: var(--lumina-text-muted);">
-                        Your completed transactions
-                    </p>
-                </div>
+    <div class="relative grid gap-8 lg:grid-cols-3">
+        <div class="flex flex-col gap-6 lg:col-span-2">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold" style="color: #181D19; letter-spacing: -0.6px;">Tuition Ledger</h2>
+                <span class="rounded-full px-3 py-1 text-xs font-semibold" style="background-color: #E5E9E3; color: #3F4941;">{{ $academicYear ?? date('Y') . '/' . (date('Y') + 1) }} Academic Year</span>
             </div>
-            <button 
-                class="rounded-xl px-4 py-2 text-sm font-semibold transition-all hover:bg-gray-100"
-                style="color: var(--lumina-primary); border: 1px solid var(--lumina-border);"
-            >
-                Download All
-            </button>
-        </div>
 
-        {{-- Table --}}
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead>
-                    <tr style="background-color: var(--lumina-bg-card);">
-                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
-                            Reference
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
-                            Child
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
-                            Description
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
-                            Amount
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
-                            Date
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
-                            Method
-                        </th>
-                        <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider" style="color: var(--lumina-text-muted);">
-                            Receipt
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y" style="border-color: var(--lumina-border);">
-                    @forelse($paymentHistory ?? [] as $payment)
-                        <tr class="transition-colors hover:bg-gray-50">
-                            <td class="whitespace-nowrap px-6 py-4 text-sm font-semibold" style="color: var(--lumina-text-primary);">
-                                {{ $payment['id'] }}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm" style="color: var(--lumina-text-secondary);">
-                                {{ $payment['child'] }}
-                            </td>
-                            <td class="px-6 py-4 text-sm" style="color: var(--lumina-text-secondary);">
-                                {{ $payment['description'] }}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm font-bold" style="color: var(--lumina-primary);">
-                                {{ number_format($payment['amount'], 0, ',', ' ') }} DZD
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm" style="color: var(--lumina-text-muted);">
-                                {{ $payment['paidDate'] }}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm" style="color: var(--lumina-text-muted);">
-                                {{ $payment['method'] }}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-right">
-                                <button class="text-sm font-semibold hover:underline" style="color: var(--lumina-primary);">
-                                    Download
-                                </button>
-                            </td>
+            <div class="overflow-hidden rounded-xl border" style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.15);">
+                <div class="lumina-scrollbar max-h-[460px] overflow-y-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr style="background-color: #F0F5EE;">
+                            <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: #3F4941; letter-spacing: 1.2px;">Child / Service</th>
+                            <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: #3F4941; letter-spacing: 1.2px;">Discount Applied</th>
+                            <th class="px-4 py-4 text-right text-xs font-bold uppercase tracking-wider" style="color: #3F4941; letter-spacing: 1.2px;">Price</th>
+                            <th class="px-4 py-4 text-center text-xs font-bold uppercase tracking-wider" style="color: #3F4941; letter-spacing: 1.2px;">Status</th>
                         </tr>
-                    @empty
+                    </thead>
+                    <tbody>
+                        @forelse(($ledgerItems ?? []) as $item)
+                            @php
+                                $discountPercent = (int) ($item['discount_percent'] ?? 0);
+                                $finalPrice = (int) ($item['final_amount'] ?? $item['amount'] ?? 0);
+                            @endphp
+                            <tr class="border-t" style="border-color: rgba(190, 201, 191, 0.15);">
+                                <td class="px-4 py-5">
+                                    <p class="text-base font-bold" style="color: #181D19;">{{ $item['child'] ?? 'Child' }}</p>
+                                    <p class="text-sm" style="color: #3F4941;">{{ $item['name'] ?? 'Tuition' }} &bull; {{ $item['period'] ?? '-' }}</p>
+                                </td>
+                                <td class="px-4 py-5 text-sm font-semibold" style="color: #3F4941;">{{ $discountPercent }}%</td>
+                                <td class="px-4 py-5 text-right text-sm font-black" style="color: #047857;">{{ number_format($finalPrice, 0, ',', ' ') }} DZD</td>
+                                <td class="px-4 py-5 text-center">
+                                    @if(($item['status'] ?? 'outstanding') === 'outstanding')
+                                        <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase" style="background-color: #FFDAD6; color: #93000A;">Outstanding</span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase" style="background-color: #C1E6CC; color: #476853;">Paid</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="px-6 py-8 text-center text-sm" style="color: #3F4941;">No financial ledger entries yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-col gap-4 lg:col-span-1">
+            <h2 class="text-2xl font-bold" style="color: #181D19; letter-spacing: -0.6px;">Scholarships</h2>
+
+            <div id="scholarshipCard" class="relative overflow-hidden rounded-xl p-8" style="background: linear-gradient(135deg, #065F46 0%, #022C22 100%); box-shadow: 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1);">
+                <div class="pointer-events-none absolute -right-16 -top-16 h-32 w-32 rounded-full blur-[20px]" style="background: rgba(255, 255, 255, 0.05);"></div>
+
+                <div id="scholarshipCardContent" class="relative flex flex-col gap-4 transition-all duration-200">
+                    <div class="flex items-center justify-between">
+                        <button id="scholarshipPrevBtn" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border text-white/80 transition-all hover:scale-105 hover:text-white" style="border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.08);">&larr;</button>
+                        <div class="flex h-12 w-12 items-center justify-center rounded-lg" style="background: rgba(255, 255, 255, 0.1);">
+                            <svg class="h-5 w-5" fill="currentColor" style="color: #6EE7B7;" viewBox="0 0 24 24">
+                                <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                            </svg>
+                        </div>
+                        <button id="scholarshipNextBtn" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border text-white/80 transition-all hover:scale-105 hover:text-white" style="border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.08);">&rarr;</button>
+                    </div>
+
+                    <div id="scholarshipChildPickerWrap" class="hidden">
+                        <label for="scholarshipChildSelect" class="mb-1 block text-[11px] font-bold uppercase tracking-wider" style="color: rgba(209, 250, 229, 0.95); letter-spacing: 1.1px;">Offer Child</label>
+                        <div class="rounded-xl border p-1" style="border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.08);">
+                            <select id="scholarshipChildSelect" class="w-full rounded-lg px-3 py-2 text-sm font-semibold outline-none" style="background: rgba(6, 78, 59, 0.85); color: #ECFDF5;">
+                                @forelse($children as $child)
+                                    <option value="{{ $child['id'] }}" @selected($initialChildId === (int) $child['id'])>{{ $child['name'] }}</option>
+                                @empty
+                                    <option value="">No child</option>
+                                @endforelse
+                            </select>
+                        </div>
+                    </div>
+
+                    <h3 id="scholarshipTitle" class="text-3xl font-bold leading-tight text-white">{{ $selectedOffer['title'] ?? 'Scholarship Offer' }}</h3>
+                    <p id="scholarshipTarget" class="text-sm font-semibold uppercase tracking-wide" style="color: rgba(209, 250, 229, 0.95);">{{ $selectedOffer['targetLabel'] ?? 'Target' }}</p>
+                    <p id="scholarshipDescription" class="text-base leading-relaxed" style="color: rgba(209, 250, 229, 0.8);">{{ $selectedOffer['description'] ?? 'Scholarship details unavailable.' }}</p>
+                    <div id="scholarshipProgress" class="rounded-lg px-3 py-2 text-sm" style="background: rgba(255,255,255,0.1); color: #D1FAE5;">Progress: {{ (int) ($selectedOffer['progressPercent'] ?? 0) }}%</div>
+
+                    <div class="mt-2 flex items-end justify-between">
+                        <span id="scholarshipPercent" class="text-5xl font-black text-white">{{ (int) ($selectedOffer['discountPercent'] ?? 0) }}%</span>
+                        <span id="scholarshipState" class="text-sm font-bold uppercase tracking-wider" style="color: #6EE7B7; letter-spacing: 1.2px;">{{ ($selectedOffer['isActive'] ?? false) ? 'Activated' : 'Available Offer' }}</span>
+                    </div>
+
+                    <form method="POST" action="{{ route('parent.financial.scholarships.activate') }}" class="mt-2">
+                        @csrf
+                        <input id="scholarshipOfferKeyInput" type="hidden" name="offer_key" value="{{ $selectedOffer['key'] ?? '' }}">
+                        <input id="scholarshipChildIdInput" type="hidden" name="selected_child_id" value="{{ $initialChildId }}">
+                        <button id="scholarshipActivateBtn" type="submit" class="w-full rounded-lg px-4 py-2 text-sm font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50" style="background-color: #10B981;">
+                            @if($selectedOffer['isActive'] ?? false)
+                                Active Discount
+                            @elseif($selectedOffer['isEligible'] ?? false)
+                                Activate Discount
+                            @else
+                                Not Eligible Yet
+                            @endif
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-10 flex flex-col gap-6">
+        <h2 class="text-2xl font-bold" style="color: #181D19; letter-spacing: -0.6px;">Payment History</h2>
+
+        <section class="overflow-hidden rounded-3xl border" style="background: white; border-color: var(--lumina-border-light);">
+            <div class="lumina-scrollbar max-h-[360px] overflow-y-auto">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead style="background-color: #F8FAFC;">
                         <tr>
-                            <td colspan="7" class="px-6 py-12 text-center">
-                                <p class="text-sm" style="color: var(--lumina-text-muted);">No payment history available.</p>
-                            </td>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Child</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Paid For</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Amount Paid</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Discount Applied</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Date</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Method</th>
+                            <th class="px-4 py-3 text-right font-semibold" style="color: var(--lumina-text-muted);">Receipt</th>
                         </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    </thead>
+                    <tbody>
+                        @forelse(($paymentHistory ?? []) as $payment)
+                            <tr class="border-t" style="border-color: var(--lumina-border);">
+                                <td class="px-4 py-4"><p class="font-semibold" style="color: var(--lumina-text-primary);">{{ $payment['child'] ?? 'Child' }}</p></td>
+                                <td class="px-4 py-4"><p class="font-semibold" style="color: var(--lumina-text-primary);">{{ $payment['description'] ?? 'Tuition Payment' }}</p><p class="text-xs" style="color: var(--lumina-text-muted);">{{ $payment['id'] ?? 'N/A' }}</p></td>
+                                <td class="px-4 py-4 font-semibold" style="color: #15803D;">{{ number_format((int) ($payment['amount'] ?? 0), 0, ',', ' ') }} DZD</td>
+                                <td class="px-4 py-4" style="color: var(--lumina-text-secondary);">{{ $payment['discountApplied'] ?? 'None' }}</td>
+                                <td class="px-4 py-4" style="color: var(--lumina-text-secondary);">{{ $payment['paidDate'] ?? '-' }}</td>
+                                <td class="px-4 py-4" style="color: var(--lumina-text-secondary);">{{ $payment['method'] ?? 'Cash' }}</td>
+                                <td class="px-4 py-4 text-right">
+                                    @if(!empty($payment['receiptUrl']))
+                                        <a href="{{ $payment['receiptUrl'] }}" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" style="border-color: var(--lumina-border); color: var(--lumina-primary);">Download</a>
+                                    @else
+                                        <span class="rounded-lg border px-3 py-1.5 text-xs font-semibold opacity-60" style="border-color: var(--lumina-border); color: var(--lumina-primary);">Download</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="px-6 py-10 text-center text-sm" style="color: var(--lumina-text-muted);">No paid transactions available yet.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            </div>
+        </section>
     </div>
+
+    <script id="parentScholarshipOffers" type="application/json">@json($offers->values())</script>
+    <script id="parentScholarshipInitialOfferKey" type="application/json">@json($initialOfferKey)</script>
+    <script>
+        (function () {
+            const offers = JSON.parse(document.getElementById('parentScholarshipOffers')?.textContent || '[]');
+            const initialOfferKey = JSON.parse(document.getElementById('parentScholarshipInitialOfferKey')?.textContent || 'null');
+
+            const prevBtn = document.getElementById('scholarshipPrevBtn');
+            const nextBtn = document.getElementById('scholarshipNextBtn');
+            const childPickerWrap = document.getElementById('scholarshipChildPickerWrap');
+            const childSelect = document.getElementById('scholarshipChildSelect');
+            const content = document.getElementById('scholarshipCardContent');
+            const titleEl = document.getElementById('scholarshipTitle');
+            const targetEl = document.getElementById('scholarshipTarget');
+            const descriptionEl = document.getElementById('scholarshipDescription');
+            const progressEl = document.getElementById('scholarshipProgress');
+            const percentEl = document.getElementById('scholarshipPercent');
+            const stateEl = document.getElementById('scholarshipState');
+            const activateBtn = document.getElementById('scholarshipActivateBtn');
+            const offerKeyInput = document.getElementById('scholarshipOfferKeyInput');
+            const childIdInput = document.getElementById('scholarshipChildIdInput');
+
+            if (!offers.length || !titleEl) {
+                return;
+            }
+
+            let index = Math.max(0, offers.findIndex((offer) => offer.key === initialOfferKey));
+            let selectedChildId = Number(childSelect?.value || 0);
+
+            const applyChildStats = (offer) => {
+                const hasChildStats = offer.childStats && typeof offer.childStats === 'object' && Object.keys(offer.childStats).length > 0;
+                const stats = hasChildStats ? offer.childStats[String(selectedChildId)] : null;
+                const activeStudentIds = Array.isArray(offer.activeStudentIds)
+                    ? offer.activeStudentIds.map((value) => Number(value))
+                    : [];
+                const isActiveForSelectedChild = hasChildStats
+                    ? activeStudentIds.includes(Number((stats?.studentId ?? selectedChildId) || 0))
+                    : Boolean(offer.isActive);
+
+                return {
+                    ...offer,
+                    targetLabel: stats?.targetLabel ?? offer.targetLabel,
+                    progressPercent: Number(stats?.progressPercent ?? offer.progressPercent ?? 0),
+                    remainingText: stats?.remainingText ?? offer.remainingText,
+                    isEligible: Boolean(stats?.isEligible ?? offer.isEligible),
+                    effectiveStudentId: Number((stats?.studentId ?? selectedChildId) || 0),
+                    hasChildStats,
+                    isActiveForSelectedChild,
+                };
+            };
+
+            const render = () => {
+                const baseOffer = offers[index] || offers[0];
+                const offer = applyChildStats(baseOffer);
+
+                titleEl.textContent = offer.title || 'Scholarship Offer';
+                targetEl.textContent = offer.targetLabel || 'Target';
+                descriptionEl.textContent = offer.description || 'Scholarship details unavailable.';
+                progressEl.innerHTML = 'Progress: ' + Number(offer.progressPercent || 0) + '%<br>' + (offer.remainingText || '');
+                percentEl.textContent = Number(offer.discountPercent || 0) + '%';
+                stateEl.textContent = offer.isActiveForSelectedChild ? 'Activated' : 'Available Offer';
+
+                if (childPickerWrap) {
+                    childPickerWrap.classList.toggle('hidden', !offer.hasChildStats);
+                }
+
+                if (offerKeyInput) {
+                    offerKeyInput.value = offer.key || '';
+                }
+
+                if (childIdInput) {
+                    childIdInput.value = offer.hasChildStats && offer.effectiveStudentId > 0
+                        ? String(offer.effectiveStudentId)
+                        : '';
+                }
+
+                if (activateBtn) {
+                    const canActivate = Boolean(offer.isEligible) && !Boolean(offer.isActiveForSelectedChild);
+                    activateBtn.disabled = !canActivate;
+                    activateBtn.textContent = offer.isActiveForSelectedChild
+                        ? 'Active Discount'
+                        : (canActivate ? 'Activate Discount' : 'Not Eligible Yet');
+                }
+            };
+
+            const animateTo = (nextIndex) => {
+                if (!content) {
+                    index = nextIndex;
+                    render();
+                    return;
+                }
+
+                content.classList.add('opacity-0', 'translate-y-1');
+                window.setTimeout(() => {
+                    index = (nextIndex + offers.length) % offers.length;
+                    render();
+                    content.classList.remove('opacity-0', 'translate-y-1');
+                }, 170);
+            };
+
+            prevBtn?.addEventListener('click', () => animateTo(index - 1));
+            nextBtn?.addEventListener('click', () => animateTo(index + 1));
+
+            childSelect?.addEventListener('change', () => {
+                selectedChildId = Number(childSelect.value || 0);
+                render();
+            });
+
+            render();
+        })();
+    </script>
 </x-layouts.parent>

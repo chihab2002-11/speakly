@@ -12,15 +12,13 @@
 
         $selectedChildId = (int) ($selectedChild['id'] ?? ($childrenData->first()['id'] ?? 0));
 
-        $studentTimetableSlots = ['08:00 - 09:30', '09:30 - 11:00', '11:00 - 12:30', '12:30 - 14:00', '14:00 - 15:30', '15:30 - 17:00'];
-        $studentTimetableDays = ['SATURDAY', 'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'];
-
         $childDashboardData = $childDashboardData ?? [];
 
         $defaultChildData = $childDashboardData[$selectedChildId] ?? reset($childDashboardData);
         if (! is_array($defaultChildData)) {
             $defaultChildData = [
                 'timetable' => [],
+                'teacherFeedbacks' => [],
                 'teachers' => [],
                 'progress' => [],
                 'attendanceProgress' => [],
@@ -29,51 +27,27 @@
                 'unreadMessagesCount' => 0,
             ];
         }
-
-        $cardPalettes = [
-            ['bg' => '#D1FAE5', 'border' => '#10B981'],
-            ['bg' => '#E0E7FF', 'border' => '#6366F1'],
-            ['bg' => '#FEF3C7', 'border' => '#F59E0B'],
-            ['bg' => '#F3F4F6', 'border' => '#6B7280'],
-        ];
-
-        $buildTimetableMatrix = function (array $rows) use ($studentTimetableDays, $studentTimetableSlots, $cardPalettes) {
-            $matrix = [];
-
-            foreach ($studentTimetableDays as $day) {
-                $matrix[$day] = array_fill(0, count($studentTimetableSlots), null);
-            }
-
-            foreach ($rows as $index => $row) {
-                $day = strtoupper((string) ($row['day'] ?? ''));
-                if (!isset($matrix[$day])) {
-                    continue;
-                }
-
-                $normalizedTime = preg_replace('/\s*-\s*/', ' - ', (string) ($row['time'] ?? ''));
-                $slotIndex = array_search($normalizedTime, $studentTimetableSlots, true);
-
-                if ($slotIndex === false) {
-                    $slotIndex = array_search(null, $matrix[$day], true);
-                    if ($slotIndex === false) {
-                        continue;
-                    }
-                }
-
-                $palette = $cardPalettes[$index % count($cardPalettes)];
-                $matrix[$day][$slotIndex] = [
-                    'course' => $row['course'] ?? 'Course',
-                    'room' => $row['room'] ?? 'Room',
-                    'bg' => $palette['bg'],
-                    'border' => $palette['border'],
-                ];
-            }
-
-            return $matrix;
-        };
-
-        $defaultTimetableMatrix = $buildTimetableMatrix($defaultChildData['timetable'] ?? []);
     @endphp
+
+    <style>
+        .lumina-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: #94d3bb #edf7f1;
+        }
+        .lumina-scrollbar::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        .lumina-scrollbar::-webkit-scrollbar-track {
+            background: #edf7f1;
+            border-radius: 999px;
+        }
+        .lumina-scrollbar::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #16a34a 0%, #0f766e 100%);
+            border-radius: 999px;
+            border: 2px solid #edf7f1;
+        }
+    </style>
 
     <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div class="flex flex-col gap-2">
@@ -108,43 +82,51 @@
     <div class="grid gap-6 lg:grid-cols-3">
         <div class="relative self-start overflow-hidden rounded-3xl border p-6 lg:col-span-2" style="background-color: #FFFFFF; border-color: var(--lumina-border-light); box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);">
             <div class="relative z-10 flex flex-col gap-4">
-                <div class="mb-2 flex flex-col gap-1">
-                    <h3 class="text-xl font-bold tracking-tight" style="color: var(--lumina-text-primary);">TIME TABLE</h3>
-                    <p class="text-sm" style="color: var(--lumina-text-muted);">Academic Year {{ now()->year }}-{{ now()->year + 1 }}</p>
+                <div class="mb-2 flex items-center justify-between">
+                    <div class="flex flex-col gap-1">
+                        <h3 class="text-xl font-bold tracking-tight" style="color: var(--lumina-text-primary);">Teacher Feedbacks</h3>
+                        <p class="text-sm" style="color: var(--lumina-text-muted);">Recent comments and performance insights from each teacher.</p>
+                    </div>
+                    <div class="inline-flex items-center gap-1 rounded-xl border p-1" id="feedbackWeekControls" style="border-color: var(--lumina-border); background-color: #F8FBF8;">
+                        <button type="button" data-feedback-week="latest" class="feedback-week-btn rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide">Latest</button>
+                        <button type="button" data-feedback-week="1" class="feedback-week-btn rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide">Week 1</button>
+                        <button type="button" data-feedback-week="2" class="feedback-week-btn rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide">Week 2</button>
+                        <button type="button" data-feedback-week="3" class="feedback-week-btn rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide">Week 3</button>
+                        <button type="button" data-feedback-week="4" class="feedback-week-btn rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wide">Week 4</button>
+                    </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full min-w-[800px] border-collapse">
-                        <thead>
-                            <tr>
-                                <th class="p-3 text-left text-sm font-semibold border-b-2" style="color: var(--lumina-text-muted); border-color: var(--lumina-border); min-width: 100px;">TIME</th>
-                                @foreach($studentTimetableSlots as $timeSlot)
-                                    <th class="p-3 text-center text-xs font-semibold border-b-2" style="color: var(--lumina-text-muted); border-color: var(--lumina-border); min-width: 110px;">{{ $timeSlot }}</th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody id="childTimetableBody" data-days='@json($studentTimetableDays)' data-slots='@json($studentTimetableSlots)'>
-                            @foreach($studentTimetableDays as $day)
-                                <tr class="border-b" style="border-color: var(--lumina-border-light);">
-                                    <td class="p-3 text-sm font-semibold h-16" style="color: var(--lumina-text-primary);">{{ $day }}</td>
-                                    @for($slot = 0; $slot < count($studentTimetableSlots); $slot++)
-                                        @php $classCell = $defaultTimetableMatrix[$day][$slot] ?? null; @endphp
-                                        <td class="p-2 text-center h-16">
-                                            @if($classCell)
-                                                <div class="rounded-lg p-3 border-l-4 h-full flex flex-col justify-center transition-all duration-200 hover:shadow-md cursor-pointer"
-                                                     data-bg="<?php echo e($classCell['bg']); ?>"
-                                                     data-border="<?php echo e($classCell['border']); ?>"
-                                                     style="background-color: var(--cell-bg, transparent); border-left-color: var(--cell-border, transparent);">
-                                                    <p class="text-xs font-bold truncate" style="color: var(--lumina-text-primary);">{{ $classCell['course'] }}</p>
-                                                    <p class="text-xs mt-1" style="color: var(--lumina-text-muted);">{{ $classCell['room'] }}</p>
-                                                </div>
-                                            @endif
-                                        </td>
-                                    @endfor
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <div id="teacherFeedbackList" class="lumina-scrollbar grid max-h-[420px] gap-3 overflow-y-auto pr-1">
+                    @forelse(collect($defaultChildData['teacherFeedbacks'] ?? [])->take(3) as $feedback)
+                        @php
+                            $feedbackTone = $feedback['tone'] ?? 'good';
+                            $tonePalette = match ($feedbackTone) {
+                                'bad' => ['bg' => '#FEF2F2', 'border' => '#EF4444', 'text' => '#B91C1C'],
+                                default => ['bg' => '#ECFDF3', 'border' => '#10B981', 'text' => '#047857'],
+                            };
+                        @endphp
+                        <article class="rounded-2xl border p-4" style="border-color: <?php echo e($tonePalette['border']); ?>; border-left-width: 6px; background-color: <?php echo e($tonePalette['bg']); ?>;">
+                            <div class="mb-2 flex items-start justify-between gap-3">
+                                <div>
+                                    <h4 class="text-sm font-bold" style="color: var(--lumina-text-primary);">{{ $feedback['teacher'] ?? 'Teacher' }}</h4>
+                                    <p class="text-xs" style="color: var(--lumina-text-muted);">{{ $feedback['course'] ?? 'Course' }}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <a href="{{ $feedback['messageUrl'] ?? '#' }}" class="inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors hover:bg-gray-50" style="border-color: var(--lumina-border);" title="Message {{ $feedback['teacher'] ?? 'Teacher' }}">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--lumina-primary);">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5l-2 2V6a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H9z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                            <p class="text-sm leading-6" style="color: var(--lumina-text-secondary);">{{ $feedback['comment'] ?? 'No feedback provided yet.' }}</p>
+                            <p class="mt-2 text-[11px] font-semibold uppercase tracking-wide" style="color: var(--lumina-text-muted);">Updated {{ $feedback['recordedAt'] ?? 'recently' }}</p>
+                        </article>
+                    @empty
+                        <div class="rounded-2xl border border-dashed p-8 text-center" style="border-color: var(--lumina-border); background-color: #FAFCFA;">
+                            <p class="text-sm font-semibold" style="color: var(--lumina-text-secondary);">No teacher feedback is available yet for this child.</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -190,12 +172,9 @@
                     @endforeach
                 </div>
 
-                <a href="{{ route('parent.financial') }}" class="group mt-6 flex items-center justify-center gap-2 rounded-xl py-4 text-base font-bold transition-all duration-300 hover:scale-[1.02] hover:shadow-xl" style="background-color: #FFFFFF; color: var(--lumina-dark-green); box-shadow: 0px 10px 15px -3px rgba(0, 0, 0, 0.1);">
-                    Pay Now
-                    <svg class="h-3 w-5 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
-                    </svg>
-                </a>
+                <div class="mt-6 rounded-xl border px-4 py-3 text-sm font-semibold text-white" style="border-color: rgba(110, 231, 183, 0.35); background-color: rgba(6, 95, 70, 0.35);">
+                    Financial summary synced with parent ledger.
+                </div>
             </div>
         </div>
     </div>
@@ -223,50 +202,63 @@
         </div>
 
         <div class="overflow-hidden rounded-2xl border p-4" style="border-color: var(--lumina-border); background: linear-gradient(180deg, #f8fbf7 0%, #ffffff 100%);">
-            <svg id="progressChart" viewBox="0 0 760 280" class="h-72 w-full" preserveAspectRatio="none">
+            <svg id="progressChart" viewBox="0 0 760 420" class="h-[28rem] w-full" preserveAspectRatio="none">
                 <defs>
                     <linearGradient id="progressFill" x1="0" y1="0" x2="0" y2="1">
                         <stop id="progressFillStart" offset="0%" stop-color="#2D8C5E" stop-opacity="0.28" />
                         <stop id="progressFillEnd" offset="100%" stop-color="#2D8C5E" stop-opacity="0.04" />
                     </linearGradient>
+                    <linearGradient id="attendanceBarPresentGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#D1FAE5" />
+                        <stop offset="100%" stop-color="#86EFAC" />
+                    </linearGradient>
+                    <linearGradient id="attendanceBarLateGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#FEF3C7" />
+                        <stop offset="100%" stop-color="#FDE68A" />
+                    </linearGradient>
+                    <linearGradient id="attendanceBarAbsentGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#FEE2E2" />
+                        <stop offset="100%" stop-color="#FCA5A5" />
+                    </linearGradient>
                 </defs>
-                <line x1="40" y1="210" x2="730" y2="210" stroke="#dbe7df" stroke-width="1" />
-                <line x1="40" y1="60" x2="730" y2="60" stroke="#ecf3ee" stroke-width="1" />
-                <line x1="40" y1="110" x2="730" y2="110" stroke="#ecf3ee" stroke-width="1" />
-                <line x1="40" y1="160" x2="730" y2="160" stroke="#ecf3ee" stroke-width="1" />
+                <line x1="40" y1="330" x2="730" y2="330" stroke="#dbe7df" stroke-width="1" />
+                <line x1="40" y1="80" x2="730" y2="80" stroke="#ecf3ee" stroke-width="1" />
+                <line x1="40" y1="163" x2="730" y2="163" stroke="#ecf3ee" stroke-width="1" />
+                <line x1="40" y1="246" x2="730" y2="246" stroke="#ecf3ee" stroke-width="1" />
                 <path id="progressArea" d="" fill="url(#progressFill)"></path>
                 <polyline id="progressLine" fill="none" stroke="#1c7b50" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                <g id="progressBars"></g>
                 <g id="progressDots"></g>
                 <g id="progressLabels"></g>
             </svg>
         </div>
     </div>
 
-    <div class="mt-6 grid gap-6 md:grid-cols-3">
-        <div class="flex flex-col items-center justify-center rounded-3xl border p-5 text-center" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border-light); min-height: 170px;">
-            <svg class="mb-4 h-12 w-12 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-secondary);">
+    <div class="mt-4 grid gap-4 md:grid-cols-3">
+        <div class="flex flex-col items-center justify-center rounded-3xl border p-4 text-center" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border-light); min-height: 138px;">
+            <svg class="mb-3 h-10 w-10 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-secondary);">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--lumina-text-secondary); letter-spacing: 1.2px;">Uploaded Documents</span>
-            <span id="documentsCount" class="mt-4 text-3xl font-black" style="color: var(--lumina-primary);">{{ $defaultChildData['documentsCount'] ?? 0 }}</span>
+            <span id="documentsCount" class="mt-3 text-2xl font-black" style="color: var(--lumina-primary);">{{ $defaultChildData['documentsCount'] ?? 0 }}</span>
             <span class="text-xs" style="color: var(--lumina-text-muted);">Current child</span>
         </div>
 
-        <div class="flex flex-col items-center justify-center rounded-3xl border p-5 text-center" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border-light); min-height: 170px;">
-            <svg class="mb-4 h-12 w-12 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-secondary);">
+        <div class="flex flex-col items-center justify-center rounded-3xl border p-4 text-center" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border-light); min-height: 138px;">
+            <svg class="mb-3 h-10 w-10 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-secondary);">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z"/>
             </svg>
             <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--lumina-text-secondary); letter-spacing: 1.2px;">Teachers of Your Children</span>
-            <span id="teachersCount" class="mt-4 text-3xl font-black" style="color: var(--lumina-primary);">{{ $defaultChildData['teachersCount'] ?? 0 }}</span>
+            <span id="teachersCount" class="mt-3 text-2xl font-black" style="color: var(--lumina-primary);">{{ $defaultChildData['teachersCount'] ?? 0 }}</span>
             <button id="openTeachersModal" type="button" class="mt-2 text-xs font-semibold hover:underline" style="color: var(--lumina-primary);">View All</button>
         </div>
 
-        <div class="flex flex-col items-center justify-center rounded-3xl border p-5 text-center" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border-light); min-height: 170px;">
-            <svg class="mb-4 h-12 w-12 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-secondary);">
+        <div class="flex flex-col items-center justify-center rounded-3xl border p-4 text-center" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border-light); min-height: 138px;">
+            <svg class="mb-3 h-10 w-10 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-secondary);">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
             </svg>
             <span class="text-sm font-bold uppercase tracking-wider" style="color: var(--lumina-text-secondary); letter-spacing: 1.2px;">Unread Messages</span>
-            <span id="messagesCount" class="mt-4 text-3xl font-black" style="color: var(--lumina-accent-red);">{{ $defaultChildData['unreadMessagesCount'] ?? 0 }}</span>
+            <span id="messagesCount" class="mt-3 text-2xl font-black" style="color: var(--lumina-accent-red);">{{ $defaultChildData['unreadMessagesCount'] ?? 0 }}</span>
             <a href="{{ route('role.messages.index', ['role' => 'parent']) }}" class="mt-2 text-xs font-semibold hover:underline" style="color: var(--lumina-primary);">View Inbox</a>
         </div>
     </div>
@@ -294,7 +286,7 @@
             const initialSelectedChildId = Number(JSON.parse(document.getElementById('parentSelectedChildId')?.textContent || '0'));
 
             const topSelector = document.getElementById('topChildSelector');
-            const timetableBody = document.getElementById('childTimetableBody');
+            const teacherFeedbackList = document.getElementById('teacherFeedbackList');
             const documentsCount = document.getElementById('documentsCount');
             const teachersCount = document.getElementById('teachersCount');
             const messagesCount = document.getElementById('messagesCount');
@@ -307,28 +299,24 @@
 
             const progressLine = document.getElementById('progressLine');
             const progressArea = document.getElementById('progressArea');
+            const progressBars = document.getElementById('progressBars');
             const progressDots = document.getElementById('progressDots');
             const progressLabels = document.getElementById('progressLabels');
             const progressMetricButtons = document.querySelectorAll('.progress-metric-btn');
             const progressWeekButtons = document.querySelectorAll('.progress-week-btn');
+            const feedbackWeekButtons = document.querySelectorAll('.feedback-week-btn');
             const progressMetricTitle = document.getElementById('progressMetricTitle');
             const progressMetricBadge = document.getElementById('progressMetricBadge');
             const progressFillStart = document.getElementById('progressFillStart');
             const progressFillEnd = document.getElementById('progressFillEnd');
 
-            const timetableDays = JSON.parse(timetableBody?.dataset.days || '[]');
-            const timetableSlots = JSON.parse(timetableBody?.dataset.slots || '[]');
-
             let currentChildId = Number(topSelector?.value || initialSelectedChildId || 0);
-            let currentMetric = 'grades';
+            let currentMetric = 'attendance';
             let currentWeek = 4;
+            let currentFeedbackWeek = 'latest';
 
             function getChildData(childId) {
                 return dashboardData[String(childId)] || null;
-            }
-
-            function normalizeTime(timeValue) {
-                return String(timeValue || '').replace(/\s*-\s*/g, ' - ').trim();
             }
 
             function escapeHtml(value) {
@@ -340,81 +328,70 @@
                     .replace(/'/g, '&#39;');
             }
 
-            function paletteForCourse(courseName, fallbackIndex) {
-                const palettes = [
-                    { bg: '#D1FAE5', border: '#10B981' },
-                    { bg: '#E0E7FF', border: '#6366F1' },
-                    { bg: '#FEF3C7', border: '#F59E0B' },
-                    { bg: '#F3F4F6', border: '#6B7280' },
-                ];
+            function renderTeacherFeedbacks(childId) {
+                const historyFeedbacks = getChildData(childId)?.teacherFeedbacks || [];
+                const feedbacks = currentFeedbackWeek === 'latest'
+                    ? historyFeedbacks.slice(0, 3)
+                    : historyFeedbacks.filter((feedback) => Number(feedback.week) === Number(currentFeedbackWeek));
 
-                const key = String(courseName || '').split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
-                return palettes[(key + Number(fallbackIndex || 0)) % palettes.length];
-            }
+                if (!teacherFeedbackList) {
+                    return;
+                }
 
-            function buildTimetableMatrix(rows) {
-                const matrix = {};
+                if (!feedbacks.length) {
+                    teacherFeedbackList.innerHTML = `
+                        <div class="rounded-2xl border border-dashed p-8 text-center" style="border-color: var(--lumina-border); background-color: #FAFCFA;">
+                            <p class="text-sm font-semibold" style="color: var(--lumina-text-secondary);">No teacher feedback is available yet for this child.</p>
+                        </div>
+                    `;
+                    return;
+                }
 
-                timetableDays.forEach((day) => {
-                    matrix[day] = Array.from({ length: timetableSlots.length }, () => null);
-                });
+                const toneStyles = {
+                    good: { bg: '#ECFDF3', border: '#10B981', text: '#047857' },
+                    bad: { bg: '#FEF2F2', border: '#EF4444', text: '#B91C1C' },
+                };
 
-                rows.forEach((row, rowIndex) => {
-                    const day = String(row.day || '').toUpperCase();
-                    if (!matrix[day]) {
-                        return;
-                    }
-
-                    const normalizedTime = normalizeTime(row.time);
-                    let slotIndex = timetableSlots.findIndex((slot) => normalizeTime(slot) === normalizedTime);
-
-                    if (slotIndex < 0) {
-                        slotIndex = matrix[day].findIndex((cell) => cell === null);
-                        if (slotIndex < 0) {
-                            return;
-                        }
-                    }
-
-                    const palette = paletteForCourse(row.course, rowIndex);
-                    matrix[day][slotIndex] = {
-                        course: row.course || 'Course',
-                        room: row.room || 'Room',
-                        bg: palette.bg,
-                        border: palette.border,
-                    };
-                });
-
-                return matrix;
-            }
-
-            function renderTimetable(childId) {
-                const childData = getChildData(childId);
-                const rows = childData?.timetable || [];
-                const matrix = buildTimetableMatrix(rows);
-
-                timetableBody.innerHTML = timetableDays.map((day) => {
-                    const cells = (matrix[day] || []).map((cell) => {
-                        if (!cell) {
-                            return '<td class="p-2 text-center h-16"></td>';
-                        }
-
-                        return `
-                            <td class="p-2 text-center h-16">
-                                <div class="rounded-lg p-3 border-l-4 h-full flex flex-col justify-center transition-all duration-200 hover:shadow-md cursor-pointer" style="background-color: ${cell.bg}; border-left-color: ${cell.border};">
-                                    <p class="text-xs font-bold truncate" style="color: var(--lumina-text-primary);">${escapeHtml(cell.course)}</p>
-                                    <p class="text-xs mt-1" style="color: var(--lumina-text-muted);">${escapeHtml(cell.room)}</p>
-                                </div>
-                            </td>
-                        `;
-                    }).join('');
+                teacherFeedbackList.innerHTML = feedbacks.map((feedback) => {
+                    const tone = String(feedback.tone || 'good');
+                    const toneStyle = toneStyles[tone] || toneStyles.good;
 
                     return `
-                        <tr class="border-b" style="border-color: var(--lumina-border-light);">
-                            <td class="p-3 text-sm font-semibold h-16" style="color: var(--lumina-text-primary);">${escapeHtml(day)}</td>
-                            ${cells}
-                        </tr>
+                        <article class="rounded-2xl border p-4" style="border-color: ${toneStyle.border}; border-left-width: 6px; background-color: ${toneStyle.bg};">
+                            <div class="mb-2 flex items-start justify-between gap-3">
+                                <div>
+                                    <h4 class="text-base font-bold" style="color: var(--lumina-text-primary);">${escapeHtml(feedback.teacher || 'Teacher')}</h4>
+                                    <p class="text-sm" style="color: var(--lumina-text-muted);">${escapeHtml(feedback.course || 'Course')}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <a href="${escapeHtml(feedback.messageUrl || '#')}" class="inline-flex h-11 w-11 items-center justify-center rounded-full border transition-colors hover:bg-gray-50" style="border-color: var(--lumina-border);" title="Message ${escapeHtml(feedback.teacher || 'Teacher')}">
+                                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--lumina-primary);">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5l-2 2V6a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H9z"></path>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                            <p class="text-base leading-7" style="color: var(--lumina-text-secondary);">${escapeHtml(feedback.comment || 'No feedback provided yet.')}</p>
+                            <p class="mt-2 text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-muted);">Updated ${escapeHtml(feedback.recordedAt || 'recently')}</p>
+                        </article>
                     `;
                 }).join('');
+            }
+
+            function updateFeedbackWeekButtons() {
+                feedbackWeekButtons.forEach((button) => {
+                    const isActive = String(button.dataset.feedbackWeek || 'latest') === String(currentFeedbackWeek);
+
+                    if (isActive) {
+                        button.style.background = 'linear-gradient(135deg, #0E7A4E 0%, #0A5E3D 100%)';
+                        button.style.color = '#ffffff';
+                        button.style.boxShadow = '0 6px 14px rgba(10, 94, 61, 0.2)';
+                    } else {
+                        button.style.background = 'transparent';
+                        button.style.color = 'var(--lumina-text-secondary)';
+                        button.style.boxShadow = 'none';
+                    }
+                });
             }
 
             function renderSummaryCards(childId) {
@@ -478,6 +455,7 @@
                 if (!rawValues.length) {
                     progressLine.setAttribute('points', '');
                     progressArea.setAttribute('d', '');
+                    progressBars.innerHTML = '';
                     progressDots.innerHTML = '';
                     progressLabels.innerHTML = '';
                     return;
@@ -486,8 +464,8 @@
                 const values = rawValues;
                 const chartLeft = 40;
                 const chartRight = 730;
-                const chartTop = 40;
-                const chartBottom = 240;
+                const chartTop = 60;
+                const chartBottom = 330;
                 const maxValue = metricConfig.max;
                 const minValue = metricConfig.min;
                 const spanX = chartRight - chartLeft;
@@ -525,6 +503,15 @@
                     : qualityColorForValue(avgValue);
                 const labelColor = mainColor;
 
+                const attendanceColor = (status) => {
+                    if (status === 'present') return '#2F855A';
+                    if (status === 'late') return '#B7791F';
+                    if (status === 'absent') return '#C53030';
+
+                    return '#64748B';
+                };
+
+                progressBars.innerHTML = '';
                 progressLine.setAttribute('stroke', mainColor);
                 if (progressFillStart) {
                     progressFillStart.setAttribute('stop-color', mainColor);
@@ -535,10 +522,51 @@
 
                 const points = values.map((value, index) => {
                     const x = chartLeft + (index * (spanX / Math.max(1, values.length - 1)));
-                    const normalized = (value - minValue) / (maxValue - minValue || 1);
+                    const normalized = Math.max(0, Math.min(1, (value - minValue) / (maxValue - minValue || 1)));
                     const y = chartBottom - (normalized * spanY);
                     return { x, y, value, index };
                 });
+
+                if (currentMetric === 'attendance') {
+                    progressLine.setAttribute('points', '');
+                    progressArea.setAttribute('d', '');
+                    progressDots.innerHTML = '';
+
+                    const barSlot = spanX / Math.max(1, values.length);
+                    const barWidth = Math.max(18, Math.min(42, barSlot * 0.58));
+
+                    progressBars.innerHTML = points.map((point, index) => {
+                        const status = attendanceStatuses[index] || 'unknown';
+                        const barColor = attendanceColor(status);
+                        const barFill = status === 'present'
+                            ? 'url(#attendanceBarPresentGradient)'
+                            : (status === 'late' ? 'url(#attendanceBarLateGradient)' : 'url(#attendanceBarAbsentGradient)');
+                        const barStroke = status === 'present'
+                            ? '#065F46'
+                            : (status === 'late' ? '#92400E' : '#991B1B');
+                        const barX = point.x - (barWidth / 2);
+                        const barHeight = Math.max(8, chartBottom - point.y);
+                        const iconY = Math.max(chartTop + 14, point.y + 14);
+                        const iconMarkup = status === 'present'
+                            ? `<path d="M ${point.x - 4} ${iconY} L ${point.x - 1} ${iconY + 3} L ${point.x + 5} ${iconY - 4}" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>`
+                            : (status === 'late'
+                                ? `<circle cx="${point.x}" cy="${iconY}" r="4.3" fill="none" stroke="#ffffff" stroke-width="1.6"></circle><path d="M ${point.x} ${iconY - 2} L ${point.x} ${iconY + 0.5} L ${point.x + 2} ${iconY + 2}" stroke="#ffffff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>`
+                                : `<path d="M ${point.x - 3.5} ${iconY - 3.5} L ${point.x + 3.5} ${iconY + 3.5}" stroke="#ffffff" stroke-width="2" stroke-linecap="round"></path><path d="M ${point.x + 3.5} ${iconY - 3.5} L ${point.x - 3.5} ${iconY + 3.5}" stroke="#ffffff" stroke-width="2" stroke-linecap="round"></path>`);
+
+                        return `
+                            <g>
+                                <path d="M ${barX} ${chartBottom} L ${barX} ${point.y + 8} Q ${barX} ${point.y} ${barX + 8} ${point.y} L ${barX + barWidth - 8} ${point.y} Q ${barX + barWidth} ${point.y} ${barX + barWidth} ${point.y + 8} L ${barX + barWidth} ${chartBottom} Z" fill="${barFill}" stroke="${barStroke}" stroke-width="1.4" opacity="0.98"></path>
+                                ${iconMarkup}
+                            </g>
+                        `;
+                    }).join('');
+
+                    progressLabels.innerHTML = points.map((point, index) => `
+                        <text x="${point.x}" y="378" text-anchor="middle" font-size="8" fill="#64748b">S${index + 1}</text>
+                    `).join('');
+
+                    return;
+                }
 
                 const linePoints = points.map((p) => `${p.x},${p.y}`).join(' ');
                 progressLine.setAttribute('points', linePoints);
@@ -573,26 +601,16 @@
                     return '<circle cx="' + x + '" cy="' + y + '" r="1.8" fill="#ffffff"></circle>';
                 };
 
-                const attendanceColor = (status) => {
-                    if (status === 'present') return '#16A34A';
-                    if (status === 'late') return '#EA580C';
-                    if (status === 'absent') return '#DC2626';
-
-                    return '#64748B';
-                };
-
                 progressDots.innerHTML = points.map((p) => `
                     <g>
-                        <circle cx="${p.x}" cy="${p.y}" r="7" fill="${currentMetric === 'attendance' ? attendanceColor(attendanceStatuses[p.index]) : qualityColorForValue(p.value)}"></circle>
-                        ${currentMetric === 'attendance'
-                            ? attendanceIconPath(attendanceStatuses[p.index], p.x, p.y)
-                            : `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#ffffff"></circle><text x="${p.x}" y="${p.y - 12}" text-anchor="middle" font-size="11" fill="${labelColor}" font-weight="700">${metricConfig.formatLabel(p.value)}</text>`
-                        }
+                        <circle cx="${p.x}" cy="${p.y}" r="7" fill="${qualityColorForValue(p.value)}"></circle>
+                        <circle cx="${p.x}" cy="${p.y}" r="3" fill="#ffffff"></circle>
+                        <text x="${p.x}" y="${p.y - 12}" text-anchor="middle" font-size="11" fill="${labelColor}" font-weight="700">${metricConfig.formatLabel(p.value)}</text>
                     </g>
                 `).join('');
 
                 progressLabels.innerHTML = points.map((p, index) => `
-                    <text x="${p.x}" y="262" text-anchor="middle" font-size="11" fill="#64748b">Class ${index + 1}</text>
+                    <text x="${p.x}" y="378" text-anchor="middle" font-size="8" fill="#64748b">S${index + 1}</text>
                 `).join('');
             }
 
@@ -614,7 +632,7 @@
             }
 
             function renderAll(childId) {
-                renderTimetable(childId);
+                renderTeacherFeedbacks(childId);
                 renderSummaryCards(childId);
                 renderProgressChart(childId);
                 renderTeachersModalList(childId);
@@ -693,6 +711,14 @@
                 });
             });
 
+            feedbackWeekButtons.forEach((button) => {
+                button.addEventListener('click', function () {
+                    currentFeedbackWeek = this.dataset.feedbackWeek || 'latest';
+                    updateFeedbackWeekButtons();
+                    renderTeacherFeedbacks(currentChildId);
+                });
+            });
+
             if (openTeachersModal) {
                 openTeachersModal.addEventListener('click', showTeachersModal);
             }
@@ -711,6 +737,7 @@
 
             updateMetricButtons();
             updateWeekButtons();
+            updateFeedbackWeekButtons();
             syncSelectionAndRender(currentChildId);
         })();
     </script>

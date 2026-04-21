@@ -128,9 +128,12 @@ class ParentDashboardDataProvider
         $gradeSeries = $attendanceRecords
             ->filter(fn (AttendanceRecord $record): bool => ! is_null($record->grade))
             ->map(function (AttendanceRecord $record) use ($weekStart): array {
+                $rawGrade = (float) $record->grade;
+                $normalizedGrade = $rawGrade > 20 ? ($rawGrade / 5) : $rawGrade;
+
                 return [
                     'week' => $this->weekNumberForDate($weekStart, $record->attendance_date),
-                    'value' => round((float) $record->grade, 1),
+                    'value' => round(max(0, min(20, $normalizedGrade)), 1),
                 ];
             })
             ->values()
@@ -155,9 +158,12 @@ class ParentDashboardDataProvider
 
             $gradeSeries = $fallbackGrades
                 ->map(function (AttendanceRecord $record) use ($weekStart): array {
+                    $rawGrade = (float) $record->grade;
+                    $normalizedGrade = $rawGrade > 20 ? ($rawGrade / 5) : $rawGrade;
+
                     return [
                         'week' => $this->weekNumberForDate($weekStart, $record->attendance_date),
-                        'value' => round((float) $record->grade, 1),
+                        'value' => round(max(0, min(20, $normalizedGrade)), 1),
                     ];
                 })
                 ->values()
@@ -234,6 +240,7 @@ class ParentDashboardDataProvider
 
         return [
             'timetable' => $this->buildTimetableRows($classes),
+            'teacherFeedbacks' => $this->buildTeacherFeedbacks($classes, $attendanceRecords, $weekStart),
             'teachers' => $teachers->map(fn (User $teacher): array => [
                 'id' => (int) $teacher->id,
                 'name' => (string) $teacher->name,
@@ -248,6 +255,131 @@ class ParentDashboardDataProvider
             'teachersCount' => (int) $teachers->count(),
             'unreadMessagesCount' => (int) $unreadMessagesCount,
         ];
+    }
+
+    /**
+     * @param  Collection<int, CourseClass>  $classes
+     * @param  Collection<int, AttendanceRecord>  $attendanceRecords
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildTeacherFeedbacks(Collection $classes, Collection $attendanceRecords, CarbonInterface $weekStart): array
+    {
+        $classMap = $classes->keyBy('id');
+        $feedbacks = [];
+
+        foreach ($attendanceRecords as $record) {
+            $class = $classMap->get((int) $record->class_id);
+            if (! $class) {
+                continue;
+            }
+
+            $feedbackText = trim((string) ($record->feedback ?? ''));
+            if ($feedbackText === '' || is_null($record->grade)) {
+                continue;
+            }
+
+            $teacherId = (int) ($class->teacher?->id ?? 0);
+            if ($teacherId <= 0) {
+                continue;
+            }
+
+            $grade = (int) $record->grade;
+            $feedbacks[] = [
+                'teacherId' => $teacherId,
+                'teacher' => (string) ($class->teacher?->name ?? 'Teacher'),
+                'course' => (string) ($class->course?->name ?? ('Class #'.$class->id)),
+                'comment' => $feedbackText,
+                'grade' => $grade,
+                'tone' => $this->feedbackToneFromGrade($grade),
+                'messageUrl' => route('role.messages.conversation', ['role' => 'parent', 'conversation' => $teacherId]),
+                'week' => $this->weekNumberForDate($weekStart, $record->attendance_date),
+                'recordedAt' => Carbon::parse((string) $record->attendance_date)->format('M d, Y'),
+                'recordedAtTs' => Carbon::parse((string) $record->attendance_date)->timestamp,
+            ];
+        }
+
+        if ($feedbacks === []) {
+            foreach ($classes as $class) {
+                $teacherId = (int) ($class->teacher?->id ?? 0);
+                if ($teacherId <= 0) {
+                    continue;
+                }
+
+                $records = $attendanceRecords->where('class_id', $class->id)->values();
+                $graded = $records
+                    ->filter(fn (AttendanceRecord $record): bool => ! is_null($record->grade))
+                    ->pluck('grade')
+                    ->map(fn ($value): float => (float) $value)
+                    ->values();
+
+                if ($graded->isEmpty()) {
+                    continue;
+                }
+
+                $avgGrade = round($graded->avg(), 1);
+                $latestRecord = $records
+                    ->filter(fn (AttendanceRecord $record): bool => ! is_null($record->grade))
+                    ->sortBy('attendance_date')
+                    ->last();
+
+                $feedbacks[] = [
+                    'teacherId' => $teacherId,
+                    'teacher' => (string) ($class->teacher?->name ?? 'Teacher'),
+                    'course' => (string) ($class->course?->name ?? ('Class #'.$class->id)),
+                    'comment' => $this->feedbackComment($avgGrade, null),
+                    'grade' => (int) round($avgGrade),
+                    'tone' => $this->feedbackToneFromGrade((int) round($avgGrade)),
+                    'messageUrl' => route('role.messages.conversation', ['role' => 'parent', 'conversation' => $teacherId]),
+                    'week' => $latestRecord
+                        ? $this->weekNumberForDate($weekStart, $latestRecord->attendance_date)
+                        : 4,
+                    'recordedAt' => $latestRecord?->attendance_date
+                        ? Carbon::parse((string) $latestRecord->attendance_date)->format('M d, Y')
+                        : 'No recent session',
+                    'recordedAtTs' => $latestRecord?->attendance_date
+                        ? Carbon::parse((string) $latestRecord->attendance_date)->timestamp
+                        : 0,
+                ];
+            }
+        }
+
+        usort($feedbacks, fn (array $a, array $b): int => ($b['recordedAtTs'] ?? 0) <=> ($a['recordedAtTs'] ?? 0));
+
+        return array_map(function (array $feedback): array {
+            unset($feedback['recordedAtTs']);
+
+            return $feedback;
+        }, $feedbacks);
+    }
+
+    private function feedbackToneFromGrade(int $grade): string
+    {
+        return $grade >= 10 ? 'good' : 'bad';
+    }
+
+    private function feedbackRating(?float $avgGrade, ?int $attendanceRate): int
+    {
+        $gradeComponent = is_null($avgGrade) ? 3.2 : max(1.0, min(5.0, ($avgGrade / 20) * 5));
+        $attendanceComponent = is_null($attendanceRate) ? 3.4 : max(1.0, min(5.0, ($attendanceRate / 100) * 5));
+
+        return (int) round(($gradeComponent * 0.65) + ($attendanceComponent * 0.35));
+    }
+
+    private function feedbackComment(?float $avgGrade, ?int $attendanceRate): string
+    {
+        if (! is_null($avgGrade) && $avgGrade >= 15 && (! is_null($attendanceRate) && $attendanceRate >= 85)) {
+            return 'Excellent consistency in class participation and assessment performance. Keep this momentum.';
+        }
+
+        if (! is_null($avgGrade) && $avgGrade >= 12) {
+            return 'Good academic progress overall. More revision before assessments can raise results further.';
+        }
+
+        if (! is_null($attendanceRate) && $attendanceRate < 70) {
+            return 'Attendance is impacting continuity. Improving weekly presence will quickly improve outcomes.';
+        }
+
+        return 'Steady progress observed. Focus on assignment completion and regular practice to strengthen performance.';
     }
 
     /**

@@ -25,11 +25,6 @@ class ParentDashboardController extends Controller
 
         return view('parent.dashboard', array_merge($baseData, $parentData, [
             'user' => $user,
-            'totalOutstanding' => 245000,
-            'payments' => [
-                ['child' => 'Alex', 'term' => 'Term 3', 'amount' => 122500],
-                ['child' => 'Sophie', 'term' => 'Term 3', 'amount' => 122500],
-            ],
         ]));
     }
 }
