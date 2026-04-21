@@ -46,7 +46,10 @@ class TuitionFinancialService
             'ledgerItems' => $summary['ledger_items'],
             'receipts' => $summary['receipts'],
             'totalOutstanding' => $summary['balance'],
-            'scholarshipDiscount' => 0,
+            'totalCoursesPrice' => $summary['gross_due'],
+            'totalPaid' => $summary['amount_paid'],
+            'totalRemaining' => $summary['balance'],
+            'paidPercentage' => $summary['paid_percentage'],
         ];
     }
 
@@ -188,103 +191,94 @@ class TuitionFinancialService
         $academicYear = $this->academicYearLabel();
         $studentTuition = $this->hasStudentTuitionsTable() ? $student->studentTuition : null;
 
-        if ($studentTuition !== null) {
-            $courseName = (string) ($studentTuition->course?->name ?? 'Selected Course');
-            $courseCode = $studentTuition->course?->code;
-            $coursePrice = max(0, (int) $studentTuition->course_price);
-            $balance = max($coursePrice - $amountPaid, 0);
-            $status = $balance === 0 ? 'paid' : 'pending';
+        $tuitionEntries = collect();
+        $studentTuitionCourseId = null;
 
-            return [
-                'academic_year' => $academicYear,
-                'gross_due' => $coursePrice,
-                'discount' => 0,
-                'net_due' => $coursePrice,
-                'course_price' => $coursePrice,
-                'selected_course_name' => $courseName,
-                'selected_course_code' => $courseCode,
-                'amount_paid' => $amountPaid,
-                'balance' => $balance,
-                'status' => $status,
-                'last_payment_at' => $payments->first()?->paid_on,
-                'enrolled_classes_count' => 1,
-                'ledger_items' => [[
-                    'name' => $courseName,
-                    'type' => 'Course Fee',
-                    'period' => $academicYear,
-                    'amount' => $coursePrice,
-                    'status' => $status === 'paid' ? 'paid' : 'outstanding',
-                    'icon' => 'course',
-                ]],
-                'receipts' => $this->buildReceipts($payments),
-            ];
+        if ($studentTuition !== null) {
+            $studentTuitionCourseId = $studentTuition->course_id;
+
+            $tuitionEntries->push([
+                'course_id' => $studentTuitionCourseId,
+                'name' => (string) ($studentTuition->course?->name ?? 'Selected Course'),
+                'code' => $studentTuition->course?->code,
+                'price' => max(0, (int) $studentTuition->course_price),
+            ]);
         }
 
-        $classes = $student->enrolledClasses
+        $student->enrolledClasses
             ->filter(fn ($courseClass): bool => $courseClass->course !== null)
             ->sortBy(fn ($courseClass): string => (string) $courseClass->course->name)
+            ->each(function ($courseClass) use ($tuitionEntries, $studentTuitionCourseId): void {
+                $course = $courseClass->course;
+
+                if ($course === null || $course->id === $studentTuitionCourseId) {
+                    return;
+                }
+
+                $coursePrice = 0;
+
+                if ($this->hasCoursePriceColumn() && array_key_exists('price', $course->getAttributes())) {
+                    $coursePrice = max(0, (int) ($course->price ?? 0));
+                }
+
+                $tuitionEntries->push([
+                    'course_id' => $course->id,
+                    'name' => (string) $course->name,
+                    'code' => $course->code,
+                    'price' => $coursePrice,
+                ]);
+            });
+
+        $tuitionEntries = $tuitionEntries
+            ->sortBy(fn (array $entry): string => (string) $entry['name'])
             ->values();
 
-        $grossDue = (int) $classes->sum(function ($courseClass): int {
-            $course = $courseClass->course;
-
-            if ($course === null) {
-                return 0;
-            }
-
-            if (! $this->hasCoursePriceColumn() || ! array_key_exists('price', $course->getAttributes())) {
-                return 0;
-            }
-
-            return max(0, (int) ($course->price ?? 0));
-        });
+        $grossDue = (int) $tuitionEntries->sum('price');
         $balance = max($grossDue - $amountPaid, 0);
         $status = $balance === 0 ? 'paid' : 'pending';
+        $paidPercentage = $grossDue === 0 ? 0 : (int) round(($amountPaid / $grossDue) * 100);
 
         $remainingPaid = $amountPaid;
 
-        $ledgerItems = $classes->map(function ($courseClass) use (&$remainingPaid, $academicYear): array {
-            $course = $courseClass->course;
-
-            $coursePrice = 0;
-
-            if ($course !== null && $this->hasCoursePriceColumn() && array_key_exists('price', $course->getAttributes())) {
-                $coursePrice = max(0, (int) ($course->price ?? 0));
-            }
-
-            $isPaid = $remainingPaid >= $coursePrice;
+        $ledgerItems = $tuitionEntries->map(function (array $entry) use (&$remainingPaid, $academicYear): array {
+            $coursePrice = max(0, (int) $entry['price']);
+            $paidForCourse = min($remainingPaid, $coursePrice);
             $remainingPaid = max(0, $remainingPaid - $coursePrice);
+            $remainingForCourse = max($coursePrice - $paidForCourse, 0);
 
             return [
-                'name' => (string) $courseClass->course->name,
+                'name' => (string) $entry['name'],
                 'type' => 'Course Fee',
                 'period' => $academicYear,
                 'amount' => $coursePrice,
-                'status' => $isPaid ? 'paid' : 'outstanding',
+                'paid' => $paidForCourse,
+                'remaining' => $remainingForCourse,
+                'status' => $remainingForCourse === 0 ? 'paid' : 'outstanding',
                 'icon' => 'course',
             ];
         })->all();
-        $selectedCourse = $classes->count() === 1 ? $classes->first()?->course : null;
+        $selectedCourse = $tuitionEntries->count() === 1 ? $tuitionEntries->first() : null;
 
         return [
             'academic_year' => $academicYear,
             'gross_due' => $grossDue,
             'discount' => 0,
             'net_due' => $grossDue,
-            'course_price' => $classes->count() === 1
-                ? max(0, (int) ($selectedCourse?->price ?? 0))
+            'course_price' => $tuitionEntries->count() === 1
+                ? max(0, (int) ($selectedCourse['price'] ?? 0))
                 : $grossDue,
-            'selected_course_name' => $classes->isEmpty()
+            'selected_course_name' => $tuitionEntries->isEmpty()
                 ? 'No course selected'
-                : ($classes->count() === 1
-                    ? (string) $selectedCourse?->name
-                    : $classes->pluck('course.name')->implode(', ')),
-            'selected_course_code' => $classes->count() === 1 ? $selectedCourse?->code : null,
+                : ($tuitionEntries->count() === 1
+                    ? (string) ($selectedCourse['name'] ?? 'Selected Course')
+                    : $tuitionEntries->pluck('name')->implode(', ')),
+            'selected_course_code' => $tuitionEntries->count() === 1 ? ($selectedCourse['code'] ?? null) : null,
             'amount_paid' => $amountPaid,
             'balance' => $balance,
+            'paid_percentage' => $paidPercentage,
             'status' => $status,
             'last_payment_at' => $payments->first()?->paid_on,
-            'enrolled_classes_count' => (int) $classes->count(),
+            'enrolled_classes_count' => (int) $tuitionEntries->count(),
             'ledger_items' => $ledgerItems,
             'receipts' => $this->buildReceipts($payments),
         ];

@@ -100,9 +100,14 @@
                                 </td>
                                 {{-- Amount --}}
                                 <td class="px-6 py-6 text-right">
-                                    <span class="text-base font-bold" style="color: #181D19;">
-                                        ${{ number_format($item['amount'], 2) }}
-                                    </span>
+                                    <div class="flex flex-col items-end gap-1">
+                                        <span class="text-base font-bold" style="color: #181D19;">
+                                            {{ number_format($item['amount'], 0, ',', ' ') }} DZD
+                                        </span>
+                                        <span class="text-xs font-semibold" style="color: #B45309;">
+                                            Remaining: {{ number_format($item['remaining'] ?? 0, 0, ',', ' ') }} DZD
+                                        </span>
+                                    </div>
                                 </td>
                                 {{-- Status --}}
                                 <td class="px-6 py-6 text-center">
@@ -139,14 +144,14 @@
             </div>
         </div>
 
-        {{-- Right Column: Scholarships (1 column) --}}
+        {{-- Right Column: Payment Progress (1 column) --}}
         <div class="flex flex-col gap-4 lg:col-span-1">
-            {{-- Scholarships Header --}}
+            {{-- Payment Progress Header --}}
             <h2 class="text-2xl font-bold" style="color: #181D19; letter-spacing: -0.6px;">
-                Scholarships
+                Payment Progress
             </h2>
 
-            {{-- Scholarship Card --}}
+            {{-- Payment Progress Card --}}
             <div 
                 class="relative overflow-hidden rounded-xl p-8"
                 style="background: linear-gradient(135deg, #065F46 0%, #022C22 100%); box-shadow: 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1);"
@@ -165,28 +170,44 @@
                         style="background: rgba(255, 255, 255, 0.1);"
                     >
                         <svg class="h-5 w-5" fill="currentColor" style="color: #6EE7B7;" viewBox="0 0 24 24">
-                            <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                            <path d="M19 14V6c0-1.1-.9-2-2-2H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zm-2 0H3V6h14v8zm-7-1c1.66 0 3-1.34 3-3S11.66 7 10 7s-3 1.34-3 3 1.34 3 3 3zm11-5v10H5v2h16c1.1 0 2-.9 2-2V8h-2z"/>
                         </svg>
                     </div>
 
                     {{-- Title --}}
                     <h3 class="text-xl font-bold leading-tight text-white">
-                        Academic Excellence Grant
+                        Tuition Payment Progress
                     </h3>
 
                     {{-- Description --}}
                     <p class="text-sm leading-relaxed" style="color: rgba(209, 250, 229, 0.7);">
-                        Awarded for maintaining a GPA above 3.8 in advanced professional courses.
+                        Tracks how much of your enrolled course tuition has already been paid.
                     </p>
 
-                    {{-- Discount --}}
-                    <div class="mt-4 flex items-end justify-between">
+                    {{-- Progress --}}
+                    <div class="mt-4 flex items-end justify-between gap-4">
                         <span class="text-4xl font-black text-white">
-                            {{ $scholarshipDiscount ?? '15' }}%
+                            {{ $paidPercentage ?? 0 }}%
                         </span>
                         <span class="text-xs font-bold uppercase tracking-wider" style="color: #6EE7B7; letter-spacing: 1.2px;">
-                            Active Discount
+                            Paid
                         </span>
+                    </div>
+
+                    <div class="h-2 overflow-hidden rounded-full" style="background: rgba(255, 255, 255, 0.12);">
+                        <div
+                            class="h-full rounded-full"
+                            style="width: {{ min(max((int) ($paidPercentage ?? 0), 0), 100) }}%; background: #6EE7B7;"
+                        ></div>
+                    </div>
+
+                    <div class="mt-3 border-t pt-4" style="border-color: rgba(255, 255, 255, 0.12);">
+                        <span class="text-xs font-bold uppercase tracking-wider" style="color: #6EE7B7; letter-spacing: 1.2px;">
+                            Remaining Unpaid
+                        </span>
+                        <p class="mt-1 text-2xl font-black text-white">
+                            {{ number_format($totalRemaining ?? 0, 0, ',', ' ') }} DZD
+                        </p>
                     </div>
                 </div>
             </div>
@@ -248,7 +269,7 @@
                     {{-- Right: Amount + PDF --}}
                     <div class="flex flex-col items-end gap-2">
                         <span class="text-base font-black" style="color: #181D19;">
-                            ${{ number_format($receipt['amount'], 2) }}
+                            {{ number_format($receipt['amount'], 0, ',', ' ') }} DZD
                         </span>
                         <a 
                             href="#" 
