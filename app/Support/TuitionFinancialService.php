@@ -345,6 +345,7 @@ class TuitionFinancialService
             }
 
             return [
+                'payment_id' => $payment->id,
                 'invoice' => $payment->reference ?: 'PAY-'.str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT),
                 'amount' => (float) $payment->amount,
                 'date' => $payment->paid_on?->format('M d, Y') ?? '-',

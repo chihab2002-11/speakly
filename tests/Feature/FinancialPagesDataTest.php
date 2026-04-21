@@ -44,7 +44,57 @@ test('student financial page uses stored tuition course price and payments', fun
     $response->assertSee('5 000 DZD');
     $response->assertSee('Remaining: 5 000 DZD');
     $response->assertSee('PAY-9001');
+    $response->assertSee(route('student.financial.payments.pdf', TuitionPayment::query()->where('reference', 'PAY-9001')->value('id')));
     $response->assertDontSee('Scholarships');
+});
+
+test('student can download own payment receipt pdf', function () {
+    /** @var TestCase $this */
+    $student = User::factory()->create(['approved_at' => now()]);
+    $student->assignRole('student');
+
+    $course = Course::factory()->create(['name' => 'English A1', 'price' => 15000]);
+    StudentTuition::factory()->create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'course_price' => 15000,
+    ]);
+
+    $payment = TuitionPayment::factory()->create([
+        'student_id' => $student->id,
+        'amount' => 10000,
+        'method' => 'cash',
+        'reference' => 'PAY-PDF-01',
+    ]);
+
+    $response = $this->actingAs($student)->get(route('student.financial.payments.pdf', $payment));
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+    $response->assertHeader('content-disposition', 'inline; filename="payment-receipt-PAY-PDF-01.pdf"');
+
+    expect($response->getContent())->toStartWith('%PDF-1.4');
+    expect($response->getContent())->toContain('PAY-PDF-01');
+    expect($response->getContent())->toContain('10 000 DZD');
+});
+
+test('student cannot download another students payment receipt pdf', function () {
+    /** @var TestCase $this */
+    $student = User::factory()->create(['approved_at' => now()]);
+    $student->assignRole('student');
+
+    $otherStudent = User::factory()->create(['approved_at' => now()]);
+    $otherStudent->assignRole('student');
+
+    $payment = TuitionPayment::factory()->create([
+        'student_id' => $otherStudent->id,
+        'amount' => 10000,
+        'reference' => 'PAY-PRIVATE-01',
+    ]);
+
+    $this->actingAs($student)
+        ->get(route('student.financial.payments.pdf', $payment))
+        ->assertForbidden();
 });
 
 test('student financial page calculates payment progress and total remaining across enrolled courses', function () {

@@ -15,11 +15,11 @@
 
     {{-- Messages Container --}}
     <div 
-        class="flex overflow-hidden rounded-3xl border"
+        class="flex min-w-0 overflow-hidden rounded-3xl border"
         style="background-color: #FFFFFF; border-color: var(--lumina-border-light); min-height: calc(100vh - 280px);"
     >
         {{-- Conversations Sidebar --}}
-        <div class="flex w-full flex-col border-r md:w-80 lg:w-96 {{ $selectedUser ? 'hidden md:flex' : 'flex' }}" style="border-color: var(--lumina-border);">
+        <div class="flex w-full shrink-0 flex-col border-r md:w-80 lg:w-96 {{ $selectedUser ? 'hidden md:flex' : 'flex' }}" style="border-color: var(--lumina-border);">
             {{-- Sidebar Header --}}
             <div class="flex items-center justify-between border-b p-4" style="border-color: var(--lumina-border);">
                 <h3 class="text-lg font-bold" style="color: var(--lumina-text-primary);">
@@ -74,7 +74,7 @@
                         <div class="relative">
                             <div 
                                 class="flex h-12 w-12 items-center justify-center rounded-full"
-                                style="background-color: var(--lumina-accent-green-bg);"
+                                style="background-color: var(--lumina-accent-green-light);"
                             >
                                 <span class="text-sm font-bold" style="color: var(--lumina-primary);">
                                     {{ substr($conv['user']->name, 0, 1) }}
@@ -130,7 +130,7 @@
         </div>
 
         {{-- Chat Area --}}
-        <div class="flex-1 flex-col {{ $selectedUser ? 'flex' : 'hidden md:flex' }}">
+        <div class="min-w-0 flex-1 flex-col {{ $selectedUser ? 'flex' : 'hidden md:flex' }}">
             @if($selectedUser)
                 {{-- Chat Header --}}
                 <div class="flex items-center justify-between border-b p-4" style="border-color: var(--lumina-border);">
@@ -146,7 +146,7 @@
                         </a>
                         <div 
                             class="flex h-10 w-10 items-center justify-center rounded-full"
-                            style="background-color: var(--lumina-accent-green-bg);"
+                            style="background-color: var(--lumina-accent-green-light);"
                         >
                             <span class="text-sm font-bold" style="color: var(--lumina-primary);">
                                 {{ substr($selectedUser->name, 0, 1) }}

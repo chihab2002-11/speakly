@@ -75,14 +75,14 @@
             <x-secretary.sidebar :user="$activeUser" :currentRoute="$currentRoute ?? 'role.dashboard'" />
         @endif
 
-        <div class="flex flex-1 flex-col lg:ml-64">
+        <div class="flex min-w-0 flex-1 flex-col lg:ml-64">
             @if($isAdminActingAsSecretary)
                 <x-admin.header :user="$activeUser" />
             @else
                 <x-secretary.header :user="$activeUser" />
             @endif
 
-            <main class="flex-1 p-4 md:p-8" style="background-color: var(--lumina-bg-section);">
+            <main class="min-w-0 flex-1 overflow-x-hidden p-4 md:p-8" style="background-color: var(--lumina-bg-section);">
                 {{ $slot }}
             </main>
         </div>

@@ -272,7 +272,8 @@
                             {{ number_format($receipt['amount'], 0, ',', ' ') }} DZD
                         </span>
                         <a 
-                            href="#" 
+                            href="{{ route('student.financial.payments.pdf', $receipt['payment_id']) }}"
+                            target="_blank"
                             class="inline-flex items-center gap-1 text-xs font-bold transition-colors hover:opacity-80"
                             style="color: #006A41;"
                         >

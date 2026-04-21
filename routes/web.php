@@ -178,6 +178,9 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
 
         // Financial Information page
         Route::get('/financial', [StudentFinancialController::class, 'index'])->name('financial');
+        Route::get('/financial/payments/{payment}/pdf', [StudentFinancialController::class, 'receiptPdf'])
+            ->whereNumber('payment')
+            ->name('financial.payments.pdf');
 
         Route::get('/materials', [StudentMaterialsController::class, 'index'])->name('materials');
         Route::get('/materials/{resource}/download', [StudentMaterialsController::class, 'download'])
