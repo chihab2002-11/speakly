@@ -157,6 +157,16 @@ class User extends Authenticatable
         return $this->hasOne(StudentTuition::class, 'student_id');
     }
 
+    public function scholarshipActivationsAsParent(): HasMany
+    {
+        return $this->hasMany(ScholarshipActivation::class, 'parent_id');
+    }
+
+    public function scholarshipActivationsAsStudent(): HasMany
+    {
+        return $this->hasMany(ScholarshipActivation::class, 'student_id');
+    }
+
     public function latestStudentCard(): ?StudentCard
     {
         return $this->studentCards()->latest('valid_to')->first();

@@ -10,8 +10,10 @@ use App\Http\Controllers\AdminScheduleController;
 use App\Http\Controllers\AdminTimetableHubController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\ParentChildPortalController;
 use App\Http\Controllers\ParentDashboardController;
 use App\Http\Controllers\ParentFinancialController;
+use App\Http\Controllers\ParentSettingsController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\SecretaryDashboardController;
 use App\Http\Controllers\SecretaryOperationsController;
@@ -233,61 +235,114 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
     ->prefix('parent')
     ->name('parent.')
     ->group(function () {
-        // Helper function to get placeholder children data
+        // Helper function to get parent-linked children data
         $getChildren = function () {
-            return [
-                [
-                    'id' => 1,
-                    'name' => 'Alex Johnson',
-                    'initials' => 'A',
-                    'grade' => 'Grade 10',
-                    'stream' => 'Science Stream',
-                    'gpa' => '3.8',
-                    'status' => 'On Track',
-                    'color' => 'var(--lumina-child-1)',
-                    'textColor' => 'var(--lumina-child-1-text)',
-                ],
-                [
-                    'id' => 2,
-                    'name' => 'Sophie Johnson',
-                    'initials' => 'S',
-                    'grade' => 'Grade 8',
-                    'stream' => 'Arts Stream',
-                    'gpa' => '3.6',
-                    'status' => 'On Track',
-                    'color' => 'var(--lumina-child-2)',
-                    'textColor' => 'var(--lumina-child-2-text)',
-                ],
-            ];
+            $parent = User::query()->findOrFail((int) Auth::id());
+
+            return User::query()
+                ->where('parent_id', $parent->id)
+                ->whereNotNull('approved_at')
+                ->whereHas('roles', function ($query): void {
+                    $query->where('name', 'student');
+                })
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->values()
+                ->map(function (User $child, int $index): array {
+                    $theme = $index % 2 === 0
+                        ? ['color' => 'var(--lumina-child-1)', 'textColor' => 'var(--lumina-child-1-text)']
+                        : ['color' => 'var(--lumina-child-2)', 'textColor' => 'var(--lumina-child-2-text)'];
+
+                    return [
+                        'id' => $child->id,
+                        'name' => $child->name,
+                        'initials' => $child->initials(),
+                        'grade' => 'Student',
+                        'stream' => 'Language Track',
+                        'gpa' => '-',
+                        'status' => 'Active',
+                        'color' => $theme['color'],
+                        'textColor' => $theme['textColor'],
+                    ];
+                })
+                ->all();
         };
 
         // Parent Financial Information
         Route::get('/financial', [ParentFinancialController::class, 'index'])->name('financial');
+        Route::post('/financial/scholarships/activate', [ParentFinancialController::class, 'activateScholarship'])
+            ->name('financial.scholarships.activate');
+        Route::get('/financial/receipts/{payment}/download', [ParentFinancialController::class, 'downloadReceipt'])
+            ->whereNumber('payment')
+            ->name('financial.receipts.download');
 
-        // Parent Calendar (Timetable)
-        Route::get('/calendar', function () use ($getChildren) {
-            $user = User::query()->findOrFail((int) Auth::id());
-            $children = $getChildren();
+        // Parent Child Portal (student experience without financial page)
+        Route::get('/children/{child}/dashboard', [ParentChildPortalController::class, 'dashboard'])
+            ->whereNumber('child')
+            ->name('child.dashboard');
 
-            return view('parent.calendar', [
-                'user' => $user,
-                'children' => $children,
-                'selectedChild' => $children[0],
-                'currentWeek' => 'April 1 - 7, 2024',
-            ]);
-        })->name('calendar');
+        Route::get('/children/{child}/academic', [ParentChildPortalController::class, 'academic'])
+            ->whereNumber('child')
+            ->name('child.academic');
+
+        Route::get('/children/{child}/materials', [ParentChildPortalController::class, 'materials'])
+            ->whereNumber('child')
+            ->name('child.materials');
+
+        Route::get('/children/{child}/materials/{resource}/download', [ParentChildPortalController::class, 'downloadMaterial'])
+            ->whereNumber('child')
+            ->whereNumber('resource')
+            ->name('child.materials.download');
+
+        Route::get('/children/{child}/materials/{resource}/print', [ParentChildPortalController::class, 'printMaterial'])
+            ->whereNumber('child')
+            ->whereNumber('resource')
+            ->name('child.materials.print');
+
+        Route::get('/children/{child}/messages', [ParentChildPortalController::class, 'messages'])
+            ->whereNumber('child')
+            ->name('child.messages');
+
+        Route::get('/children/{child}/messages/{conversation}', [ParentChildPortalController::class, 'messages'])
+            ->whereNumber('child')
+            ->whereNumber('conversation')
+            ->name('child.messages.conversation');
+
+        Route::post('/children/{child}/messages', [ParentChildPortalController::class, 'storeMessage'])
+            ->whereNumber('child')
+            ->name('child.messages.store');
+
+        Route::get('/children/{child}/settings', [ParentChildPortalController::class, 'settings'])
+            ->whereNumber('child')
+            ->name('child.settings');
+
+        Route::post('/children/{child}/settings', [ParentChildPortalController::class, 'updateSettings'])
+            ->whereNumber('child')
+            ->name('child.settings.update');
+
+        Route::get('/children/{child}/password', [ParentChildPortalController::class, 'password'])
+            ->whereNumber('child')
+            ->name('child.password');
+
+        Route::post('/children/{child}/password', [ParentChildPortalController::class, 'updatePassword'])
+            ->whereNumber('child')
+            ->name('child.password.update');
+
+        Route::get('/children/{child}/notifications', [ParentChildPortalController::class, 'notifications'])
+            ->whereNumber('child')
+            ->name('child.notifications');
+
+        Route::post('/children/{child}/notifications/{id}/read', [ParentChildPortalController::class, 'markNotificationAsRead'])
+            ->whereNumber('child')
+            ->name('child.notifications.read');
+
+        Route::post('/children/{child}/notifications/read-all', [ParentChildPortalController::class, 'markAllNotificationsAsRead'])
+            ->whereNumber('child')
+            ->name('child.notifications.read-all');
 
         // Parent Settings
-        Route::get('/settings', function () use ($getChildren) {
-            $user = User::query()->findOrFail((int) Auth::id());
-            $children = $getChildren();
-
-            return view('parent.settings', [
-                'user' => $user,
-                'children' => $children,
-                'twoFactorEnabled' => $user->two_factor_confirmed_at !== null,
-            ]);
-        })->name('settings');
+        Route::get('/settings', [ParentSettingsController::class, 'edit'])->name('settings');
+        Route::post('/settings', [ParentSettingsController::class, 'update'])->name('settings.update');
 
         // Parent Password Change
         Route::get('/password', function () use ($getChildren) {

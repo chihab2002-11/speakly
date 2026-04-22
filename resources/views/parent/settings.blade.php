@@ -3,14 +3,21 @@
     :pageTitle="'Settings'"
     :currentRoute="'settings'"
     :user="$user ?? null"
+    :children="$children ?? []"
 >
+    @if(session('success'))
+        <div class="mb-4 rounded-xl border px-4 py-3 text-sm font-semibold" style="border-color: #86efac; background-color: #f0fdf4; color: #166534;">
+            {{ session('success') }}
+        </div>
+    @endif
+
     {{-- Page Header --}}
     <div class="mb-8">
         <h1 class="font-inter text-3xl font-extrabold tracking-tight md:text-4xl" style="color: var(--lumina-text-primary); letter-spacing: -0.9px;">
             Account Settings
         </h1>
         <p class="mt-2 text-base" style="color: var(--lumina-text-secondary);">
-            Manage your personal information, notification preferences, and security settings.
+            Manage your personal information and security settings.
         </p>
     </div>
 
@@ -91,9 +98,9 @@
                             <div class="flex items-center gap-3">
                                 <div 
                                     class="flex h-10 w-10 items-center justify-center rounded-xl"
-                                    style="background-color: {{ $child['color'] }};"
+                                    style="background-color: <?php echo e($child['color']); ?>;"
                                 >
-                                    <span class="text-sm font-bold" style="color: {{ $child['textColor'] }};">
+                                    <span class="text-sm font-bold" style="color: <?php echo e($child['textColor']); ?>;">
                                         {{ $child['initials'] }}
                                     </span>
                                 </div>
@@ -106,15 +113,60 @@
                                     </p>
                                 </div>
                             </div>
-                            <a 
-                                href="#" 
-                                class="text-xs font-bold transition-opacity hover:opacity-80"
+                            <button
+                                type="button"
+                                class="js-open-child-profile text-xs font-bold transition-opacity hover:opacity-80"
                                 style="color: var(--lumina-primary);"
+                                data-child='@json($child, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)'
                             >
                                 View Profile
-                            </a>
+                            </button>
                         </div>
                     @endforeach
+                </div>
+            </div>
+
+            <div id="childProfileModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+                <div id="childProfileBackdrop" class="absolute inset-0 bg-black/45"></div>
+                <div class="relative z-10 w-full max-w-2xl rounded-2xl border bg-white p-6 shadow-2xl" style="border-color: var(--lumina-border);">
+                    <div class="mb-5 flex items-center justify-between">
+                        <h3 class="text-xl font-bold" style="color: var(--lumina-text-primary);">Child Account Profile</h3>
+                        <button id="closeChildProfileModal" type="button" class="rounded-full p-2 hover:bg-gray-100" aria-label="Close profile modal">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+
+                    <form class="grid gap-4 sm:grid-cols-2">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-muted);">Full Name</label>
+                            <input id="childProfileName" type="text" readonly class="rounded-xl border px-4 py-2.5 text-sm" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary);">
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-muted);">Role</label>
+                            <input id="childProfileRole" type="text" readonly class="rounded-xl border px-4 py-2.5 text-sm" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary);">
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-muted);">Email</label>
+                            <input id="childProfileEmail" type="text" readonly class="rounded-xl border px-4 py-2.5 text-sm" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary);">
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-muted);">Phone</label>
+                            <input id="childProfilePhone" type="text" readonly class="rounded-xl border px-4 py-2.5 text-sm" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary);">
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-muted);">Date of Birth</label>
+                            <input id="childProfileDob" type="text" readonly class="rounded-xl border px-4 py-2.5 text-sm" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary);">
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-muted);">Member Since</label>
+                            <input id="childProfileSince" type="text" readonly class="rounded-xl border px-4 py-2.5 text-sm" style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary);">
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -137,12 +189,14 @@
                 </div>
 
                 {{-- Form Fields --}}
-                <form class="flex flex-col gap-5">
+                <form method="POST" action="{{ route('parent.settings.update') }}" class="flex flex-col gap-5">
+                    @csrf
                     <div class="grid gap-5 sm:grid-cols-2">
                         {{-- Full Name --}}
                         <div class="flex flex-col gap-2">
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Full Name</label>
                             <input 
+                                name="name"
                                 type="text" 
                                 value="{{ $user->name ?? 'Sarah Henderson' }}"
                                 class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
@@ -154,6 +208,7 @@
                         <div class="flex flex-col gap-2">
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Email Address</label>
                             <input 
+                                name="email"
                                 type="email" 
                                 value="{{ $user->email ?? 'sarah.henderson@email.com' }}"
                                 class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
@@ -167,41 +222,24 @@
                         <div class="flex flex-col gap-2">
                             <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Phone Number</label>
                             <input 
+                                name="phone"
                                 type="tel" 
                                 value="{{ $user->phone ?? '+213 555 123 456' }}"
                                 class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                                 style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
                             >
                         </div>
-
-                        {{-- Preferred Language --}}
-                        <div class="flex flex-col gap-2">
-                            <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Preferred Language</label>
-                            <div class="relative">
-                                <select 
-                                    class="w-full appearance-none rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2 cursor-pointer"
-                                    style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
-                                >
-                                    <option value="english" selected>English</option>
-                                    <option value="french">French</option>
-                                    <option value="arabic">Arabic</option>
-                                </select>
-                                <svg class="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2" fill="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
-                                    <path d="M7 10l5 5 5-5z"/>
-                                </svg>
-                            </div>
-                        </div>
                     </div>
 
-                    {{-- Address --}}
+                    {{-- Notes --}}
                     <div class="flex flex-col gap-2">
-                        <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Address</label>
-                        <input 
-                            type="text" 
-                            value="{{ $user->address ?? '123 Rue des Martyrs, Algiers, Algeria' }}"
+                        <label class="text-sm font-medium" style="color: var(--lumina-text-secondary);">Bio</label>
+                        <textarea
+                            name="bio"
                             class="rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
                             style="background-color: var(--lumina-bg-card); border-color: var(--lumina-border); color: var(--lumina-text-primary); --tw-ring-color: var(--lumina-primary);"
-                        >
+                            rows="3"
+                        >{{ $user->bio ?? '' }}</textarea>
                     </div>
 
                     {{-- Save Button --}}
@@ -213,100 +251,6 @@
                         Save Changes
                     </button>
                 </form>
-            </div>
-
-            {{-- Notification Preferences Card --}}
-            <div 
-                class="flex flex-col rounded-3xl border p-8"
-                style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.1); border-radius: 24px;"
-            >
-                {{-- Header --}}
-                <div class="mb-6 flex items-center gap-2">
-                    <svg class="h-5 w-5" fill="currentColor" style="color: var(--lumina-primary);" viewBox="0 0 24 24">
-                        <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/>
-                    </svg>
-                    <h3 class="text-lg font-bold" style="color: var(--lumina-text-primary);">
-                        Notification Preferences
-                    </h3>
-                </div>
-
-                {{-- Notification Options --}}
-                <div class="flex flex-col gap-4">
-                    {{-- Email Notifications --}}
-                    <div 
-                        class="flex items-center justify-between rounded-xl border p-4"
-                        style="border-color: var(--lumina-border);"
-                    >
-                        <div class="flex items-center gap-3">
-                            <div 
-                                class="flex h-10 w-10 items-center justify-center rounded-full"
-                                style="background-color: var(--lumina-bg-card);"
-                            >
-                                <svg class="h-5 w-5" fill="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
-                                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold" style="color: var(--lumina-text-primary);">Email Notifications</p>
-                                <p class="text-xs" style="color: var(--lumina-text-muted);">Receive updates about grades and events</p>
-                            </div>
-                        </div>
-                        <label class="relative inline-flex cursor-pointer items-center">
-                            <input type="checkbox" class="peer sr-only" checked>
-                            <div class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--lumina-primary)] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
-                        </label>
-                    </div>
-
-                    {{-- SMS Notifications --}}
-                    <div 
-                        class="flex items-center justify-between rounded-xl border p-4"
-                        style="border-color: var(--lumina-border);"
-                    >
-                        <div class="flex items-center gap-3">
-                            <div 
-                                class="flex h-10 w-10 items-center justify-center rounded-full"
-                                style="background-color: var(--lumina-bg-card);"
-                            >
-                                <svg class="h-5 w-5" fill="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
-                                    <path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold" style="color: var(--lumina-text-primary);">SMS Notifications</p>
-                                <p class="text-xs" style="color: var(--lumina-text-muted);">Urgent alerts via text message</p>
-                            </div>
-                        </div>
-                        <label class="relative inline-flex cursor-pointer items-center">
-                            <input type="checkbox" class="peer sr-only">
-                            <div class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--lumina-primary)] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
-                        </label>
-                    </div>
-
-                    {{-- Payment Reminders --}}
-                    <div 
-                        class="flex items-center justify-between rounded-xl border p-4"
-                        style="border-color: var(--lumina-border);"
-                    >
-                        <div class="flex items-center gap-3">
-                            <div 
-                                class="flex h-10 w-10 items-center justify-center rounded-full"
-                                style="background-color: var(--lumina-bg-card);"
-                            >
-                                <svg class="h-5 w-5" fill="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
-                                    <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <p class="text-sm font-bold" style="color: var(--lumina-text-primary);">Payment Reminders</p>
-                                <p class="text-xs" style="color: var(--lumina-text-muted);">Get notified before payment due dates</p>
-                            </div>
-                        </div>
-                        <label class="relative inline-flex cursor-pointer items-center">
-                            <input type="checkbox" class="peer sr-only" checked>
-                            <div class="peer h-6 w-11 rounded-full bg-gray-200 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[var(--lumina-primary)] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none"></div>
-                        </label>
-                    </div>
-                </div>
             </div>
 
             {{-- Security Card --}}
@@ -380,4 +324,68 @@
             </div>
         </div>
     </div>
+
+    <script>
+        (function () {
+            const modal = document.getElementById('childProfileModal');
+            const backdrop = document.getElementById('childProfileBackdrop');
+            const closeButton = document.getElementById('closeChildProfileModal');
+            const triggers = document.querySelectorAll('.js-open-child-profile');
+
+            const fields = {
+                name: document.getElementById('childProfileName'),
+                role: document.getElementById('childProfileRole'),
+                email: document.getElementById('childProfileEmail'),
+                phone: document.getElementById('childProfilePhone'),
+                dob: document.getElementById('childProfileDob'),
+                since: document.getElementById('childProfileSince'),
+            };
+
+            const fallback = (value, empty = 'Not provided') => String(value || '').trim() || empty;
+
+            const hideModal = () => {
+                if (!modal) return;
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            };
+
+            const showModal = (child) => {
+                if (!modal) return;
+
+                fields.name.value = fallback(child.name, 'Unknown child');
+                fields.role.value = fallback(child.grade, 'Student');
+                fields.email.value = fallback(child.email);
+                fields.phone.value = fallback(child.phone);
+                fields.dob.value = fallback(child.dateOfBirth);
+                fields.since.value = fallback(child.memberSince);
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            };
+
+            triggers.forEach((button) => {
+                button.addEventListener('click', function () {
+                    const payload = this.getAttribute('data-child') || '{}';
+
+                    try {
+                        showModal(JSON.parse(payload));
+                    } catch (error) {
+                        showModal({});
+                    }
+                });
+            });
+
+            [backdrop, closeButton].forEach((node) => {
+                if (node) {
+                    node.addEventListener('click', hideModal);
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    hideModal();
+                }
+            });
+        })();
+    </script>
 </x-layouts.parent>

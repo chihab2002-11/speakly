@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AttendanceRecord;
 use App\Models\CourseClass;
 use App\Models\User;
+use App\Notifications\ParentChildAttendanceSavedNotification;
 use App\Notifications\StudentAttendanceSavedNotification;
 use App\Notifications\TeacherAttendanceSavedNotification;
 use Illuminate\Http\RedirectResponse;
@@ -200,6 +201,31 @@ class TeacherAttendanceController extends Controller
                     ));
                 });
         }
+
+        $studentsForParentNotify = User::query()
+            ->whereIn('id', $submittedStudentIds->values())
+            ->whereNotNull('parent_id')
+            ->get(['id', 'name', 'parent_id']);
+
+        $parentsById = User::query()
+            ->whereIn('id', $studentsForParentNotify->pluck('parent_id')->unique()->values())
+            ->get(['id'])
+            ->keyBy('id');
+
+        $studentsForParentNotify->each(function (User $student) use ($parentsById, $courseClassName, $validated): void {
+            $parent = $parentsById->get((int) $student->parent_id);
+
+            if (! $parent) {
+                return;
+            }
+
+            $parent->notify(new ParentChildAttendanceSavedNotification(
+                childId: (int) $student->id,
+                childName: (string) $student->name,
+                className: $courseClassName,
+                date: (string) $validated['date'],
+            ));
+        });
 
         return redirect()
             ->route('teacher.attendance', [

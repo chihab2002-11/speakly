@@ -42,6 +42,8 @@ class DatabaseSeeder extends Seeder
                 TeacherWorkflowSeeder::class,
                 LanguageProgramSeeder::class,
                 ReviewSeeder::class,
+                ParentDashboardLinkedChildrenSeeder::class,
+                ParentFinancialScholarshipSeeder::class,
             ]);
         }
     }

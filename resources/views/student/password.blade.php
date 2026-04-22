@@ -1,8 +1,8 @@
-<x-layouts.student :title="__('Change Password')" :currentRoute="'settings'">
+<x-dynamic-component :component="$layoutComponent ?? 'layouts.student'" :title="__('Change Password')" :currentRoute="$currentRoute ?? 'settings'" :pageTitle="'Child Change Password'" :user="$user ?? null" :portalParent="$portalParent ?? null" :portalChildren="$portalChildren ?? []" :portalSelectedChild="$portalSelectedChild ?? null">
     {{-- Page Header with Back Link --}}
     <div class="mb-8">
         <a 
-            href="{{ route('student.settings') }}" 
+            href="{{ route($settingsRouteName ?? 'student.settings', $settingsRouteParams ?? []) }}" 
             class="mb-4 inline-flex items-center gap-2 text-sm font-medium transition-opacity hover:opacity-80 cursor-pointer"
             style="color: var(--lumina-primary);"
             wire:navigate
@@ -53,7 +53,7 @@
             </div>
 
             {{-- Password Form --}}
-            <form class="flex flex-col gap-5" method="POST" action="{{ route('student.password.update') }}">
+            <form class="flex flex-col gap-5" method="POST" action="{{ route($passwordUpdateRouteName ?? 'student.password.update', $passwordUpdateRouteParams ?? []) }}">
                 @csrf
                 
                 {{-- Current Password --}}
@@ -158,7 +158,7 @@
                 {{-- Action Buttons --}}
                 <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
                     <a 
-                        href="{{ route('student.settings') }}"
+                        href="{{ route($settingsRouteName ?? 'student.settings', $settingsRouteParams ?? []) }}"
                         class="rounded-xl border px-6 py-3 text-center text-sm font-bold transition-all hover:bg-gray-50 cursor-pointer"
                         style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);"
                         wire:navigate
@@ -209,4 +209,4 @@
             }
         }
     </script>
-</x-layouts.student>
+</x-dynamic-component>

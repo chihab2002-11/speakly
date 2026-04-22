@@ -78,9 +78,11 @@
             <a 
                 href="{{ Route::has($item['route']) ? route($item['route'], $item['routeParams'] ?? []) : '#' }}"
                 class="relative flex items-center gap-4 px-4 py-3 text-sm font-medium transition-all duration-200 {{ $isActive ? 'rounded-l-2xl' : 'rounded-xl mr-4 hover:bg-white/30' }}"
-                style="{{ $isActive 
-                    ? 'background-color: var(--lumina-bg-section); color: var(--lumina-primary-dark); font-weight: 700;' 
-                    : 'color: var(--lumina-primary-dark);' }}"
+                @if($isActive)
+                    style="background-color: var(--lumina-bg-section); color: var(--lumina-primary-dark); font-weight: 700;"
+                @else
+                    style="color: var(--lumina-primary-dark);"
+                @endif
                 wire:navigate
             >
                 {{-- Icon --}}
