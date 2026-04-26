@@ -47,6 +47,8 @@ RUN mkdir -p \
     --prefer-dist \
     --optimize-autoloader
 
+RUN php artisan migrate --force || true
+
 ENV PORT=8080
 
 EXPOSE 8080
