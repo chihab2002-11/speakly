@@ -1,3 +1,13 @@
+FROM node:22-bookworm-slim AS frontend
+
+WORKDIR /app
+
+COPY package.json package-lock.json vite.config.js ./
+COPY resources ./resources
+
+RUN npm ci
+RUN npm run build
+
 FROM php:8.4-cli
 
 RUN apt-get update \
@@ -20,10 +30,17 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 
 COPY . .
+COPY --from=frontend /app/public/build ./public/build
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-RUN composer install \
+RUN mkdir -p \
+        bootstrap/cache \
+        storage/framework/cache/data \
+        storage/framework/sessions \
+        storage/framework/views \
+        storage/logs \
+    && composer install \
     --no-dev \
     --no-interaction \
     --no-progress \

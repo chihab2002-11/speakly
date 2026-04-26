@@ -1,0 +1,16 @@
+.git
+.cursor
+.idea
+.junie
+.env
+.env.*
+node_modules
+vendor
+public/build
+npm-debug.log
+yarn-error.log
+storage/logs
+storage/framework/cache
+storage/framework/sessions
+storage/framework/testing
+storage/framework/views
