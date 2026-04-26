@@ -41,15 +41,14 @@ RUN mkdir -p \
         storage/framework/views \
         storage/logs \
     && composer install \
-    --no-dev \
-    --no-interaction \
-    --no-progress \
-    --prefer-dist \
-    --optimize-autoloader
-
+        --no-dev \
+        --no-interaction \
+        --no-progress \
+        --prefer-dist \
+        --optimize-autoloader
 
 ENV PORT=8080
 
 EXPOSE 8080
 
-CMD php artisan optimize:clear && php artisan config:clear && php -S 0.0.0.0:$PORT -t public
+CMD php artisan optimize:clear && php artisan config:clear && php artisan migrate --force && php -S 0.0.0.0:$PORT -t public
