@@ -98,9 +98,9 @@
                             <div class="flex items-center gap-3">
                                 <div 
                                     class="flex h-10 w-10 items-center justify-center rounded-xl"
-                                    style="background-color: <?php echo e($child['color']); ?>;"
+                                    style="--child-bg: {{ $child['color'] }}; --child-text: {{ $child['textColor'] }}; background-color: var(--child-bg);"
                                 >
-                                    <span class="text-sm font-bold" style="color: <?php echo e($child['textColor']); ?>;">
+                                    <span class="text-sm font-bold" style="color: var(--child-text);">
                                         {{ $child['initials'] }}
                                     </span>
                                 </div>

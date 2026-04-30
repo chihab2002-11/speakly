@@ -77,8 +77,8 @@
                                         @php $class = $timetableData[$day][$slot]; @endphp
                                         <div 
                                             class="js-timetable-card rounded-lg p-3 border-l-4 h-full flex flex-col justify-center transition-all duration-200 hover:shadow-md cursor-pointer"
-                                            data-bg="<?php echo e($class['color']); ?>"
-                                            data-border="<?php echo e($class['border']); ?>"
+                                            data-bg="{{ $class['color'] }}"
+                                            data-border="{{ $class['border'] }}"
                                         >
                                             <p class="text-xs font-bold truncate" style="color: var(--lumina-text-primary);">{{ $class['name'] }}</p>
                                             <p class="text-xs mt-1" style="color: var(--lumina-text-muted);">{{ $class['room'] }}</p>

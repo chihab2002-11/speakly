@@ -105,7 +105,7 @@
                                 default => ['bg' => '#ECFDF3', 'border' => '#10B981', 'text' => '#047857'],
                             };
                         @endphp
-                        <article class="rounded-2xl border p-4" style="border-color: <?php echo e($tonePalette['border']); ?>; border-left-width: 6px; background-color: <?php echo e($tonePalette['bg']); ?>;">
+                        <article class="rounded-2xl border p-4" data-tone="{{ $feedbackTone }}" style="--feedback-border: {{ $tonePalette['border'] }}; --feedback-bg: {{ $tonePalette['bg'] }}; border-color: var(--feedback-border); border-left-width: 6px; background-color: var(--feedback-bg);">
                             <div class="mb-2 flex items-start justify-between gap-3">
                                 <div>
                                     <h4 class="text-sm font-bold" style="color: var(--lumina-text-primary);">{{ $feedback['teacher'] ?? 'Teacher' }}</h4>
@@ -113,7 +113,7 @@
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <a href="{{ $feedback['messageUrl'] ?? '#' }}" class="inline-flex h-10 w-10 items-center justify-center rounded-full border transition-colors hover:bg-gray-50" style="border-color: var(--lumina-border);" title="Message {{ $feedback['teacher'] ?? 'Teacher' }}">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--lumina-primary);">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #EF4444; stroke-width: 2.2;">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5l-2 2V6a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H9z"/>
                                         </svg>
                                     </a>
@@ -207,18 +207,6 @@
                     <linearGradient id="progressFill" x1="0" y1="0" x2="0" y2="1">
                         <stop id="progressFillStart" offset="0%" stop-color="#2D8C5E" stop-opacity="0.28" />
                         <stop id="progressFillEnd" offset="100%" stop-color="#2D8C5E" stop-opacity="0.04" />
-                    </linearGradient>
-                    <linearGradient id="attendanceBarPresentGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#D1FAE5" />
-                        <stop offset="100%" stop-color="#86EFAC" />
-                    </linearGradient>
-                    <linearGradient id="attendanceBarLateGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#FEF3C7" />
-                        <stop offset="100%" stop-color="#FDE68A" />
-                    </linearGradient>
-                    <linearGradient id="attendanceBarAbsentGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#FEE2E2" />
-                        <stop offset="100%" stop-color="#FCA5A5" />
                     </linearGradient>
                 </defs>
                 <line x1="40" y1="330" x2="730" y2="330" stroke="#dbe7df" stroke-width="1" />
@@ -539,8 +527,8 @@
                         const status = attendanceStatuses[index] || 'unknown';
                         const barColor = attendanceColor(status);
                         const barFill = status === 'present'
-                            ? 'url(#attendanceBarPresentGradient)'
-                            : (status === 'late' ? 'url(#attendanceBarLateGradient)' : 'url(#attendanceBarAbsentGradient)');
+                            ? 'rgba(134, 239, 172, 0.35)'
+                            : (status === 'late' ? 'rgba(253, 230, 138, 0.35)' : 'rgba(252, 165, 165, 0.35)');
                         const barStroke = status === 'present'
                             ? '#065F46'
                             : (status === 'late' ? '#92400E' : '#991B1B');
@@ -548,10 +536,10 @@
                         const barHeight = Math.max(8, chartBottom - point.y);
                         const iconY = Math.max(chartTop + 14, point.y + 14);
                         const iconMarkup = status === 'present'
-                            ? `<path d="M ${point.x - 4} ${iconY} L ${point.x - 1} ${iconY + 3} L ${point.x + 5} ${iconY - 4}" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>`
+                            ? `<path d="M ${point.x - 4} ${iconY} L ${point.x - 1} ${iconY + 3} L ${point.x + 5} ${iconY - 4}" stroke="#1F3A34" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>`
                             : (status === 'late'
-                                ? `<circle cx="${point.x}" cy="${iconY}" r="4.3" fill="none" stroke="#ffffff" stroke-width="1.6"></circle><path d="M ${point.x} ${iconY - 2} L ${point.x} ${iconY + 0.5} L ${point.x + 2} ${iconY + 2}" stroke="#ffffff" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>`
-                                : `<path d="M ${point.x - 3.5} ${iconY - 3.5} L ${point.x + 3.5} ${iconY + 3.5}" stroke="#ffffff" stroke-width="2" stroke-linecap="round"></path><path d="M ${point.x + 3.5} ${iconY - 3.5} L ${point.x - 3.5} ${iconY + 3.5}" stroke="#ffffff" stroke-width="2" stroke-linecap="round"></path>`);
+                                ? `<circle cx="${point.x}" cy="${iconY}" r="4.3" fill="none" stroke="#78350F" stroke-width="1.8"></circle><path d="M ${point.x} ${iconY - 2} L ${point.x} ${iconY + 0.5} L ${point.x + 2} ${iconY + 2}" stroke="#78350F" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>`
+                                : `<path d="M ${point.x - 3.5} ${iconY - 3.5} L ${point.x + 3.5} ${iconY + 3.5}" stroke="#7F1D1D" stroke-width="2.2" stroke-linecap="round"></path><path d="M ${point.x + 3.5} ${iconY - 3.5} L ${point.x - 3.5} ${iconY + 3.5}" stroke="#7F1D1D" stroke-width="2.2" stroke-linecap="round"></path>`);
 
                         return `
                             <g>

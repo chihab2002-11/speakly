@@ -194,10 +194,13 @@
                         </span>
                     </div>
 
+                    @php
+                        $progressWidth = min(max((int) ($paidPercentage ?? 0), 0), 100);
+                    @endphp
                     <div class="h-2 overflow-hidden rounded-full" style="background: rgba(255, 255, 255, 0.12);">
                         <div
                             class="h-full rounded-full"
-                            style="width: {{ min(max((int) ($paidPercentage ?? 0), 0), 100) }}%; background: #6EE7B7;"
+                            style="--progress-width: {{ $progressWidth }}%; width: var(--progress-width); background-color: #6EE7B7;"
                         ></div>
                     </div>
 

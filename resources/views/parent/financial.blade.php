@@ -72,6 +72,12 @@
                 <span class="rounded-full px-3 py-1 text-xs font-semibold" style="background-color: #E5E9E3; color: #3F4941;">{{ $academicYear ?? date('Y') . '/' . (date('Y') + 1) }} Academic Year</span>
             </div>
 
+            <div id="ledgerFilterButtons" class="inline-flex items-center gap-2 rounded-lg border p-1" style="border-color: var(--lumina-border); background-color: #F8FBF8;">
+                <button type="button" data-ledger-filter="all" class="ledger-filter-btn rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wide transition-all" style="background: linear-gradient(135deg, #0E7A4E 0%, #0A5E3D 100%); color: #ffffff; box-shadow: 0 6px 14px rgba(10, 94, 61, 0.2);">All</button>
+                <button type="button" data-ledger-filter="paid" class="ledger-filter-btn rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wide transition-all" style="background: transparent; color: var(--lumina-text-secondary);">Paid</button>
+                <button type="button" data-ledger-filter="outstanding" class="ledger-filter-btn rounded-lg px-4 py-2 text-sm font-bold uppercase tracking-wide transition-all" style="background: transparent; color: var(--lumina-text-secondary);">Outstanding</button>
+            </div>
+
             <div class="overflow-hidden rounded-xl border" style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.15);">
                 <div class="lumina-scrollbar max-h-[460px] overflow-y-auto">
                 <table class="w-full">
@@ -88,8 +94,9 @@
                             @php
                                 $discountPercent = (int) ($item['discount_percent'] ?? 0);
                                 $finalPrice = (int) ($item['final_amount'] ?? $item['amount'] ?? 0);
+                                $status = ($item['status'] ?? 'outstanding') === 'outstanding' ? 'outstanding' : 'paid';
                             @endphp
-                            <tr class="border-t" style="border-color: rgba(190, 201, 191, 0.15);">
+                            <tr class="border-t ledger-row" data-ledger-status="{{ $status }}" style="border-color: rgba(190, 201, 191, 0.15);">
                                 <td class="px-4 py-5">
                                     <p class="text-base font-bold" style="color: #181D19;">{{ $item['child'] ?? 'Child' }}</p>
                                     <p class="text-sm" style="color: #3F4941;">{{ $item['name'] ?? 'Tuition' }} &bull; {{ $item['period'] ?? '-' }}</p>
@@ -97,7 +104,7 @@
                                 <td class="px-4 py-5 text-sm font-semibold" style="color: #3F4941;">{{ $discountPercent }}%</td>
                                 <td class="px-4 py-5 text-right text-sm font-black" style="color: #047857;">{{ number_format($finalPrice, 0, ',', ' ') }} DZD</td>
                                 <td class="px-4 py-5 text-center">
-                                    @if(($item['status'] ?? 'outstanding') === 'outstanding')
+                                    @if($status === 'outstanding')
                                         <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase" style="background-color: #FFDAD6; color: #93000A;">Outstanding</span>
                                     @else
                                         <span class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold uppercase" style="background-color: #C1E6CC; color: #476853;">Paid</span>
@@ -322,7 +329,7 @@
             };
 
             prevBtn?.addEventListener('click', () => animateTo(index - 1));
-            nextBtn?.addEventListener('click', () => animateTo(index + 1));
+            nextBtn?.addEventListener('click', () => animateTo(index - 1));
 
             childSelect?.addEventListener('change', () => {
                 selectedChildId = Number(childSelect.value || 0);
@@ -330,6 +337,50 @@
             });
 
             render();
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const ledgerFilterButtons = document.querySelectorAll('.ledger-filter-btn');
+            const ledgerRows = document.querySelectorAll('.ledger-row');
+            let currentFilter = 'all';
+
+            function updateButtonStyles() {
+                ledgerFilterButtons.forEach((button) => {
+                    const isActive = button.dataset.ledgerFilter === currentFilter;
+                    if (isActive) {
+                        button.style.background = 'linear-gradient(135deg, #0E7A4E 0%, #0A5E3D 100%)';
+                        button.style.color = '#ffffff';
+                        button.style.boxShadow = '0 6px 14px rgba(10, 94, 61, 0.2)';
+                    } else {
+                        button.style.background = 'transparent';
+                        button.style.color = 'var(--lumina-text-secondary)';
+                        button.style.boxShadow = 'none';
+                    }
+                });
+            }
+
+            function filterRows() {
+                ledgerRows.forEach((row) => {
+                    const status = row.dataset.ledgerStatus;
+                    if (currentFilter === 'all' || status === currentFilter) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
+            ledgerFilterButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    currentFilter = button.dataset.ledgerFilter;
+                    updateButtonStyles();
+                    filterRows();
+                });
+            });
+
+            updateButtonStyles();
         })();
     </script>
 </x-layouts.parent>
