@@ -9,10 +9,11 @@ use App\Models\User;
 use App\Support\DashboardDataProvider;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class StudentDashboardController extends Controller
@@ -132,7 +133,7 @@ class StudentDashboardController extends Controller
         }
 
         try {
-            $popularCourses = Course::take(4)->get();
+            $popularCourses = $this->popularCourses();
         } catch (QueryException $e) {
         }
 
@@ -180,7 +181,7 @@ class StudentDashboardController extends Controller
 
     /**
      * @param  Collection<int, CourseClass>  $enrolledClasses
-    * @return array{class:CourseClass,minutes:int,countdown:string,startsAt:string,room:string}|null
+     * @return array{class:CourseClass,minutes:int,countdown:string,startsAt:string,room:string}|null
      */
     private function resolveNextClassData(Collection $enrolledClasses): ?array
     {
@@ -300,8 +301,43 @@ class StudentDashboardController extends Controller
     }
 
     /**
+     * @return Collection<int, Course>
+     */
+    private function popularCourses(int $limit = 4): Collection
+    {
+        return Course::query()
+            ->select('courses.*')
+            ->selectRaw('COUNT(DISTINCT class_student.user_id) as assigned_students_count')
+            ->join('classes', 'classes.course_id', '=', 'courses.id')
+            ->join('class_student', 'class_student.class_id', '=', 'classes.id')
+            ->groupBy([
+                'courses.id',
+                'courses.name',
+                'courses.code',
+                'courses.description',
+                'courses.created_at',
+                'courses.updated_at',
+            ])
+            ->when($this->courseColumnExists('price'), fn ($query) => $query->groupBy('courses.price'))
+            ->when($this->courseColumnExists('program_id'), fn ($query) => $query->groupBy('courses.program_id'))
+            ->orderByDesc(DB::raw('assigned_students_count'))
+            ->orderBy('courses.name')
+            ->limit($limit)
+            ->get();
+    }
+
+    private function courseColumnExists(string $column): bool
+    {
+        static $columns = null;
+
+        $columns ??= (new Course)->getConnection()->getSchemaBuilder()->getColumnListing('courses');
+
+        return in_array($column, $columns, true);
+    }
+
+    /**
      * @param  Collection<int, CourseClass>  $enrolledClasses
-    * @return array{groups:list<array{key:string,label:string,displayName:string,percent:int,targetLevel:string,status:string,insight:string,count:int}>,default:array{key:string,label:string,displayName:string,percent:int,targetLevel:string,status:string,insight:string,count:int}}
+     * @return array{groups:list<array{key:string,label:string,displayName:string,percent:int,targetLevel:string,status:string,insight:string,count:int}>,default:array{key:string,label:string,displayName:string,percent:int,targetLevel:string,status:string,insight:string,count:int}}
      */
     private function buildLanguageProficiencyData(User $student, Collection $enrolledClasses): array
     {

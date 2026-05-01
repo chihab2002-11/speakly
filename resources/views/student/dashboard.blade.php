@@ -387,28 +387,22 @@
                         href="#" 
                         class="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-gray-50"
                     >
-                        <span class="text-sm font-medium" style="color: var(--lumina-text-primary);">
-                            {{ $course->name }}
+                        <span class="flex min-w-0 flex-col">
+                            <span class="truncate text-sm font-medium" style="color: var(--lumina-text-primary);">
+                                {{ $course->name }}
+                            </span>
+                            <span class="text-[10px] font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">
+                                {{ (int) ($course->assigned_students_count ?? 0) }} student{{ (int) ($course->assigned_students_count ?? 0) === 1 ? '' : 's' }}
+                            </span>
                         </span>
                         <svg class="h-4 w-4" fill="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
                             <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
                         </svg>
                     </a>
                 @empty
-                    {{-- Default courses --}}
-                    @foreach(['Spanish A1', 'German B1', 'Italian A2', 'Japanese N5'] as $defaultCourse)
-                        <a 
-                            href="#" 
-                            class="flex items-center justify-between rounded-lg p-3 transition-colors hover:bg-gray-50"
-                        >
-                            <span class="text-sm font-medium" style="color: var(--lumina-text-primary);">
-                                {{ $defaultCourse }}
-                            </span>
-                            <svg class="h-4 w-4" fill="currentColor" style="color: var(--lumina-text-muted);" viewBox="0 0 24 24">
-                                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-                            </svg>
-                        </a>
-                    @endforeach
+                    <p class="rounded-lg p-3 text-xs" style="background-color: var(--lumina-bg-card); color: var(--lumina-text-secondary);">
+                        No course assignments found yet.
+                    </p>
                 @endforelse
             </div>
         </div>

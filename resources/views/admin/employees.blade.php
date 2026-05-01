@@ -66,10 +66,6 @@
                         <input type="text" name="search" value="{{ $search }}" placeholder="Search staff or records..." class="w-64 rounded-lg border px-3 py-2 text-sm" style="background: #F4F2FC; border-color: rgba(196, 197, 213, 0.2);">
                         <button type="submit" class="rounded-lg border px-3 py-2 text-sm font-semibold" style="border-color: rgba(196, 197, 213, 0.25); color: #2D8C5E;">Filter</button>
                     </form>
-                    <button type="button" onclick="openCreateSecretaryModal()" class="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-bold" style="border-color: rgba(45, 140, 94, 0.2); color: #2D8C5E; background: #FFFFFF;">
-                        <span>+</span>
-                        <span>Add Secretary</span>
-                    </button>
                 </div>
             </div>
 
@@ -126,10 +122,6 @@
                     <h2 class="text-4xl font-bold tracking-tight" style="color: #1A1B22; letter-spacing: -0.6px;">Academic Faculty</h2>
                     <p class="text-sm" style="color: #444653;">Teacher expertise and language curriculum assignment</p>
                 </div>
-                <button type="button" onclick="openCreateTeacherModal()" class="inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-bold" style="border-color: rgba(45, 140, 94, 0.2); color: #2D8C5E; background: #FFFFFF;">
-                    <span>+</span>
-                    <span>Add Teacher</span>
-                </button>
             </div>
 
             <div class="overflow-hidden rounded-2xl" style="background: #FFFFFF; box-shadow: 0px 20px 25px -5px rgba(26, 27, 34, 0.04), 0px 8px 10px -6px rgba(26, 27, 34, 0.04);">
@@ -205,26 +197,6 @@
         </section>
     </div>
 
-    <div id="createSecretaryModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4" onclick="if(event.target===this){closeCreateSecretaryModal()}">
-        <div class="w-full max-w-xl rounded-2xl p-6" style="background:#FFFFFF;" onclick="event.stopPropagation()">
-            <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-xl font-bold" style="color:#1A1B22;">Add Secretary</h3>
-                <button type="button" onclick="closeCreateSecretaryModal()" class="rounded-lg p-2 hover:bg-gray-100">×</button>
-            </div>
-            <form method="POST" action="{{ route('admin.employees.secretaries.store') }}" class="grid gap-3">
-                @csrf
-                <input name="name" type="text" required placeholder="Full name" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;">
-                <input name="email" type="email" required placeholder="Email" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;">
-                <input name="phone" type="text" placeholder="Phone" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;">
-                <input name="password" type="password" required placeholder="Temporary password" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;">
-                <div class="mt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeCreateSecretaryModal()" class="rounded-lg border px-4 py-2 text-sm font-semibold" style="border-color:#E2E8F0;color:#3F4941;">Cancel</button>
-                    <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:#2D8C5E;">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <div id="editSecretaryModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4" onclick="if(event.target===this){closeEditSecretaryModal()}">
         <div class="w-full max-w-xl rounded-2xl p-6" style="background:#FFFFFF;" onclick="event.stopPropagation()">
             <div class="mb-4 flex items-center justify-between">
@@ -240,33 +212,6 @@
                 <div class="mt-2 flex justify-end gap-2">
                     <button type="button" onclick="closeEditSecretaryModal()" class="rounded-lg border px-4 py-2 text-sm font-semibold" style="border-color:#E2E8F0;color:#3F4941;">Cancel</button>
                     <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:#2D8C5E;">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="createTeacherModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4" onclick="if(event.target===this){closeCreateTeacherModal()}">
-        <div class="w-full max-w-xl rounded-2xl p-6" style="background:#FFFFFF;" onclick="event.stopPropagation()">
-            <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-xl font-bold" style="color:#1A1B22;">Add Teacher</h3>
-                <button type="button" onclick="closeCreateTeacherModal()" class="rounded-lg p-2 hover:bg-gray-100">×</button>
-            </div>
-            <form method="POST" action="{{ route('admin.employees.teachers.store') }}" class="grid gap-3">
-                @csrf
-                <input name="name" type="text" required placeholder="Full name" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;">
-                <input name="email" type="email" required placeholder="Email" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;">
-                <input name="phone" type="text" placeholder="Phone" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;">
-                <select name="preferred_language" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;">
-                    <option value="">Preferred language</option>
-                    @foreach($languageOptions as $languageOption)
-                        <option value="{{ $languageOption }}">{{ strtoupper($languageOption) }}</option>
-                    @endforeach
-                </select>
-                <textarea name="bio" rows="3" placeholder="Faculty bio (optional)" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;"></textarea>
-                <input name="password" type="password" required placeholder="Temporary password" class="rounded-lg border px-3 py-2 text-sm" style="border-color:#E2E8F0;">
-                <div class="mt-2 flex justify-end gap-2">
-                    <button type="button" onclick="closeCreateTeacherModal()" class="rounded-lg border px-4 py-2 text-sm font-semibold" style="border-color:#E2E8F0;color:#3F4941;">Cancel</button>
-                    <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background:#2D8C5E;">Create</button>
                 </div>
             </form>
         </div>
@@ -300,19 +245,6 @@
     </div>
 
     <script>
-        function openCreateSecretaryModal() {
-            const modal = document.getElementById('createSecretaryModal');
-            if (!modal) return;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-        function closeCreateSecretaryModal() {
-            const modal = document.getElementById('createSecretaryModal');
-            if (!modal) return;
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
         function openEditSecretaryModal(button) {
             const modal = document.getElementById('editSecretaryModal');
             const form = document.getElementById('editSecretaryForm');
@@ -334,20 +266,6 @@
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
-
-        function openCreateTeacherModal() {
-            const modal = document.getElementById('createTeacherModal');
-            if (!modal) return;
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-        function closeCreateTeacherModal() {
-            const modal = document.getElementById('createTeacherModal');
-            if (!modal) return;
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        }
-
         function openEditTeacherModal(button) {
             const modal = document.getElementById('editTeacherModal');
             const form = document.getElementById('editTeacherForm');

@@ -31,6 +31,8 @@ test('admin can open manage employees page', function () {
     $response->assertOk();
     $response->assertSee('Manage employees');
     $response->assertSee('Academic Faculty');
+    $response->assertDontSee('Add Teacher');
+    $response->assertDontSee('Add Secretary');
 });
 
 test('admin can create and update secretary employee', function () {
