@@ -1,9 +1,24 @@
+FROM composer:2 AS vendor
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+
+RUN composer install \
+        --no-dev \
+        --no-interaction \
+        --no-progress \
+        --prefer-dist \
+        --optimize-autoloader \
+        --no-scripts
+
 FROM node:22-bookworm-slim AS frontend
 
 WORKDIR /app
 
 COPY package.json package-lock.json vite.config.js ./
 COPY resources ./resources
+COPY --from=vendor /app/vendor ./vendor
 
 RUN npm ci
 RUN npm run build
@@ -30,6 +45,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 
 COPY . .
+COPY --from=vendor /app/vendor ./vendor
 COPY --from=frontend /app/public/build ./public/build
 
 ENV COMPOSER_ALLOW_SUPERUSER=1
@@ -50,5 +66,3 @@ RUN mkdir -p \
 ENV PORT=8080
 
 EXPOSE 8080
-
-CMD php artisan optimize:clear && php artisan config:clear && php artisan migrate --force && php -S 0.0.0.0:$PORT -t public

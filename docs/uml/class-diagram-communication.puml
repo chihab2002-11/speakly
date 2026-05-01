@@ -1,0 +1,82 @@
+@startuml
+title Final Project - Communication and Notifications Diagram
+
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 70
+skinparam ranksep 70
+hide methods
+hide circle
+
+skinparam packageStyle rectangle
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #475569
+skinparam PackageBorderColor #334155
+skinparam PackageBackgroundColor #F8FAFC
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+
+package "5) Communication & Notifications" {
+    class User {
+        +id
+        +name
+        +email
+        +requested_role
+    }
+
+    class Message {
+        +id
+        +subject
+        +body
+        +read_at
+    }
+
+    class Notification {
+        +id
+        +type
+        +read_at
+    }
+
+    class Review {
+        +id
+        +student_name
+        +rating_score
+        +uploaded_at
+    }
+
+    class TeacherResource {
+        +id
+        +category
+        +name
+        +download_count
+    }
+
+    class CourseClass {
+        +id
+        +capacity
+        +teacher_id
+    }
+}
+
+User "1" <-- "0..*" Message : sends
+User "1" <-- "0..*" Message : receives
+User "1" <-- "0..*" Notification : receives
+User "1" <-- "0..*" Review : writes
+User "1" <-- "0..*" TeacherResource : uploads
+CourseClass "1" <-- "0..*" TeacherResource : shared with class
+
+User -[hidden]-> Message
+Message -[hidden]-> Notification
+Notification -[hidden]-> Review
+Review -[hidden]-> TeacherResource
+TeacherResource -[hidden]-> CourseClass
+
+note bottom of Notification
+Notifications are used for approvals, new messages,
+attendance events, resource actions, and announcements.
+end note
+
+@enduml
