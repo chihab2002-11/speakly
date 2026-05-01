@@ -45,10 +45,12 @@ RUN mkdir -p \
         --no-interaction \
         --no-progress \
         --prefer-dist \
-        --optimize-autoloader
+        --optimize-autoloader \
+    && sed -i 's/\r$//' /app/docker-entrypoint.sh \
+    && chmod +x /app/docker-entrypoint.sh
 
 ENV PORT=8080
 
 EXPOSE 8080
 
-CMD ["sh", "-lc", "php artisan migrate --force && php artisan optimize:clear && exec php -S 0.0.0.0:${PORT:-8080} -t public"]
+CMD ["/app/docker-entrypoint.sh"]
