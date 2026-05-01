@@ -1,6 +1,7 @@
 #!/bin/sh
 
-set -eu
+set -e
+set -x
 
 echo "=== ENTRYPOINT STARTED ==="
 
@@ -13,7 +14,7 @@ echo "[startup] Verifying database connection before migrations..."
 while [ "$attempt" -le "$max_attempts" ]; do
     echo "[startup] Database check attempt ${attempt}/${max_attempts}"
 
-    if php artisan db:show --no-interaction >/dev/null 2>&1; then
+    if php artisan db:show --no-interaction; then
         echo "[startup] Database connection verified."
         break
     fi
@@ -38,4 +39,4 @@ php artisan optimize:clear
 echo "[startup] Laravel optimization caches cleared."
 
 echo "[startup] Starting PHP development server on 0.0.0.0:${PORT:-8080}..."
-exec php -S 0.0.0.0:"${PORT:-8080}" -t public
+exec php -S 0.0.0.0:${PORT:-8080} -t public

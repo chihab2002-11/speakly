@@ -15,20 +15,25 @@ test('railway container uses the deployment entrypoint script', function () {
 test('deployment entrypoint verifies the database and runs migrations before the php server', function () {
     $entrypoint = file_get_contents(__DIR__.'/../../../docker-entrypoint.sh');
 
-    expect($entrypoint)->toContain('=== ENTRYPOINT STARTED ===')
+    expect($entrypoint)->toContain('#!/bin/sh')
+        ->and($entrypoint)->toContain('set -e')
+        ->and($entrypoint)->toContain('set -x')
+        ->and($entrypoint)->not->toContain('set -eu')
+        ->and($entrypoint)->toContain('=== ENTRYPOINT STARTED ===')
         ->and($entrypoint)->toContain('php artisan db:show --no-interaction')
         ->and($entrypoint)->toContain('php artisan migrate --force')
         ->and($entrypoint)->toContain('php artisan optimize:clear')
-        ->and($entrypoint)->toContain('exec php -S 0.0.0.0:"${PORT:-8080}" -t public')
+        ->and($entrypoint)->toContain('exec php -S 0.0.0.0:${PORT:-8080} -t public')
         ->and($entrypoint)->toContain('Database connection verification failed')
         ->and($entrypoint)->toContain('Running database migrations...')
         ->and($entrypoint)->toContain('Clearing Laravel optimization caches...')
-        ->and($entrypoint)->not->toContain("\r");
+        ->and($entrypoint)->not->toContain("\r")
+        ->and($entrypoint)->not->toContain('>/dev/null 2>&1');
 
     expect(strpos($entrypoint, '=== ENTRYPOINT STARTED ==='))->toBeLessThan(strpos($entrypoint, 'php artisan db:show --no-interaction'))
         ->and(strpos($entrypoint, 'php artisan db:show --no-interaction'))->toBeLessThan(strpos($entrypoint, 'php artisan migrate --force'))
         ->and(strpos($entrypoint, 'php artisan migrate --force'))->toBeLessThan(strpos($entrypoint, 'php artisan optimize:clear'))
-        ->and(strpos($entrypoint, 'php artisan optimize:clear'))->toBeLessThan(strpos($entrypoint, 'exec php -S 0.0.0.0:"${PORT:-8080}" -t public'));
+        ->and(strpos($entrypoint, 'php artisan optimize:clear'))->toBeLessThan(strpos($entrypoint, 'exec php -S 0.0.0.0:${PORT:-8080} -t public'));
 });
 
 test('required session and sanctum token table migrations exist', function () {
