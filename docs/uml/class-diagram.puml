@@ -1,0 +1,163 @@
+@startuml
+title Final Project - School Management System Overview Class Diagram
+
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 70
+skinparam ranksep 70
+hide methods
+hide circle
+
+skinparam packageStyle rectangle
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #475569
+skinparam PackageBorderColor #334155
+skinparam PackageBackgroundColor #F8FAFC
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+
+package "1) User, Roles & Approval" {
+    class User {
+        +id
+        +name
+        +email
+        +requested_role
+        +approved_at
+    }
+
+    class Role {
+        +id
+        +name
+    }
+}
+
+package "2) Academic Management" {
+    class LanguageProgram {
+        +id
+        +code
+        +name
+        +is_active
+    }
+
+    class Course {
+        +id
+        +code
+        +name
+        +price
+    }
+
+    class CourseClass {
+        +id
+        +capacity
+        +teacher_id
+    }
+}
+
+package "3) Timetable & Attendance" {
+    class Schedule {
+        +id
+        +day_of_week
+        +start_time
+        +end_time
+    }
+
+    class Room {
+        +id
+        +name
+        +capacity
+        +location
+    }
+
+    class AttendanceRecord {
+        +id
+        +attendance_date
+        +status
+        +grade
+    }
+
+    class TeacherResource {
+        +id
+        +category
+        +name
+        +download_count
+    }
+}
+
+package "4) Finance" {
+    class StudentTuition {
+        +id
+        +course_price
+    }
+
+    class TuitionPayment {
+        +id
+        +amount
+        +paid_on
+        +method
+    }
+
+    class ScholarshipActivation {
+        +id
+        +offer_key
+        +discount_percent
+        +activated_at
+    }
+}
+
+package "5) Communication & Notifications" {
+    class Message {
+        +id
+        +subject
+        +body
+        +read_at
+    }
+
+    class Notification {
+        +id
+        +type
+        +read_at
+    }
+}
+
+User "1" -- "0..*" Role : assigned role(s)
+User "0..1" <-- "0..*" User : approved / rejected by
+
+LanguageProgram "1" <-- "0..*" Course : groups courses
+Course "1" <-- "0..*" CourseClass : offered as classes
+User "0..*" -- "0..*" CourseClass : enrolls in
+User "0..1" <-- "0..*" CourseClass : taught by
+
+CourseClass "1" <-- "0..*" Schedule : scheduled by
+Room "0..1" <-- "0..*" Schedule : held in
+CourseClass "1" <-- "0..*" AttendanceRecord : has attendance
+User "1" <-- "0..*" AttendanceRecord : recorded for student
+User "1" <-- "0..*" TeacherResource : uploaded by teacher
+CourseClass "1" <-- "0..*" TeacherResource : supports class
+
+User "1" <-- "0..1" StudentTuition : tuition profile
+Course "1" <-- "0..*" StudentTuition : selected course
+StudentTuition "1" .. "0..*" TuitionPayment : settled by payments
+User "1" <-- "0..*" TuitionPayment : payment for student
+User "0..1" <-- "0..*" TuitionPayment : paid by parent
+User "1" <-- "0..*" ScholarshipActivation : activated by parent
+User "0..1" <-- "0..*" ScholarshipActivation : applied to student
+
+User "1" <-- "0..*" Message : sends / receives
+User "1" <-- "0..*" Notification : receives
+
+User -[hidden]-> LanguageProgram
+LanguageProgram -[hidden]-> Course
+Course -[hidden]-> CourseClass
+CourseClass -[hidden]-> Schedule
+Schedule -[hidden]-> StudentTuition
+StudentTuition -[hidden]-> Message
+
+note right of User
+Approval flow tracks requested_role, approved_at,
+approved_by, rejected_by, and parent-linked accounts.
+end note
+
+@enduml

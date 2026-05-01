@@ -32,6 +32,12 @@ class EnsureApproved
             return $next($request);
         }
 
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'message' => 'Account is pending approval.',
+            ], 403);
+        }
+
         return redirect()->route('pending-approval');
     }
 }

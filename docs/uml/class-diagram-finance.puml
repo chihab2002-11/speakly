@@ -1,0 +1,89 @@
+@startuml
+title Final Project - Finance Diagram
+
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 70
+skinparam ranksep 70
+hide methods
+hide circle
+
+skinparam packageStyle rectangle
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #475569
+skinparam PackageBorderColor #334155
+skinparam PackageBackgroundColor #F8FAFC
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+
+package "4) Finance" {
+    class User {
+        +id
+        +name
+        +requested_role
+        +approved_at
+    }
+
+    class Course {
+        +id
+        +code
+        +name
+        +price
+    }
+
+    class StudentTuition {
+        +id
+        +course_price
+    }
+
+    class TuitionPayment {
+        +id
+        +amount
+        +paid_on
+        +method
+    }
+
+    class EmployeePayment {
+        +id
+        +expected_salary
+        +amount_paid
+    }
+
+    class ScholarshipActivation {
+        +id
+        +offer_key
+        +discount_percent
+        +activated_at
+    }
+}
+
+User "1" <-- "0..1" StudentTuition : tuition profile for student
+Course "1" <-- "0..*" StudentTuition : selected course
+StudentTuition "1" .. "0..*" TuitionPayment : settled by payments
+
+User "1" <-- "0..*" TuitionPayment : payment for student
+User "0..1" <-- "0..*" TuitionPayment : paid by parent
+User "0..1" <-- "0..*" TuitionPayment : recorded by staff
+
+User "1" <-- "0..1" EmployeePayment : salary record for employee
+User "0..1" <-- "0..*" EmployeePayment : recorded by staff
+
+User "1" <-- "0..*" ScholarshipActivation : activated by parent
+User "0..1" <-- "0..*" ScholarshipActivation : applied to student
+
+User -[hidden]-> Course
+Course -[hidden]-> StudentTuition
+StudentTuition -[hidden]-> TuitionPayment
+TuitionPayment -[hidden]-> EmployeePayment
+EmployeePayment -[hidden]-> ScholarshipActivation
+
+note bottom of TuitionPayment
+Payments are stored against users in the codebase.
+The dotted link to StudentTuition represents the
+business flow used by the financial services.
+end note
+
+@enduml

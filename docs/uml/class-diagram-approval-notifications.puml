@@ -1,0 +1,75 @@
+@startuml
+title Final Project - Approval and Accounts Diagram
+
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam nodesep 70
+skinparam ranksep 70
+hide methods
+hide circle
+
+skinparam packageStyle rectangle
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #475569
+skinparam PackageBorderColor #334155
+skinparam PackageBackgroundColor #F8FAFC
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+
+package "1) User, Roles & Approval" {
+    class User {
+        +id
+        +name
+        +requested_role
+        +approved_at
+        +rejected_at
+    }
+
+    class Role {
+        +id
+        +name
+    }
+
+    class Course {
+        +id
+        +code
+        +name
+        +price
+    }
+
+    class StudentTuition {
+        +id
+        +course_price
+    }
+
+    class Notification {
+        +id
+        +type
+        +read_at
+    }
+}
+
+User "1" -- "0..*" Role : assigned after approval
+User "0..1" <-- "0..*" User : parent account
+User "0..1" <-- "0..*" User : approved_by
+User "0..1" <-- "0..*" User : rejected_by
+Course "1" <-- "0..*" User : requested course
+User "1" <-- "0..1" StudentTuition : created for approved student
+Course "1" <-- "0..*" StudentTuition : approved course
+User "1" <-- "0..*" Notification : receives approval notice
+
+Role -[hidden]-> User
+User -[hidden]-> Course
+Course -[hidden]-> StudentTuition
+StudentTuition -[hidden]-> Notification
+
+note right of User
+ApprovalController approves or rejects requested accounts.
+When an approved user requested the Student role,
+a StudentTuition record is created from the selected course.
+end note
+
+@enduml
