@@ -46,11 +46,11 @@ RUN mkdir -p \
         --no-progress \
         --prefer-dist \
         --optimize-autoloader \
-    && sed -i 's/\r$//' ./docker-entrypoint.sh \
-    && chmod +x ./docker-entrypoint.sh
+    && sed -i 's/\r$//' /app/docker-entrypoint.sh \
+    && chmod +x /app/docker-entrypoint.sh
 
 ENV PORT=8080
 
 EXPOSE 8080
 
-ENTRYPOINT ["./docker-entrypoint.sh"]
+ENTRYPOINT ["/app/docker-entrypoint.sh"]

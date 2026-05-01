@@ -2,6 +2,8 @@
 
 set -eu
 
+echo "=== ENTRYPOINT STARTED ==="
+
 max_attempts="${DB_WAIT_ATTEMPTS:-30}"
 sleep_seconds="${DB_WAIT_SECONDS:-2}"
 attempt=1
