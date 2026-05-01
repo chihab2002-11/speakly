@@ -129,7 +129,7 @@
         <div class="flex flex-col gap-2">
             {{-- Support --}}
             <a 
-                href="#" 
+                href="{{ route('support') }}"
                 class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 hover:bg-white/50"
                 style="color: var(--lumina-text-muted);"
             >

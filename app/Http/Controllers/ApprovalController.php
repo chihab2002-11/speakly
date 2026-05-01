@@ -9,6 +9,8 @@ use App\Notifications\AccountRejectedNotification;
 use App\Support\DashboardRedirector;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApprovalController extends Controller
 {
@@ -115,6 +117,34 @@ class ApprovalController extends Controller
             ->with('success', 'User rejected.');
     }
 
+    public function document(Request $request, string $role, User $user): StreamedResponse
+    {
+        $requestedRole = $user->requested_role;
+
+        abort_unless($this->canReviewRequestedRole($request, $requestedRole), 403);
+        abort_unless(
+            $user->registration_document_path !== null
+                && $user->registration_document_original_filename !== null
+                && Storage::disk('public')->exists($user->registration_document_path),
+            404
+        );
+
+        $disposition = $request->query('disposition') === 'inline' ? 'inline' : 'attachment';
+
+        if ($disposition === 'inline') {
+            return response()->stream(function () use ($user): void {
+                echo Storage::disk('public')->get($user->registration_document_path);
+            }, 200, [
+                'Content-Type' => (string) ($user->registration_document_mime_type ?: 'application/octet-stream'),
+                'Content-Disposition' => 'inline; filename="'.addslashes($user->registration_document_original_filename).'"',
+            ]);
+        }
+
+        return response()->streamDownload(function () use ($user): void {
+            echo Storage::disk('public')->get($user->registration_document_path);
+        }, $user->registration_document_original_filename);
+    }
+
     private function routeRole(Request $request): string
     {
         $routeRole = (string) $request->route('role');
@@ -139,6 +169,12 @@ class ApprovalController extends Controller
         }
 
         return $request->user()->can($permission);
+    }
+
+    private function canReviewRequestedRole(Request $request, ?string $requestedRole): bool
+    {
+        return $this->canManageRequestedRole($request, $requestedRole, 'approve')
+            || $this->canManageRequestedRole($request, $requestedRole, 'reject');
     }
 
     /**

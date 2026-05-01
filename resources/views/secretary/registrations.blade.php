@@ -96,7 +96,7 @@
             </div>
 
             <div class="p-6 lg:col-span-3">
-                <form method="POST" action="{{ route('secretary.registrations.store') }}" class="space-y-5">
+                <form method="POST" action="{{ route('secretary.registrations.store') }}" enctype="multipart/form-data" class="space-y-5">
                     @csrf
 
                     <div class="grid gap-4 md:grid-cols-2">
@@ -161,7 +161,7 @@
                             <input id="date_of_birth" name="date_of_birth" type="date" value="{{ old('date_of_birth') }}" class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
                         </div>
 
-                        <div>
+                        <div id="secretaryParentEmailField">
                             <label for="parent_email" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Parent Email (Under 18 Student)</label>
                             <input id="parent_email" name="parent_email" type="email" value="{{ old('parent_email') }}" class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none" style="border-color: var(--lumina-border); background: #F8FAFC;">
                         </div>
@@ -189,6 +189,14 @@
                         </select>
                         <p class="mt-2 text-xs" style="color: var(--lumina-text-secondary);">
                             Required for student registrations only. The selected course will be copied into the student payment workflow after approval.
+                        </p>
+                    </div>
+
+                    <div id="secretaryRegistrationDocumentField">
+                        <label id="secretaryRegistrationDocumentLabel" for="secretary_registration_document" class="mb-2 block text-xs font-semibold uppercase tracking-wide" style="color: var(--lumina-text-secondary);">Registration Document</label>
+                        <input id="secretary_registration_document" name="registration_document" type="file" class="w-full rounded-xl border px-3 py-2.5 text-sm outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:font-medium file:text-emerald-700" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        <p id="secretaryRegistrationDocumentHint" class="mt-2 text-xs" style="color: var(--lumina-text-secondary);">
+                            Upload the required file for the selected role.
                         </p>
                     </div>
 
@@ -246,31 +254,70 @@
         })();
 
         function toggleSecretaryCourseField(role) {
+            const parentEmailField = document.getElementById('secretaryParentEmailField');
+            const parentEmailInput = document.getElementById('parent_email');
             const programField = document.getElementById('secretaryProgramField');
             const programSelect = document.getElementById('secretary_program_id');
             const courseField = document.getElementById('secretaryCourseField');
             const courseSelect = document.getElementById('secretary_course_id');
+            const documentField = document.getElementById('secretaryRegistrationDocumentField');
+            const documentInput = document.getElementById('secretary_registration_document');
+            const documentLabel = document.getElementById('secretaryRegistrationDocumentLabel');
+            const documentHint = document.getElementById('secretaryRegistrationDocumentHint');
 
-            if (!programField || !programSelect || !courseField || !courseSelect) {
+            if (!parentEmailField || !parentEmailInput || !programField || !programSelect || !courseField || !courseSelect || !documentField || !documentInput || !documentLabel || !documentHint) {
                 return;
             }
 
             const isStudent = role === 'student';
             const selectedCourseId = courseSelect.dataset.selectedCourse ?? '';
+            const documentConfig = {
+                student: {
+                    label: 'Upload Birth Certificate',
+                    hint: 'Upload the student birth certificate as PDF, JPG, or PNG.',
+                    accept: '.pdf,.jpg,.jpeg,.png',
+                },
+                teacher: {
+                    label: 'Upload C.V',
+                    hint: 'Upload the teacher C.V as PDF or Word document.',
+                    accept: '.pdf,.doc,.docx',
+                },
+                secretary: {
+                    label: 'Upload C.V',
+                    hint: 'Upload the secretary C.V as PDF or Word document.',
+                    accept: '.pdf,.doc,.docx',
+                },
+            };
+            const activeDocumentConfig = documentConfig[role] ?? null;
 
+            parentEmailField.style.display = isStudent ? 'block' : 'none';
+            parentEmailInput.disabled = !isStudent;
             programField.style.display = isStudent ? 'block' : 'none';
             courseField.style.display = isStudent ? 'block' : 'none';
             programSelect.disabled = !isStudent;
+            documentField.style.display = activeDocumentConfig ? 'block' : 'none';
+            documentInput.disabled = !activeDocumentConfig;
 
             if (!isStudent) {
+                parentEmailInput.value = '';
                 programSelect.value = '';
                 setSecretaryCourseOptions('', selectedCourseId);
                 courseSelect.disabled = true;
-
-                return;
             }
 
-            setSecretaryCourseOptions(programSelect.value, selectedCourseId);
+            if (activeDocumentConfig) {
+                documentInput.value = '';
+                documentLabel.textContent = activeDocumentConfig.label;
+                documentHint.textContent = activeDocumentConfig.hint;
+                documentInput.setAttribute('accept', activeDocumentConfig.accept);
+            } else {
+                documentInput.value = '';
+                documentInput.removeAttribute('accept');
+            }
+
+            if (isStudent) {
+                setSecretaryCourseOptions(programSelect.value, selectedCourseId);
+            }
         }
 
         function setSecretaryCourseOptions(programId, selectedCourseId) {

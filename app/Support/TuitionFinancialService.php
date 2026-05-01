@@ -51,16 +51,25 @@ class TuitionFinancialService
     public function buildStudentPageData(User $student): array
     {
         $summary = $this->summarizeStudent($student);
+        $scholarshipOffers = $this->buildStudentScholarshipOffers($student, $summary);
 
         return [
             'academicYear' => $summary['academic_year'],
             'ledgerItems' => $summary['ledger_items'],
             'receipts' => $summary['receipts'],
             'totalOutstanding' => $summary['balance'],
+            'totalOutstandingBeforeDiscount' => $summary['balance_before_discount'],
             'totalCoursesPrice' => $summary['gross_due'],
+            'totalDueAfterDiscount' => $summary['net_due'],
             'totalPaid' => $summary['amount_paid'],
             'totalRemaining' => $summary['balance'],
             'paidPercentage' => $summary['paid_percentage'],
+            'discountAmount' => $summary['discount'],
+            'scholarshipDiscount' => $summary['discount_percent'],
+            'scholarshipOffers' => $scholarshipOffers,
+            'selectedScholarshipOffer' => collect($scholarshipOffers)->first(fn (array $offer): bool => (bool) ($offer['isActive'] ?? false))
+                ?? collect($scholarshipOffers)->first(),
+            'activeScholarshipOffer' => collect($scholarshipOffers)->first(fn (array $offer): bool => (bool) ($offer['isActive'] ?? false)),
         ];
     }
 
@@ -83,14 +92,18 @@ class TuitionFinancialService
         $invoices = [];
         $ledgerItems = [];
         $childBalances = [];
+        $childDiscountPercents = [];
+        $discountAmount = 0;
         $totalOutstandingBeforeDiscount = 0;
 
         foreach ($children as $child) {
             $summary = $this->summarizeStudent($child);
             $summariesByStudent[$child->id] = $summary;
             $childBalances[(int) $child->id] = (int) $summary['balance'];
+            $childDiscountPercents[(int) $child->id] = (int) $summary['discount_percent'];
 
-            $totalOutstandingBeforeDiscount += $summary['balance'];
+            $totalOutstandingBeforeDiscount += $summary['balance_before_discount'];
+            $discountAmount += $summary['discount'];
 
             foreach ($summary['ledger_items'] as $item) {
                 $ledgerItems[] = [
@@ -99,6 +112,9 @@ class TuitionFinancialService
                     'name' => $item['name'] ?? 'Tuition Fee',
                     'period' => $item['period'] ?? $summary['academic_year'],
                     'amount' => (int) ($item['amount'] ?? 0),
+                    'discount_percent' => (int) ($item['discount_percent'] ?? 0),
+                    'discount_amount' => (int) ($item['discount_amount'] ?? 0),
+                    'final_amount' => (int) ($item['final_amount'] ?? $item['amount'] ?? 0),
                     'status' => $item['status'] ?? 'outstanding',
                 ];
             }
@@ -140,31 +156,6 @@ class TuitionFinancialService
 
         $activationsByOffer = $activations->groupBy('offer_key');
 
-        $childDiscountPercents = [];
-        foreach ($children as $child) {
-            $childDiscountPercents[(int) $child->id] = 0;
-        }
-
-        foreach ($activations as $activation) {
-            $percent = (int) ($activation->discount_percent ?? 0);
-            if ($percent <= 0) {
-                continue;
-            }
-
-            if ((string) $activation->offer_key === 'family_3_children') {
-                foreach (array_keys($childDiscountPercents) as $childId) {
-                    $childDiscountPercents[$childId] += $percent;
-                }
-
-                continue;
-            }
-
-            $targetChildId = (int) ($activation->student_id ?? 0);
-            if ($targetChildId > 0 && array_key_exists($targetChildId, $childDiscountPercents)) {
-                $childDiscountPercents[$targetChildId] += $percent;
-            }
-        }
-
         $scholarshipOffers = collect($scholarshipOffers)->map(function (array $offer) use ($activationsByOffer): array {
             $offerActivations = $activationsByOffer->get($offer['key']);
             $latestActivation = $offerActivations instanceof Collection ? $offerActivations->first() : null;
@@ -198,25 +189,7 @@ class TuitionFinancialService
 
         $activeDiscountPercent = empty($childDiscountPercents) ? 0 : max($childDiscountPercents);
 
-        $discountAmount = 0;
-        foreach ($childBalances as $childId => $childBalance) {
-            $rate = (int) ($childDiscountPercents[(int) $childId] ?? 0);
-            $discountAmount += (int) round(((int) $childBalance) * ($rate / 100));
-        }
-        $totalOutstanding = max($totalOutstandingBeforeDiscount - $discountAmount, 0);
-
-        $ledgerItems = collect($ledgerItems)->map(function (array $item) use ($childDiscountPercents): array {
-            $original = (int) ($item['amount'] ?? 0);
-            $childId = (int) ($item['child_id'] ?? 0);
-            $discountPercent = (int) ($childDiscountPercents[$childId] ?? 0);
-            $discountValue = (int) round($original * ($discountPercent / 100));
-
-            $item['discount_percent'] = $discountPercent;
-            $item['discount_amount'] = $discountValue;
-            $item['final_amount'] = max($original - $discountValue, 0);
-
-            return $item;
-        })->values()->all();
+        $totalOutstanding = (int) array_sum($childBalances);
 
         $yearStart = now()->startOfYear();
         $totalPaid = (int) $payments
@@ -296,6 +269,9 @@ class TuitionFinancialService
             'course_price' => $summary['course_price'],
             'amount_paid' => $summary['amount_paid'],
             'balance' => $summary['balance'],
+            'balance_before_discount' => $summary['balance_before_discount'],
+            'discount' => $summary['discount'],
+            'discount_percent' => $summary['discount_percent'],
             'status' => $summary['status'],
             'due_date' => now()->endOfMonth(),
             'last_payment_at' => $summary['last_payment_at'],
@@ -411,6 +387,62 @@ class TuitionFinancialService
     }
 
     /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildStudentScholarshipOffers(User $student, array $summary): array
+    {
+        $recentWindowStart = now()->subMonths(self::SCHOLARSHIP_MONTHS_WINDOW);
+        $records = $student->attendanceRecords()
+            ->whereDate('attendance_date', '>=', $recentWindowStart)
+            ->whereNotNull('grade')
+            ->get(['grade']);
+
+        $averageGrade = $records->isNotEmpty()
+            ? (float) round((float) $records->avg('grade'), 1)
+            : 0.0;
+
+        $academicProgressPercent = min(100, (int) round(($averageGrade / self::SCHOLARSHIP_GRADE_TARGET) * 100));
+        $academicRemaining = max(self::SCHOLARSHIP_GRADE_TARGET - $averageGrade, 0);
+
+        $courseCount = (int) ($summary['enrolled_classes_count'] ?? 0);
+        $multiCourseProgressPercent = min(100, (int) round(($courseCount / self::SCHOLARSHIP_MULTI_COURSE_TARGET) * 100));
+        $multiCourseRemaining = max(self::SCHOLARSHIP_MULTI_COURSE_TARGET - $courseCount, 0);
+        $activeOfferKeys = $this->activeScholarshipActivationsForStudent($student)
+            ->pluck('offer_key')
+            ->map(fn (mixed $key): string => (string) $key)
+            ->all();
+
+        return [
+            [
+                'key' => 'academic_progress_2m',
+                'title' => 'Academic Excellence Grant',
+                'description' => 'Average grade over the last '.self::SCHOLARSHIP_MONTHS_WINDOW.' months must reach '.self::SCHOLARSHIP_GRADE_TARGET.'/100.',
+                'discountPercent' => 15,
+                'targetLabel' => $student->name,
+                'progressPercent' => $academicProgressPercent,
+                'remainingText' => $academicRemaining <= 0
+                    ? 'Eligible now'
+                    : number_format((float) $academicRemaining, 1).' grade points left to unlock',
+                'isEligible' => $averageGrade >= self::SCHOLARSHIP_GRADE_TARGET,
+                'isActive' => in_array('academic_progress_2m', $activeOfferKeys, true),
+            ],
+            [
+                'key' => 'multi_course_4_plus',
+                'title' => 'Multi Course Commitment',
+                'description' => 'Enroll in at least '.self::SCHOLARSHIP_MULTI_COURSE_TARGET.' courses to unlock this discount.',
+                'discountPercent' => 10,
+                'targetLabel' => $student->name,
+                'progressPercent' => $multiCourseProgressPercent,
+                'remainingText' => $multiCourseRemaining === 0
+                    ? 'Eligible now'
+                    : $multiCourseRemaining.' more course(s) needed',
+                'isEligible' => $multiCourseRemaining === 0,
+                'isActive' => in_array('multi_course_4_plus', $activeOfferKeys, true),
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function summarizeStudent(User $student): array
@@ -472,23 +504,32 @@ class TuitionFinancialService
         if ($grossDue === 0 && $studentTuition !== null) {
             $grossDue = max(0, (int) $studentTuition->course_price);
         }
-        $balance = max($grossDue - $amountPaid, 0);
+        $discountPercent = $this->activeDiscountPercentForStudent($student);
+        $discount = (int) round($grossDue * ($discountPercent / 100));
+        $netDue = max($grossDue - $discount, 0);
+        $balanceBeforeDiscount = max($grossDue - $amountPaid, 0);
+        $balance = max($netDue - $amountPaid, 0);
         $status = $balance === 0 ? 'paid' : 'pending';
-        $paidPercentage = $grossDue === 0 ? 0 : (int) round(($amountPaid / $grossDue) * 100);
+        $paidPercentage = $netDue === 0 ? 0 : (int) round(($amountPaid / $netDue) * 100);
 
         $remainingPaid = $amountPaid;
 
-        $ledgerItems = $tuitionEntries->map(function (array $entry) use (&$remainingPaid, $academicYear): array {
+        $ledgerItems = $tuitionEntries->map(function (array $entry) use (&$remainingPaid, $academicYear, $discountPercent): array {
             $coursePrice = max(0, (int) $entry['price']);
-            $paidForCourse = min($remainingPaid, $coursePrice);
-            $remainingPaid = max(0, $remainingPaid - $coursePrice);
-            $remainingForCourse = max($coursePrice - $paidForCourse, 0);
+            $discountAmount = (int) round($coursePrice * ($discountPercent / 100));
+            $finalAmount = max($coursePrice - $discountAmount, 0);
+            $paidForCourse = min($remainingPaid, $finalAmount);
+            $remainingPaid = max(0, $remainingPaid - $finalAmount);
+            $remainingForCourse = max($finalAmount - $paidForCourse, 0);
 
             return [
                 'name' => (string) $entry['name'],
                 'type' => 'Course Fee',
                 'period' => $academicYear,
                 'amount' => $coursePrice,
+                'discount_percent' => $discountPercent,
+                'discount_amount' => $discountAmount,
+                'final_amount' => $finalAmount,
                 'paid' => $paidForCourse,
                 'remaining' => $remainingForCourse,
                 'status' => $remainingForCourse === 0 ? 'paid' : 'outstanding',
@@ -500,8 +541,9 @@ class TuitionFinancialService
         return [
             'academic_year' => $academicYear,
             'gross_due' => $grossDue,
-            'discount' => 0,
-            'net_due' => $grossDue,
+            'discount' => $discount,
+            'discount_percent' => $discountPercent,
+            'net_due' => $netDue,
             'course_price' => $tuitionEntries->count() === 1
                 ? max(0, (int) ($selectedCourse['price'] ?? 0))
                 : $grossDue,
@@ -512,14 +554,46 @@ class TuitionFinancialService
                     : $tuitionEntries->pluck('name')->implode(', ')),
             'selected_course_code' => $tuitionEntries->count() === 1 ? ($selectedCourse['code'] ?? null) : null,
             'amount_paid' => $amountPaid,
+            'balance_before_discount' => $balanceBeforeDiscount,
             'balance' => $balance,
             'paid_percentage' => $paidPercentage,
             'status' => $status,
             'last_payment_at' => $payments->first()?->paid_on,
             'enrolled_classes_count' => (int) $tuitionEntries->count(),
             'ledger_items' => $ledgerItems,
-            'receipts' => $this->buildReceipts($payments),
+            'receipts' => $this->buildReceipts($payments, $discountPercent),
         ];
+    }
+
+    private function activeDiscountPercentForStudent(User $student): int
+    {
+        return min(100, (int) $this->activeScholarshipActivationsForStudent($student)
+            ->sum('discount_percent'));
+    }
+
+    /**
+     * @return Collection<int, ScholarshipActivation>
+     */
+    private function activeScholarshipActivationsForStudent(User $student): Collection
+    {
+        if (! $this->hasScholarshipActivationsTable()) {
+            return collect();
+        }
+
+        return ScholarshipActivation::query()
+            ->where(function ($query) use ($student): void {
+                $query->where('student_id', $student->id);
+
+                if ($student->parent_id !== null) {
+                    $query->orWhere(function ($familyQuery) use ($student): void {
+                        $familyQuery
+                            ->where('parent_id', $student->parent_id)
+                            ->where('offer_key', 'family_3_children');
+                    });
+                }
+            })
+            ->orderByDesc('activated_at')
+            ->get();
     }
 
     private function academicYearLabel(): string
@@ -572,9 +646,9 @@ class TuitionFinancialService
      * @param  Collection<int, TuitionPayment>  $payments
      * @return array<int, array<string, mixed>>
      */
-    private function buildReceipts(Collection $payments): array
+    private function buildReceipts(Collection $payments, int $discountPercent = 0): array
     {
-        return $payments->map(function (TuitionPayment $payment): array {
+        return $payments->map(function (TuitionPayment $payment) use ($discountPercent): array {
             $referenceDigits = preg_replace('/\D+/', '', (string) $payment->reference);
             $last4 = null;
 
@@ -589,6 +663,7 @@ class TuitionFinancialService
                 'date' => $payment->paid_on?->format('M d, Y') ?? '-',
                 'method' => $this->methodLabel((string) $payment->method),
                 'last4' => $last4,
+                'discount_applied' => $discountPercent > 0 ? $discountPercent.'%' : 'None',
             ];
         })->all();
     }

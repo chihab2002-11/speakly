@@ -3,6 +3,8 @@
 use App\Models\Course;
 use App\Models\LanguageProgram;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
@@ -98,6 +100,7 @@ test('new users can register', function () {
         'requested_role' => 'student',
         'program_id' => $program->id,
         'course_id' => $course->id,
+        'registration_document' => UploadedFile::fake()->create('adult-student-birth-certificate.pdf', 120, 'application/pdf'),
     ]);
 
     $response->assertSessionHasNoErrors()
@@ -126,9 +129,88 @@ test('underage students must provide parent email', function () {
         'requested_role' => 'student',
         'program_id' => $program->id,
         'course_id' => $course->id,
+        'registration_document' => UploadedFile::fake()->create('birth-certificate.pdf', 120, 'application/pdf'),
     ]);
 
     $response->assertSessionHasErrors('parent_email');
+});
+
+test('student registration requires a birth certificate upload', function () {
+    $program = createLanguageProgramForRegistration();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
+
+    $response = $this->post(route('register.store'), [
+        'name' => 'Student Without Document',
+        'email' => 'student-without-document@example.com',
+        'date_of_birth' => '2000-01-01',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'requested_role' => 'student',
+        'program_id' => $program->id,
+        'course_id' => $course->id,
+    ]);
+
+    $response->assertSessionHasErrors([
+        'registration_document' => 'Birth certificate upload is required for student registration.',
+    ]);
+});
+
+test('student registration accepts pdf upload even when browser reports a generic mime type', function () {
+    Storage::fake('public');
+
+    $program = createLanguageProgramForRegistration();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
+
+    $response = $this->post(route('register.store'), [
+        'name' => 'Student With Generic Pdf',
+        'email' => 'student-generic-pdf@example.com',
+        'date_of_birth' => '2000-01-01',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'requested_role' => 'student',
+        'program_id' => $program->id,
+        'course_id' => $course->id,
+        'registration_document' => UploadedFile::fake()->create('birth-certificate.pdf', 120, 'application/octet-stream'),
+    ]);
+
+    $response->assertSessionHasNoErrors()
+        ->assertRedirectToRoute('pending-approval');
+
+    $student = User::query()->where('email', 'student-generic-pdf@example.com')->first();
+
+    expect($student)->not()->toBeNull();
+    expect($student?->registration_document_type)->toBe('birth_certificate');
+
+    Storage::disk('public')->assertExists($student->registration_document_path);
+});
+
+test('teacher registration stores uploaded cv document', function () {
+    Storage::fake('public');
+
+    $response = $this->post(route('register.store'), [
+        'name' => 'Teacher With CV',
+        'email' => 'teacher-with-cv@example.com',
+        'date_of_birth' => '1991-06-14',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'requested_role' => 'teacher',
+        'registration_document' => UploadedFile::fake()->create('teacher-cv.pdf', 240, 'application/pdf'),
+    ]);
+
+    $response->assertSessionHasNoErrors()
+        ->assertRedirectToRoute('pending-approval');
+
+    $teacher = User::query()->where('email', 'teacher-with-cv@example.com')->first();
+
+    expect($teacher)->not()->toBeNull();
+    expect($teacher?->registration_document_type)->toBe('cv');
+    expect($teacher?->registration_document_original_filename)->toBe('teacher-cv.pdf');
+
+    Storage::disk('public')->assertExists($teacher->registration_document_path);
 });
 
 test('underage student is connected to parent account', function () {
@@ -153,6 +235,7 @@ test('underage student is connected to parent account', function () {
         'requested_role' => 'student',
         'program_id' => $program->id,
         'course_id' => $course->id,
+        'registration_document' => UploadedFile::fake()->create('blocked-student-birth-certificate.pdf', 120, 'application/pdf'),
     ]);
 
     $response->assertSessionHasNoErrors()
@@ -209,6 +292,7 @@ test('student registration requires a program selection', function () {
         'password_confirmation' => 'password',
         'requested_role' => 'student',
         'course_id' => $course->id,
+        'registration_document' => UploadedFile::fake()->create('missing-program-birth-certificate.pdf', 120, 'application/pdf'),
     ]);
 
     $response->assertSessionHasErrors('program_id');
@@ -225,6 +309,7 @@ test('student registration requires a course selection', function () {
         'password_confirmation' => 'password',
         'requested_role' => 'student',
         'program_id' => $program->id,
+        'registration_document' => UploadedFile::fake()->create('missing-course-birth-certificate.pdf', 120, 'application/pdf'),
     ]);
 
     $response->assertSessionHasErrors('course_id');
@@ -247,6 +332,7 @@ test('student registration rejects a course without a valid price', function () 
         'requested_role' => 'student',
         'program_id' => $program->id,
         'course_id' => $course->id,
+        'registration_document' => UploadedFile::fake()->create('invalid-course-birth-certificate.pdf', 120, 'application/pdf'),
     ]);
 
     $response->assertSessionHasErrors([
@@ -279,6 +365,7 @@ test('student registration rejects a course outside the selected program', funct
         'requested_role' => 'student',
         'program_id' => $englishProgram->id,
         'course_id' => $course->id,
+        'registration_document' => UploadedFile::fake()->create('wrong-program-birth-certificate.pdf', 120, 'application/pdf'),
     ]);
 
     $response->assertSessionHasErrors([

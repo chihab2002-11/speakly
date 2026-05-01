@@ -13,24 +13,30 @@ class PaymentReceiptPdf
     public function render(User $student, TuitionPayment $payment, array $financialSummary): string
     {
         $reference = $payment->reference ?: 'PAY-'.str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT);
+        $discountPercent = (int) ($financialSummary['scholarshipDiscount'] ?? 0);
+        $discountAmount = (int) ($financialSummary['discountAmount'] ?? 0);
+        $discountLabel = $discountPercent > 0
+            ? $discountPercent.'% ('.$this->formatMoney($discountAmount).')'
+            : 'None';
 
         $lines = [
-            ['text' => 'Lumina Academy', 'x' => 56, 'y' => 780, 'size' => 20, 'style' => 'bold'],
-            ['text' => 'Payment Receipt', 'x' => 56, 'y' => 752, 'size' => 14, 'style' => 'bold'],
-            ['text' => 'Reference: '.$reference, 'x' => 56, 'y' => 714, 'size' => 11],
-            ['text' => 'Student: '.$student->name, 'x' => 56, 'y' => 694, 'size' => 11],
-            ['text' => 'Email: '.$student->email, 'x' => 56, 'y' => 674, 'size' => 11],
-            ['text' => 'Paid on: '.($payment->paid_on?->format('F j, Y') ?? '-'), 'x' => 56, 'y' => 654, 'size' => 11],
-            ['text' => 'Method: '.$this->methodLabel((string) $payment->method), 'x' => 56, 'y' => 634, 'size' => 11],
-            ['text' => 'Amount Paid', 'x' => 56, 'y' => 586, 'size' => 12, 'style' => 'bold'],
-            ['text' => $this->formatMoney((int) $payment->amount), 'x' => 56, 'y' => 558, 'size' => 22, 'style' => 'bold'],
-            ['text' => 'Tuition Summary', 'x' => 56, 'y' => 506, 'size' => 13, 'style' => 'bold'],
-            ['text' => 'Total course price: '.$this->formatMoney((int) ($financialSummary['totalCoursesPrice'] ?? 0)), 'x' => 56, 'y' => 482, 'size' => 11],
-            ['text' => 'Total paid: '.$this->formatMoney((int) ($financialSummary['totalPaid'] ?? 0)), 'x' => 56, 'y' => 462, 'size' => 11],
-            ['text' => 'Remaining unpaid: '.$this->formatMoney((int) ($financialSummary['totalRemaining'] ?? 0)), 'x' => 56, 'y' => 442, 'size' => 11],
-            ['text' => 'Paid progress: '.(int) ($financialSummary['paidPercentage'] ?? 0).'%', 'x' => 56, 'y' => 422, 'size' => 11],
-            ['text' => 'Generated on '.now()->format('F j, Y g:i A'), 'x' => 56, 'y' => 92, 'size' => 9],
-            ['text' => 'This receipt was generated from the Lumina Academy student billing portal.', 'x' => 56, 'y' => 76, 'size' => 9],
+            ['text' => 'Lumina Academy', 'x' => 18, 'y' => 392, 'size' => 14, 'style' => 'bold'],
+            ['text' => 'Payment Receipt', 'x' => 18, 'y' => 374, 'size' => 10, 'style' => 'bold'],
+            ['text' => 'Ref: '.$reference, 'x' => 18, 'y' => 346, 'size' => 9],
+            ['text' => 'Student: '.$student->name, 'x' => 18, 'y' => 330, 'size' => 9],
+            ['text' => 'Date: '.($payment->paid_on?->format('Y-m-d') ?? '-'), 'x' => 18, 'y' => 314, 'size' => 9],
+            ['text' => 'Method: '.$this->methodLabel((string) $payment->method), 'x' => 18, 'y' => 298, 'size' => 9],
+            ['text' => 'Amount Paid', 'x' => 18, 'y' => 268, 'size' => 10, 'style' => 'bold'],
+            ['text' => $this->formatMoney((int) $payment->amount), 'x' => 18, 'y' => 248, 'size' => 16, 'style' => 'bold'],
+            ['text' => 'Tuition Summary', 'x' => 18, 'y' => 214, 'size' => 10, 'style' => 'bold'],
+            ['text' => 'Course total: '.$this->formatMoney((int) ($financialSummary['totalCoursesPrice'] ?? 0)), 'x' => 18, 'y' => 196, 'size' => 9],
+            ['text' => 'Applied discount: '.$discountLabel, 'x' => 18, 'y' => 180, 'size' => 9],
+            ['text' => 'Due after discount: '.$this->formatMoney((int) ($financialSummary['totalDueAfterDiscount'] ?? $financialSummary['totalCoursesPrice'] ?? 0)), 'x' => 18, 'y' => 164, 'size' => 9],
+            ['text' => 'Total paid: '.$this->formatMoney((int) ($financialSummary['totalPaid'] ?? 0)), 'x' => 18, 'y' => 148, 'size' => 9],
+            ['text' => 'Remaining: '.$this->formatMoney((int) ($financialSummary['totalRemaining'] ?? 0)), 'x' => 18, 'y' => 132, 'size' => 9],
+            ['text' => 'Progress: '.(int) ($financialSummary['paidPercentage'] ?? 0).'%', 'x' => 18, 'y' => 116, 'size' => 9],
+            ['text' => 'Generated: '.now()->format('Y-m-d H:i'), 'x' => 18, 'y' => 72, 'size' => 8],
+            ['text' => 'Thank you.', 'x' => 18, 'y' => 56, 'size' => 8, 'style' => 'bold'],
         ];
 
         return $this->buildPdf($lines);
@@ -38,8 +44,9 @@ class PaymentReceiptPdf
 
     private function buildPdf(array $lines): string
     {
-        $content = "0.08 0.37 0.27 rg\n0 730 612 112 re f\n";
-        $content .= "1 1 1 rg\n";
+        $content = "0 0 0 RG\n0.7 w\n18 360 m 208 360 l S\n";
+        $content .= "18 232 m 208 232 l S\n";
+        $content .= "18 92 m 208 92 l S\n";
 
         foreach ($lines as $line) {
             $content .= $this->text(
@@ -48,17 +55,13 @@ class PaymentReceiptPdf
                 y: (int) $line['y'],
                 size: (int) $line['size'],
                 bold: ($line['style'] ?? null) === 'bold',
-                white: (int) $line['y'] >= 730,
             );
         }
-
-        $content .= "0.88 0.91 0.89 RG\n56 610 m 556 610 l S\n";
-        $content .= "0.88 0.91 0.89 RG\n56 402 m 556 402 l S\n";
 
         $objects = [
             '<< /Type /Catalog /Pages 2 0 R >>',
             '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-            '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>',
+            '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 226 420] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>',
             '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
             '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>',
             '<< /Length '.strlen($content)." >>\nstream\n".$content."\nendstream",
@@ -87,12 +90,11 @@ class PaymentReceiptPdf
         return $pdf;
     }
 
-    private function text(string $text, int $x, int $y, int $size, bool $bold = false, bool $white = false): string
+    private function text(string $text, int $x, int $y, int $size, bool $bold = false): string
     {
         $font = $bold ? 'F2' : 'F1';
-        $color = $white ? '1 1 1 rg' : '0.10 0.11 0.13 rg';
 
-        return $color."\nBT /".$font.' '.$size.' Tf '.$x.' '.$y.' Td ('.$this->escapeText($text).") Tj ET\n";
+        return "0 0 0 rg\nBT /".$font.' '.$size.' Tf '.$x.' '.$y.' Td ('.$this->escapeText($text).") Tj ET\n";
     }
 
     private function escapeText(string $text): string

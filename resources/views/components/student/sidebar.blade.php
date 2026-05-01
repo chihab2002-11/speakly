@@ -33,6 +33,8 @@
         $hasMaterialsUpload = false;
         $materialsLatestUploadTs = 0;
     }
+
+    $canViewFinancial = $user?->canViewStudentFinancialInformation() ?? false;
     
     $navItems = [
         [
@@ -48,12 +50,6 @@
             'icon' => 'academic-cap',
         ],
         [
-            'name' => 'Financial Information',
-            'route' => 'student.financial',
-            'routeParams' => [],
-            'icon' => 'credit-card',
-        ],
-        [
             'name' => 'Learning Materials',
             'route' => 'student.materials',
             'routeParams' => [],
@@ -66,6 +62,15 @@
             'icon' => 'chat',
         ],
     ];
+
+    if ($canViewFinancial) {
+        array_splice($navItems, 2, 0, [[
+            'name' => 'Financial Information',
+            'route' => 'student.financial',
+            'routeParams' => [],
+            'icon' => 'credit-card',
+        ]]);
+    }
 @endphp
 
 {{-- Desktop Sidebar --}}
@@ -172,7 +177,7 @@
         <div class="flex flex-col gap-2">
             {{-- Support --}}
             <a 
-                href="#" 
+                href="{{ route('support') }}"
                 class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 hover:bg-white/50"
                 style="color: var(--lumina-text-muted);"
             >
@@ -255,4 +260,3 @@
         document.addEventListener('livewire:navigated', syncBadgeState);
     })();
 </script>
-

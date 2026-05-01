@@ -15,16 +15,11 @@
        - Request: { name, email, phone, language, department, bio }
        - Response: { data: TeacherProfile }
     
-    3. POST /api/teacher/profile/avatar
-       - Uploads profile photo
-       - Request: multipart/form-data { avatar }
-       - Response: { data: { avatar_url: string } }
-    
-    4. GET /api/teacher/profile/sessions
+    3. GET /api/teacher/profile/sessions
        - Returns: Active sessions list
        - Response: { data: Session[] }
     
-    5. DELETE /api/teacher/profile/sessions/{id}
+    4. DELETE /api/teacher/profile/sessions/{id}
        - Terminates a session
        - Response: { success: true }
     
@@ -35,7 +30,6 @@
         name: string,
         email: string,
         phone: string|null,
-        avatar: string|null,
         language: string,
         department: string|null,
         bio: string|null,
@@ -82,14 +76,11 @@
 
     {{-- Main Grid Layout --}}
     <div class="grid gap-6 lg:grid-cols-2">
-        {{-- Left Column --}}
         <div class="flex flex-col gap-6">
-            {{-- Profile Photo Card --}}
             <div 
                 class="flex flex-col items-center rounded-3xl border p-8"
                 style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.1); border-radius: 24px;"
             >
-                {{-- Profile Photo --}}
                 <div class="mb-4">
                     <div 
                         class="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full"
@@ -111,17 +102,6 @@
                 </h2>
                 <p class="text-sm" style="color: var(--lumina-text-muted);">
                     Employee ID: TCH-{{ str_pad($user->id ?? 1, 4, '0', STR_PAD_LEFT) }}
-                </p>
-
-                {{-- Upload Button --}}
-                <button 
-                    class="mt-6 rounded-xl px-6 py-3 text-sm font-bold text-white transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                    style="background-color: var(--lumina-primary);"
-                >
-                    Upload New Photo
-                </button>
-                <p class="mt-2 text-xs" style="color: var(--lumina-text-muted);">
-                    JPG, GIF or PNG. Max size of 800K
                 </p>
             </div>
 

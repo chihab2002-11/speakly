@@ -157,6 +157,13 @@
             flex-wrap: wrap;
         }
 
+        .document-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
         .btn {
             border: none;
             border-radius: 8px;
@@ -182,6 +189,22 @@
 
         .btn-reject:hover {
             background: var(--reject-hover);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #1e293b;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e1;
+        }
+
+        .document-meta {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-top: 4px;
         }
 
         .reason-input {
@@ -258,6 +281,7 @@
                     <th>Email</th>
                     <th>Requested role</th>
                     <th>Selected course</th>
+                    <th>Document</th>
                     <th>Action</th>
                 </tr>
                 </thead>
@@ -272,6 +296,30 @@
                                 <div>{{ $u->requestedCourse->name }}</div>
                                 <div style="color: var(--muted); font-size: 0.8rem;">
                                     {{ $u->requestedCourse->code }} - {{ number_format($u->requestedCourse->price) }} DA
+                                </div>
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>
+                            @if ($u->registration_document_path && $u->registration_document_original_filename)
+                                <div>{{ $u->requiredRegistrationDocumentLabel() ?? 'Document' }}</div>
+                                <div class="document-meta">{{ $u->registration_document_original_filename }}</div>
+                                <div class="document-actions" style="margin-top: 8px;">
+                                    <a
+                                        href="{{ route('approvals.document', ['role' => $currentRole, 'user' => $u, 'disposition' => 'inline']) }}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="btn-link btn-secondary"
+                                    >
+                                        Open
+                                    </a>
+                                    <a
+                                        href="{{ route('approvals.document', ['role' => $currentRole, 'user' => $u]) }}"
+                                        class="btn-link btn-secondary"
+                                    >
+                                        Download
+                                    </a>
                                 </div>
                             @else
                                 -

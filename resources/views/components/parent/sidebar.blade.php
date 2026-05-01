@@ -159,7 +159,7 @@
                 </div>
             </div>
 
-            <a href="#" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 hover:bg-white/50" style="color: var(--lumina-text-muted);">
+            <a href="{{ route('support') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 hover:bg-white/50" style="color: var(--lumina-text-muted);">
                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92c-.72.73-1.17 1.4-1.17 2.83V15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26a2 2 0 10-3.41-1.41H8a4 4 0 118 0c0 .88-.36 1.68-.93 2.25z"/></svg>
                 <span>Support</span>
             </a>

@@ -23,6 +23,18 @@
             <p class="text-base font-medium" style="color: #3F4941;">
                 Lumina Academy Central Billing Portal
             </p>
+
+            <div class="mt-2 flex flex-wrap items-center gap-2 text-sm" style="color: #3F4941;">
+                <span class="rounded-full px-3 py-1" style="background-color: #E5E9E3;">
+                    Outstanding before discount: {{ number_format($totalOutstandingBeforeDiscount ?? 0, 0, ',', ' ') }} DZD
+                </span>
+                <span class="rounded-full px-3 py-1" style="background-color: #D1FAE5; color: #065F46;">
+                    Active discount: {{ (int) ($scholarshipDiscount ?? 0) }}%
+                </span>
+                <span class="rounded-full px-3 py-1" style="background-color: #F0F5EE;">
+                    Discount amount: {{ number_format($discountAmount ?? 0, 0, ',', ' ') }} DZD
+                </span>
+            </div>
         </div>
 
     </div>
@@ -55,6 +67,9 @@
                             <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: #3F4941; letter-spacing: 1.2px;">
                                 Course / Service
                             </th>
+                            <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider" style="color: #3F4941; letter-spacing: 1.2px;">
+                                Applied Discount
+                            </th>
                             <th class="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider" style="color: #3F4941; letter-spacing: 1.2px;">
                                 Amount
                             </th>
@@ -65,6 +80,11 @@
                     </thead>
                     <tbody>
                         @forelse($ledgerItems as $item)
+                            @php
+                                $discountPercent = (int) ($item['discount_percent'] ?? 0);
+                                $discountAmountForItem = (int) ($item['discount_amount'] ?? 0);
+                                $finalAmount = (int) ($item['final_amount'] ?? $item['amount'] ?? 0);
+                            @endphp
                             <tr class="border-t" style="border-color: rgba(190, 201, 191, 0.15);">
                                 {{-- Course/Service --}}
                                 <td class="px-6 py-6">
@@ -98,12 +118,29 @@
                                         </div>
                                     </div>
                                 </td>
+                                <td class="px-6 py-6">
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold" style="color: #181D19;">
+                                            {{ $discountPercent > 0 ? $discountPercent.'%' : 'None' }}
+                                        </span>
+                                        @if($discountAmountForItem > 0)
+                                            <span class="text-xs" style="color: #3F4941;">
+                                                -{{ number_format($discountAmountForItem, 0, ',', ' ') }} DZD
+                                            </span>
+                                        @endif
+                                    </div>
+                                </td>
                                 {{-- Amount --}}
                                 <td class="px-6 py-6 text-right">
                                     <div class="flex flex-col items-end gap-1">
                                         <span class="text-base font-bold" style="color: #181D19;">
-                                            {{ number_format($item['amount'], 0, ',', ' ') }} DZD
+                                            {{ number_format($finalAmount, 0, ',', ' ') }} DZD
                                         </span>
+                                        @if($discountAmountForItem > 0)
+                                            <span class="text-xs" style="color: #64748B;">
+                                                Before: {{ number_format($item['amount'], 0, ',', ' ') }} DZD
+                                            </span>
+                                        @endif
                                         <span class="text-xs font-semibold" style="color: #B45309;">
                                             Remaining: {{ number_format($item['remaining'] ?? 0, 0, ',', ' ') }} DZD
                                         </span>
@@ -134,7 +171,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="3" class="px-6 py-8 text-center text-sm" style="color: #3F4941;">
+                                <td colspan="4" class="px-6 py-8 text-center text-sm" style="color: #3F4941;">
                                     No financial ledger entries yet.
                                 </td>
                             </tr>
@@ -215,6 +252,44 @@
                 </div>
             </div>
 
+            <div class="flex flex-col gap-4">
+                <h2 class="text-2xl font-bold" style="color: #181D19; letter-spacing: -0.6px;">
+                    Scholarships
+                </h2>
+
+                @php
+                    $studentOffer = is_array($selectedScholarshipOffer ?? null)
+                        ? $selectedScholarshipOffer
+                        : collect($scholarshipOffers ?? [])->first();
+                @endphp
+
+                <div class="relative overflow-hidden rounded-xl p-8" style="background: linear-gradient(135deg, #065F46 0%, #022C22 100%); box-shadow: 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1);">
+                    <div class="pointer-events-none absolute -right-16 -top-16 h-32 w-32 rounded-full blur-[20px]" style="background: rgba(255, 255, 255, 0.05);"></div>
+
+                    <div class="relative flex flex-col gap-4">
+                        <div class="flex h-12 w-12 items-center justify-center rounded-lg" style="background: rgba(255, 255, 255, 0.1);">
+                            <svg class="h-5 w-5" fill="currentColor" style="color: #6EE7B7;" viewBox="0 0 24 24">
+                                <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                            </svg>
+                        </div>
+
+                        <h3 class="text-3xl font-bold leading-tight text-white">{{ $studentOffer['title'] ?? 'Scholarship Offer' }}</h3>
+                        <p class="text-sm font-semibold uppercase tracking-wide" style="color: rgba(209, 250, 229, 0.95);">{{ $studentOffer['targetLabel'] ?? ($user->name ?? 'Student') }}</p>
+                        <p class="text-base leading-relaxed" style="color: rgba(209, 250, 229, 0.8);">{{ $studentOffer['description'] ?? 'Scholarship details unavailable.' }}</p>
+                        <div class="rounded-lg px-3 py-2 text-sm" style="background: rgba(255,255,255,0.1); color: #D1FAE5;">
+                            Progress: {{ (int) ($studentOffer['progressPercent'] ?? 0) }}%<br>
+                            {{ $studentOffer['remainingText'] ?? '' }}
+                        </div>
+
+                        <div class="mt-2 flex items-end justify-between">
+                            <span class="text-5xl font-black text-white">{{ (int) ($studentOffer['discountPercent'] ?? 0) }}%</span>
+                            <span class="text-sm font-bold uppercase tracking-wider" style="color: #6EE7B7; letter-spacing: 1.2px;">
+                                {{ ($studentOffer['isActive'] ?? false) ? 'Activated' : (($studentOffer['isEligible'] ?? false) ? 'Available' : 'Not Eligible') }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

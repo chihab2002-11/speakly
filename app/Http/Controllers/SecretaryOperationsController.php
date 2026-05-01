@@ -12,9 +12,11 @@ use App\Models\Message;
 use App\Models\TuitionPayment;
 use App\Models\User;
 use App\Notifications\SecretaryAnnouncementNotification;
+use App\Support\PaymentReceiptPdf;
 use App\Support\TuitionFinancialService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
@@ -27,6 +29,7 @@ class SecretaryOperationsController extends Controller
 
     public function __construct(
         private TuitionFinancialService $tuitionFinancialService,
+        private PaymentReceiptPdf $paymentReceiptPdf,
         private CreateNewUser $createNewUser,
     ) {}
 
@@ -115,7 +118,7 @@ class SecretaryOperationsController extends Controller
         ]);
     }
 
-    public function storePayment(Request $request): RedirectResponse
+    public function storePayment(Request $request): Response|RedirectResponse
     {
         if (! Schema::hasTable('tuition_payments')) {
             return redirect()
@@ -139,7 +142,7 @@ class SecretaryOperationsController extends Controller
             })
             ->firstOrFail();
 
-        TuitionPayment::query()->create([
+        $payment = TuitionPayment::query()->create([
             'student_id' => $student->id,
             'parent_id' => $student->parent_id,
             'recorded_by' => $request->user()->id,
@@ -150,9 +153,21 @@ class SecretaryOperationsController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        return redirect()
-            ->route('secretary.payments')
-            ->with('success', 'Payment recorded successfully.');
+        $payment->loadMissing('student:id,name,email');
+
+        $pdf = $this->paymentReceiptPdf->render(
+            student: $student,
+            payment: $payment,
+            financialSummary: $this->tuitionFinancialService->buildStudentPageData($student),
+        );
+
+        $receiptIdentifier = preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) ($payment->reference ?: $payment->id));
+        $filename = 'payment-receipt-'.$receiptIdentifier.'.pdf';
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.addslashes($filename).'"',
+        ]);
     }
 
     /**

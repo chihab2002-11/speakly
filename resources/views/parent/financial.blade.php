@@ -210,9 +210,9 @@
                                 <td class="px-4 py-4" style="color: var(--lumina-text-secondary);">{{ $payment['method'] ?? 'Cash' }}</td>
                                 <td class="px-4 py-4 text-right">
                                     @if(!empty($payment['receiptUrl']))
-                                        <a href="{{ $payment['receiptUrl'] }}" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" style="border-color: var(--lumina-border); color: var(--lumina-primary);">Download</a>
+                                        <a href="{{ $payment['receiptUrl'] }}" target="_blank" class="rounded-lg border px-3 py-1.5 text-xs font-semibold" style="border-color: var(--lumina-border); color: var(--lumina-primary);">Print Receipt</a>
                                     @else
-                                        <span class="rounded-lg border px-3 py-1.5 text-xs font-semibold opacity-60" style="border-color: var(--lumina-border); color: var(--lumina-primary);">Download</span>
+                                        <span class="rounded-lg border px-3 py-1.5 text-xs font-semibold opacity-60" style="border-color: var(--lumina-border); color: var(--lumina-primary);">Print Receipt</span>
                                     @endif
                                 </td>
                             </tr>

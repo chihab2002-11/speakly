@@ -39,11 +39,6 @@
                 <p class="text-sm" style="color: var(--lumina-text-muted);">
                     Secretary ID: SEC-{{ str_pad($user->id, 4, '0', STR_PAD_LEFT) }}
                 </p>
-
-                <button class="mt-6 rounded-xl px-6 py-3 text-sm font-bold text-white transition-all hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]" style="background-color: var(--lumina-primary);" type="button">
-                    Upload New Photo
-                </button>
-                <p class="mt-2 text-xs" style="color: var(--lumina-text-muted);">JPG, GIF or PNG. Max size of 800K</p>
             </div>
 
             <div class="flex flex-col rounded-3xl border p-8" style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.1); border-radius: 24px;">

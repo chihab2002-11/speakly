@@ -20,6 +20,8 @@ class StudentFinancialController extends Controller
     {
         $user = $request->user();
 
+        abort_unless($user->canViewStudentFinancialInformation(), 403);
+
         return view('student.financial', array_merge(
             ['user' => $user],
             $this->tuitionFinancialService->buildStudentPageData($user)
@@ -30,6 +32,7 @@ class StudentFinancialController extends Controller
     {
         $student = $request->user();
 
+        abort_unless($student->canViewStudentFinancialInformation(), 403);
         abort_unless((int) $payment->student_id === (int) $student->id, 403);
 
         $payment->loadMissing('student:id,name,email');

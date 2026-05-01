@@ -5,12 +5,15 @@ use App\Models\CourseClass;
 use App\Models\LanguageProgram;
 use App\Models\Room;
 use App\Models\Schedule;
+use App\Models\ScholarshipActivation;
 use App\Models\StudentTuition;
 use App\Models\TuitionPayment;
 use App\Models\User;
 use App\Notifications\SecretaryAnnouncementNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 uses(RefreshDatabase::class);
@@ -73,6 +76,7 @@ it('renders secretary registrations using secretary view', function () {
 it('creates pending account from secretary registrations form', function () {
     /** @var TestCase $this */
     $secretary = createApprovedSecretaryForOperations();
+    Storage::fake('public');
 
     $response = $this->actingAs($secretary)
         ->post(route('secretary.registrations.store'), [
@@ -82,6 +86,7 @@ it('creates pending account from secretary registrations form', function () {
             'password_confirmation' => 'Password123!',
             'requested_role' => 'teacher',
             'date_of_birth' => '1996-05-10',
+            'registration_document' => UploadedFile::fake()->create('pending-teacher-cv.pdf', 240, 'application/pdf'),
         ]);
 
     $response->assertRedirect(route('secretary.registrations'));
@@ -92,11 +97,14 @@ it('creates pending account from secretary registrations form', function () {
     expect($created?->requested_role)->toBe('teacher');
     expect($created?->approved_at)->toBeNull();
     expect($created?->rejected_at)->toBeNull();
+    expect($created?->registration_document_type)->toBe('cv');
+    Storage::disk('public')->assertExists($created->registration_document_path);
 });
 
 it('secretary-created registration appears in approvals queue', function () {
     /** @var TestCase $this */
     $secretary = createApprovedSecretaryForOperations();
+    Storage::fake('public');
     $program = createLanguageProgramForSecretaryOperations([
         'name' => 'German Program',
     ]);
@@ -116,6 +124,7 @@ it('secretary-created registration appears in approvals queue', function () {
             'date_of_birth' => '2001-03-14',
             'program_id' => $program->id,
             'course_id' => $course->id,
+            'registration_document' => UploadedFile::fake()->create('student-birth-certificate.pdf', 300, 'application/pdf'),
         ])
         ->assertRedirect(route('secretary.registrations'));
 
@@ -124,7 +133,44 @@ it('secretary-created registration appears in approvals queue', function () {
         ->assertOk()
         ->assertViewIs('approvals.index')
         ->assertSee('queue.student@example.com')
-        ->assertSee('German A1');
+        ->assertSee('German A1')
+        ->assertSee('student-birth-certificate.pdf')
+        ->assertSee('Open')
+        ->assertSee('Download');
+});
+
+it('reviewer can download pending registration document from approvals', function () {
+    /** @var TestCase $this */
+    Storage::fake('public');
+
+    $secretary = createApprovedSecretaryForOperations();
+    $program = createLanguageProgramForSecretaryOperations();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+        'price' => 16000,
+    ]);
+
+    $this->actingAs($secretary)
+        ->post(route('secretary.registrations.store'), [
+            'name' => 'Pending Student With Document',
+            'email' => 'pending.student.document@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+            'requested_role' => 'student',
+            'date_of_birth' => '2004-03-14',
+            'program_id' => $program->id,
+            'course_id' => $course->id,
+            'registration_document' => UploadedFile::fake()->create('pending-student-document.pdf', 220, 'application/pdf'),
+        ])
+        ->assertRedirect(route('secretary.registrations'));
+
+    $pendingUser = User::query()->where('email', 'pending.student.document@example.com')->firstOrFail();
+
+    $response = $this->actingAs($secretary)
+        ->get(route('approvals.document', ['role' => 'secretary', 'user' => $pendingUser]));
+
+    $response->assertOk();
+    $response->assertHeader('content-disposition', 'attachment; filename=pending-student-document.pdf');
 });
 
 it('secretary registration rejects a course outside the selected program', function () {
@@ -155,6 +201,7 @@ it('secretary registration rejects a course outside the selected program', funct
             'date_of_birth' => '2001-03-14',
             'program_id' => $englishProgram->id,
             'course_id' => $course->id,
+            'registration_document' => UploadedFile::fake()->create('mismatch-student-birth-certificate.pdf', 300, 'application/pdf'),
         ])
         ->assertRedirect(route('secretary.registrations'))
         ->assertSessionHasErrors([
@@ -183,7 +230,53 @@ it('renders secretary payments page', function () {
     $response->assertViewIs('secretary.payments');
     $response->assertSee('Student Payments');
     $response->assertSee('English B1');
+    $response->assertSee('Applied Discount');
+    $response->assertSee('data-refresh-after-payment', false);
+    $response->assertSee('window.location.reload()', false);
     $response->assertSee('22,000 DA');
+});
+
+it('applies scholarship discount on secretary payments page', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $parent = User::factory()->create(['approved_at' => now()]);
+    $parent->assignRole('parent');
+
+    $course = Course::factory()->create(['name' => 'Italian A2', 'price' => 16000]);
+
+    $student = User::factory()->create([
+        'approved_at' => now(),
+        'parent_id' => $parent->id,
+    ]);
+    $student->assignRole('student');
+    StudentTuition::factory()->create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'course_price' => 16000,
+    ]);
+
+    ScholarshipActivation::query()->create([
+        'parent_id' => $parent->id,
+        'student_id' => $student->id,
+        'offer_key' => 'academic_progress_2m',
+        'discount_percent' => 10,
+        'activated_at' => now(),
+    ]);
+
+    TuitionPayment::factory()->create([
+        'student_id' => $student->id,
+        'parent_id' => $parent->id,
+        'amount' => 12000,
+    ]);
+
+    $response = $this->actingAs($secretary)->get(route('secretary.payments'));
+
+    $response->assertOk();
+    $response->assertSee('Italian A2');
+    $response->assertSee('10%');
+    $response->assertSee('-1,600 DA');
+    $response->assertSee('14,400 DA');
+    $response->assertSee('2,400 DA');
 });
 
 it('records a student payment from secretary payments page', function () {
@@ -201,14 +294,20 @@ it('records a student payment from secretary payments page', function () {
         'course_price' => 16000,
     ]);
 
-    $this->actingAs($secretary)
+    $response = $this->actingAs($secretary)
         ->post(route('secretary.payments.store'), [
             'student_id' => $student->id,
             'amount' => 12000,
             'method' => 'cash',
             'reference' => 'PAY-TEST-001',
-        ])
-        ->assertRedirect(route('secretary.payments'));
+        ]);
+
+    $response->assertOk();
+    $response->assertHeader('content-type', 'application/pdf');
+    $response->assertHeader('content-disposition', 'inline; filename="payment-receipt-PAY-TEST-001.pdf"');
+    expect($response->getContent())->toStartWith('%PDF-1.4');
+    expect($response->getContent())->toContain('PAY-TEST-001');
+    expect($response->getContent())->toContain('12 000 DZD');
 
     $this->assertDatabaseHas('tuition_payments', [
         'student_id' => $student->id,

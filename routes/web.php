@@ -7,6 +7,7 @@ use App\Http\Controllers\AdminEmployeeController;
 use App\Http\Controllers\AdminEmployeePaymentController;
 use App\Http\Controllers\AdminLanguageProgramController;
 use App\Http\Controllers\AdminScheduleController;
+use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\AdminTimetableHubController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\MessageController;
@@ -137,6 +138,18 @@ Route::get('/dashboard', function (Request $request) {
     ->middleware(['auth', 'verified', EnsureApproved::class])
     ->name('dashboard');
 
+Route::get('/support', function (Request $request) {
+    $user = $request->user();
+
+    return view('support', [
+        'user' => $user,
+        'currentRole' => DashboardRedirector::roleFor($user),
+        'currentRoute' => 'support',
+    ]);
+})
+    ->middleware(['auth', 'verified', EnsureApproved::class, $supportedRolesMiddleware])
+    ->name('support');
+
 Route::middleware(['auth', 'verified', EnsureApproved::class, $supportedRolesMiddleware, 'route.role'])
     ->prefix('{role}')
     ->whereIn('role', $supportedRoles)
@@ -164,6 +177,38 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, $supportedRolesMid
         Route::get('/messages/message/{message}', [MessageController::class, 'show'])
             ->whereNumber('message')
             ->name('role.messages.show');
+        Route::get('/messages/recipients', function (Request $request, string $role) {
+            $user = $request->user();
+
+            $allowedRoles = match ($role) {
+                'teacher' => ['student', 'parent', 'teacher', 'admin'],
+                'student' => ['teacher', 'admin', 'secretary'],
+                'parent' => ['teacher', 'admin', 'secretary'],
+                'admin' => ['student', 'parent', 'teacher', 'secretary'],
+                'secretary' => ['student', 'parent', 'teacher', 'admin', 'secretary'],
+                default => [],
+            };
+
+            $users = User::query()
+                ->where('id', '!=', $user->id)
+                ->whereNotNull('approved_at')
+                ->whereHas('roles', function ($query) use ($allowedRoles): void {
+                    $query->whereIn('name', $allowedRoles);
+                })
+                ->with('roles:id,name')
+                ->orderBy('name')
+                ->get()
+                ->map(function (User $candidate): array {
+                    return [
+                        'id' => $candidate->id,
+                        'name' => $candidate->name,
+                        'email' => $candidate->email,
+                        'role' => $candidate->roles->first()?->name,
+                    ];
+                });
+
+            return response()->json(['users' => $users]);
+        })->name('role.messages.recipients');
         Route::get('/messages/{conversation}', [MessageController::class, 'conversation'])
             ->whereNumber('conversation')
             ->name('role.messages.conversation');
@@ -587,6 +632,9 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
             return back()->with('success', 'All notifications marked as read');
         })->name('notifications.read-all');
 
+        Route::get('/settings', [AdminSettingsController::class, 'edit'])->name('settings');
+        Route::patch('/settings', [AdminSettingsController::class, 'update'])->name('settings.update');
+
         // Admin can access a page to start new conversations with anyone
         Route::get('/messages/new', function () {
             $user = User::query()->findOrFail((int) Auth::id());
@@ -736,6 +784,11 @@ Route::middleware([
             ->middleware('permission:approvals.reject.standard|approvals.reject.office')
             ->whereNumber('user')
             ->name('approvals.reject');
+
+        Route::get('/approvals/{user}/document', [ApprovalController::class, 'document'])
+            ->middleware('permission:approvals.approve.standard|approvals.reject.standard|approvals.approve.office|approvals.reject.office')
+            ->whereNumber('user')
+            ->name('approvals.document');
     });
 
 Route::middleware([

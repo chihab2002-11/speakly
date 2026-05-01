@@ -10,10 +10,11 @@
         ['name' => 'Manage Schedule', 'route' => 'admin.schedule.index', 'routeParams' => [], 'icon' => 'calendar'],
         ['name' => 'Manage Courses', 'route' => 'admin.courses.index', 'routeParams' => [], 'icon' => 'book'],
         ['name' => 'Manage ClassRooms', 'route' => 'admin.classrooms.index', 'routeParams' => [], 'icon' => 'building'],
+        ['name' => 'Messages', 'route' => 'role.messages.index', 'routeParams' => ['role' => 'admin'], 'icon' => 'chat'],
     ];
 
     $secretaryItems = [
-        ['name' => 'Student Registration', 'route' => 'secretary.registrations', 'icon' => 'user-plus', 'activeMatch' => fn () => request()->routeIs('secretary.registrations*')],
+        ['name' => 'Registrations', 'route' => 'secretary.registrations', 'icon' => 'user-plus', 'activeMatch' => fn () => request()->routeIs('secretary.registrations*')],
         ['name' => 'Student Payments', 'route' => 'secretary.payments', 'icon' => 'wallet', 'activeMatch' => fn () => request()->routeIs('secretary.payments*')],
         ['name' => 'Manage Groups', 'route' => 'secretary.groups', 'icon' => 'layers', 'activeMatch' => fn () => request()->routeIs('secretary.groups*') || request()->routeIs('secretary.timetable.index')],
         ['name' => 'Manage Accounts', 'route' => 'secretary.accounts', 'icon' => 'account', 'activeMatch' => fn () => request()->routeIs('secretary.accounts*')],
@@ -88,6 +89,9 @@
                                 @case('building')
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l8-4v18m6 0V11l-6-4"/></svg>
                                     @break
+                                @case('chat')
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
+                                    @break
                             @endswitch
                         </span>
                         <span class="tracking-tight">{{ $item['name'] }}</span>
@@ -114,6 +118,9 @@
                                     @break
                                 @case('building')
                                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l8-4v18m6 0V11l-6-4"/></svg>
+                                    @break
+                                @case('chat')
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/></svg>
                                     @break
                             @endswitch
                         </span>
@@ -171,7 +178,7 @@
 
     <div class="border-t p-6" style="border-color: rgba(226, 232, 240, 0.5);">
         <div class="flex flex-col gap-2">
-            <a href="mailto:admin@speakly.com" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 hover:bg-white/50" style="color: var(--lumina-text-muted);">
+            <a href="{{ route('support') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 hover:bg-white/50" style="color: var(--lumina-text-muted);">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <span>Support</span>
             </a>

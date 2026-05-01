@@ -5,15 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\ScholarshipActivation;
 use App\Models\TuitionPayment;
 use App\Models\User;
+use App\Support\PaymentReceiptPdf;
 use App\Support\TuitionFinancialService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ParentFinancialController extends Controller
 {
-    public function __construct(private TuitionFinancialService $tuitionFinancialService) {}
+    public function __construct(
+        private TuitionFinancialService $tuitionFinancialService,
+        private PaymentReceiptPdf $paymentReceiptPdf,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -113,7 +117,7 @@ class ParentFinancialController extends Controller
             ->with('success', 'Discount has been activated successfully.');
     }
 
-    public function downloadReceipt(Request $request, TuitionPayment $payment): StreamedResponse|RedirectResponse
+    public function downloadReceipt(Request $request, TuitionPayment $payment): Response|RedirectResponse
     {
         $parent = $request->user();
 
@@ -126,23 +130,23 @@ class ParentFinancialController extends Controller
             abort(403);
         }
 
-        $reference = $payment->reference ?: 'PAY-'.str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT);
-        $filename = 'receipt-'.$reference.'.txt';
-        $content = implode(PHP_EOL, [
-            'Lumina Academy Receipt',
-            'Reference: '.$reference,
-            'Child: '.($payment->student?->name ?? 'Child'),
-            'Amount: '.number_format((int) $payment->amount, 0, ',', ' ').' DZD',
-            'Date: '.($payment->paid_on?->format('Y-m-d') ?? '-'),
-            'Method: '.ucfirst(str_replace('_', ' ', (string) $payment->method)),
-        ]).PHP_EOL;
+        $payment->loadMissing('student:id,name,email');
+        $student = $payment->student;
 
-        return response()->streamDownload(
-            static function () use ($content): void {
-                echo $content;
-            },
-            $filename,
-            ['Content-Type' => 'text/plain; charset=UTF-8']
+        abort_unless($student instanceof User, 404);
+
+        $pdf = $this->paymentReceiptPdf->render(
+            student: $student,
+            payment: $payment,
+            financialSummary: $this->tuitionFinancialService->buildStudentPageData($student),
         );
+
+        $receiptIdentifier = preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) ($payment->reference ?: $payment->id));
+        $filename = 'payment-receipt-'.$receiptIdentifier.'.pdf';
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.addslashes($filename).'"',
+        ]);
     }
 }

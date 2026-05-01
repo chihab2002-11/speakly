@@ -37,6 +37,11 @@ class User extends Authenticatable
         'date_of_birth',
         'parent_id',
         'requested_course_id',
+        'registration_document_type',
+        'registration_document_original_filename',
+        'registration_document_path',
+        'registration_document_mime_type',
+        'registration_document_size',
         'approved_at',
         'approved_by',
         'rejected_at',
@@ -69,6 +74,7 @@ class User extends Authenticatable
             'approved_at' => 'datetime',
             'rejected_at' => 'datetime',
             'password_changed_at' => 'datetime',
+            'registration_document_size' => 'integer',
             'password' => 'hashed',
         ];
     }
@@ -189,5 +195,35 @@ class User extends Authenticatable
         }
 
         return Carbon::parse($this->date_of_birth)->age;
+    }
+
+    public function isUnderageStudent(): bool
+    {
+        return $this->hasRole('student')
+            && $this->student_age !== null
+            && $this->student_age < 18;
+    }
+
+    public function canViewStudentFinancialInformation(): bool
+    {
+        return $this->hasRole('student') && ! $this->isUnderageStudent();
+    }
+
+    public function requiredRegistrationDocumentType(): ?string
+    {
+        return match ($this->requested_role) {
+            'student' => 'birth_certificate',
+            'teacher', 'secretary' => 'cv',
+            default => null,
+        };
+    }
+
+    public function requiredRegistrationDocumentLabel(): ?string
+    {
+        return match ($this->requiredRegistrationDocumentType()) {
+            'birth_certificate' => 'Birth Certificate',
+            'cv' => 'C.V',
+            default => null,
+        };
     }
 }

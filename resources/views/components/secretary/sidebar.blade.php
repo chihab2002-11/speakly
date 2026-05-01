@@ -15,13 +15,6 @@
             'icon' => 'grid',
             'activeMatch' => fn () => request()->routeIs('role.dashboard') && request()->route('role') === $sharedRole,
         ],
-        [
-            'name' => 'Messages',
-            'route' => 'role.messages.index',
-            'routeParams' => ['role' => $sharedRole],
-            'icon' => 'chat',
-            'activeMatch' => fn () => request()->routeIs('role.messages.*') && request()->route('role') === $sharedRole,
-        ],
     ];
 
     if ($user?->can('registrations.manage')) {
@@ -73,6 +66,14 @@
             'activeMatch' => fn () => request()->routeIs('secretary.publish-notifications*'),
         ];
     }
+
+    $navItems[] = [
+        'name' => 'Messages',
+        'route' => 'role.messages.index',
+        'routeParams' => ['role' => $sharedRole],
+        'icon' => 'chat',
+        'activeMatch' => fn () => request()->routeIs('role.messages.*') && request()->route('role') === $sharedRole,
+    ];
 @endphp
 
 <aside
@@ -164,7 +165,7 @@
     <div class="border-t p-6" style="border-color: rgba(226, 232, 240, 0.5);">
         <div class="flex flex-col gap-2">
             <a
-                href="mailto:support@speakly.com"
+                href="{{ route('support') }}"
                 class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 hover:bg-white/50"
                 style="color: var(--lumina-text-muted);"
             >

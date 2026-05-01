@@ -326,7 +326,7 @@
                     </div>
                     
                     <!-- Form -->
-                    <form method="POST" action="{{ route('register') }}" class="space-y-5">
+                    <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data" class="space-y-5">
                         @csrf
                         
                         <!-- Global Error Messages for Registration -->
@@ -399,7 +399,7 @@
                         </div>
 
                         <!-- Parent Email (under 18 students) -->
-                        <div>
+                        <div id="publicParentEmailField">
                             <label class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">PARENT EMAIL (UNDER 18 STUDENTS)</label>
                             <div class="relative">
                                 <span class="absolute left-4 top-1/2 -translate-y-1/2">
@@ -408,6 +408,7 @@
                                     </svg>
                                 </span>
                                 <input
+                                    id="publicParentEmail"
                                     type="email"
                                     name="parent_email"
                                     value="{{ old('parent_email') }}"
@@ -463,6 +464,26 @@
                             </div>
                             <p class="mt-2 text-xs text-on-surface-variant">
                                 Students must choose one admin-created course from the selected program before the registration can be approved.
+                            </p>
+                        </div>
+
+                        <div id="publicRegistrationDocumentField">
+                            <label id="publicRegistrationDocumentLabel" class="block text-xs font-semibold text-on-surface-variant uppercase tracking-wide mb-2">REGISTRATION DOCUMENT</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828a4 4 0 00-5.656-5.656L5.757 10.757a6 6 0 108.486 8.486L20.5 13"/>
+                                    </svg>
+                                </span>
+                                <input
+                                    id="publicRegistrationDocument"
+                                    type="file"
+                                    name="registration_document"
+                                    class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-on-surface file:mr-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-2 file:font-medium file:text-primary hover:file:bg-primary/15"
+                                />
+                            </div>
+                            <p id="publicRegistrationDocumentHint" class="mt-2 text-xs text-on-surface-variant">
+                                Upload the required file for the selected role.
                             </p>
                         </div>
                         
@@ -666,31 +687,70 @@
         }
 
         function toggleStudentOnlyFields(role) {
+            const parentEmailField = document.getElementById('publicParentEmailField');
+            const parentEmailInput = document.getElementById('publicParentEmail');
             const programField = document.getElementById('publicProgramField');
             const programSelect = document.getElementById('publicProgramSelect');
             const courseField = document.getElementById('publicCourseField');
             const courseSelect = document.getElementById('publicCourseSelect');
+            const documentField = document.getElementById('publicRegistrationDocumentField');
+            const documentInput = document.getElementById('publicRegistrationDocument');
+            const documentLabel = document.getElementById('publicRegistrationDocumentLabel');
+            const documentHint = document.getElementById('publicRegistrationDocumentHint');
 
-            if (!programField || !programSelect || !courseField || !courseSelect) {
+            if (!parentEmailField || !parentEmailInput || !programField || !programSelect || !courseField || !courseSelect || !documentField || !documentInput || !documentLabel || !documentHint) {
                 return;
             }
 
             const isStudent = role === 'student';
             const selectedCourseId = courseSelect.dataset.selectedCourse ?? '';
+            const documentConfig = {
+                student: {
+                    label: 'UPLOAD BIRTH CERTIFICATE',
+                    hint: 'Upload the student birth certificate as PDF, JPG, or PNG.',
+                    accept: '.pdf,.jpg,.jpeg,.png',
+                },
+                teacher: {
+                    label: 'UPLOAD C.V',
+                    hint: 'Upload the teacher C.V as PDF or Word document.',
+                    accept: '.pdf,.doc,.docx',
+                },
+                secretary: {
+                    label: 'UPLOAD C.V',
+                    hint: 'Upload the secretary C.V as PDF or Word document.',
+                    accept: '.pdf,.doc,.docx',
+                },
+            };
+            const activeDocumentConfig = documentConfig[role] ?? null;
 
+            parentEmailField.style.display = isStudent ? 'block' : 'none';
+            parentEmailInput.disabled = !isStudent;
             programField.style.display = isStudent ? 'block' : 'none';
             courseField.style.display = isStudent ? 'block' : 'none';
             programSelect.disabled = !isStudent;
+            documentField.style.display = activeDocumentConfig ? 'block' : 'none';
+            documentInput.disabled = !activeDocumentConfig;
 
             if (!isStudent) {
+                parentEmailInput.value = '';
                 programSelect.value = '';
                 setCourseOptions(courseSelect, '', selectedCourseId);
                 courseSelect.disabled = true;
-
-                return;
             }
 
-            setCourseOptions(courseSelect, programSelect.value, selectedCourseId);
+            if (activeDocumentConfig) {
+                documentInput.value = '';
+                documentLabel.textContent = activeDocumentConfig.label;
+                documentHint.textContent = activeDocumentConfig.hint;
+                documentInput.setAttribute('accept', activeDocumentConfig.accept);
+            } else {
+                documentInput.value = '';
+                documentInput.removeAttribute('accept');
+            }
+
+            if (isStudent) {
+                setCourseOptions(courseSelect, programSelect.value, selectedCourseId);
+            }
         }
 
         function setCourseOptions(select, programId, selectedCourseId) {

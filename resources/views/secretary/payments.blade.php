@@ -127,6 +127,7 @@
                             <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Student</th>
                             <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Selected Course</th>
                             <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Course Price</th>
+                            <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Applied Discount</th>
                             <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Paid</th>
                             <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Remaining</th>
                             <th class="px-4 py-3 text-left font-semibold" style="color: var(--lumina-text-muted);">Status</th>
@@ -137,6 +138,9 @@
                         @foreach($payments as $payment)
                             @php
                                 $student = $payment['student'];
+                                $discountPercent = (int) ($payment['discount_percent'] ?? 0);
+                                $discountAmount = (int) ($payment['discount'] ?? 0);
+                                $netDue = (int) ($payment['net_due'] ?? $payment['course_price'] ?? 0);
                             @endphp
                             <tr class="border-t" style="border-color: var(--lumina-border);">
                                 <td class="px-4 py-4">
@@ -149,7 +153,20 @@
                                         {{ $payment['selected_course_code'] ?: $payment['academic_year'] }}
                                     </p>
                                 </td>
-                                <td class="px-4 py-4 font-semibold" style="color: var(--lumina-text-primary);">{{ number_format($payment['course_price']) }} DA</td>
+                                <td class="px-4 py-4">
+                                    <p class="font-semibold" style="color: var(--lumina-text-primary);">{{ number_format($netDue) }} DA</p>
+                                    @if($discountAmount > 0)
+                                        <p class="text-xs" style="color: var(--lumina-text-muted);">
+                                            Before: {{ number_format($payment['gross_due'] ?? $payment['course_price']) }} DA
+                                        </p>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-4">
+                                    <p class="font-semibold" style="color: var(--lumina-text-primary);">{{ $discountPercent > 0 ? $discountPercent.'%' : 'None' }}</p>
+                                    @if($discountAmount > 0)
+                                        <p class="text-xs" style="color: var(--lumina-text-muted);">-{{ number_format($discountAmount) }} DA</p>
+                                    @endif
+                                </td>
                                 <td class="px-4 py-4" style="color: #15803D;">{{ number_format($payment['amount_paid']) }} DA</td>
                                 <td class="px-4 py-4 font-semibold" style="color: #B45309;">{{ number_format($payment['balance']) }} DA</td>
                                 <td class="px-4 py-4">
@@ -164,7 +181,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-4">
-                                    <form method="POST" action="{{ route('secretary.payments.store') }}" class="flex justify-end gap-2">
+                                    <form method="POST" action="{{ route('secretary.payments.store') }}" target="_blank" data-refresh-after-payment class="flex justify-end gap-2">
                                         @csrf
                                         <input type="hidden" name="student_id" value="{{ $student->id }}">
                                         <input
@@ -191,10 +208,10 @@
                                         <button
                                             type="submit"
                                             @disabled(! $paymentsEnabled)
-                                            class="rounded-lg px-3 py-1.5 text-xs font-semibold text-white {{ $paymentsEnabled ? '' : 'cursor-not-allowed opacity-60' }}"
+                                            class="whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold text-white {{ $paymentsEnabled ? '' : 'cursor-not-allowed opacity-60' }}"
                                             style="background-color: var(--lumina-primary);"
                                         >
-                                            Save
+                                            Save &amp; Print Receipt
                                         </button>
                                     </form>
                                 </td>
@@ -205,4 +222,14 @@
             </div>
         @endif
     </section>
+
+    <script>
+        document.querySelectorAll('[data-refresh-after-payment]').forEach((form) => {
+            form.addEventListener('submit', () => {
+                window.setTimeout(() => {
+                    window.location.reload();
+                }, 1200);
+            });
+        });
+    </script>
 </x-layouts.secretary>

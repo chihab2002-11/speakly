@@ -6,9 +6,13 @@ use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use App\Models\Course;
 use App\Models\User;
-use Illuminate\Support\Carbon;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -43,6 +47,7 @@ class CreateNewUser implements CreatesNewUsers
                             ->whereNotNull('program_id');
                     }),
                 ],
+                'registration_document' => ['nullable', 'file', 'max:10240'],
                 'password' => $this->passwordRules(),
             ],
             [
@@ -52,6 +57,22 @@ class CreateNewUser implements CreatesNewUsers
         );
 
         $validator->after(function ($validator) use ($input) {
+            $documentType = $this->requiredDocumentTypeForRole($input['requested_role'] ?? null);
+            $uploadedDocument = request()->file('registration_document');
+
+            if ($documentType !== null && ! $uploadedDocument instanceof UploadedFile) {
+                $validator->errors()->add(
+                    'registration_document',
+                    $documentType === 'birth_certificate'
+                        ? 'Birth certificate upload is required for student registration.'
+                        : 'C.V upload is required for this registration.'
+                );
+            }
+
+            if ($documentType !== null && $uploadedDocument instanceof UploadedFile) {
+                $this->validateRegistrationDocumentExtension($validator, $uploadedDocument, $documentType);
+            }
+
             if (($input['requested_role'] ?? null) !== 'student') {
                 return;
             }
@@ -129,6 +150,8 @@ class CreateNewUser implements CreatesNewUsers
         $validator->validate();
 
         $parentId = null;
+        $documentType = $this->requiredDocumentTypeForRole($input['requested_role'] ?? null);
+        $uploadedDocument = request()->file('registration_document');
 
         if (($input['requested_role'] ?? null) === 'student' && ! empty($input['date_of_birth'])) {
             $age = Carbon::parse($input['date_of_birth'])->age;
@@ -145,17 +168,81 @@ class CreateNewUser implements CreatesNewUsers
             }
         }
 
-        return User::create([
-            'name' => $input['name'],
-            'email' => $input['email'],
-            'requested_role' => $input['requested_role'],
-            'date_of_birth' => $input['date_of_birth'] ?? null,
-            'parent_id' => $parentId,
-            'requested_course_id' => ($input['requested_role'] ?? null) === 'student'
-                ? (int) $input['course_id']
-                : null,
-            'password' => $input['password'], // User model has 'hashed' cast
-            // approved_at / approved_by stay null until approval
-        ]);
+        return DB::transaction(function () use ($documentType, $input, $parentId, $uploadedDocument): User {
+            $user = User::create([
+                'name' => $input['name'],
+                'email' => $input['email'],
+                'requested_role' => $input['requested_role'],
+                'date_of_birth' => $input['date_of_birth'] ?? null,
+                'parent_id' => $parentId,
+                'requested_course_id' => ($input['requested_role'] ?? null) === 'student'
+                    ? (int) $input['course_id']
+                    : null,
+                'password' => $input['password'],
+            ]);
+
+            $this->storeRegistrationDocument($user, $uploadedDocument, $documentType);
+
+            return $user;
+        });
+    }
+
+    private function requiredDocumentTypeForRole(?string $role): ?string
+    {
+        return match ($role) {
+            'student' => 'birth_certificate',
+            'teacher', 'secretary' => 'cv',
+            default => null,
+        };
+    }
+
+    private function validateRegistrationDocumentExtension($validator, UploadedFile $uploadedDocument, string $documentType): void
+    {
+        $extension = strtolower((string) $uploadedDocument->getClientOriginalExtension());
+        $allowedExtensions = $this->allowedDocumentExtensionsForType($documentType);
+
+        if (in_array($extension, $allowedExtensions, true)) {
+            return;
+        }
+
+        $validator->errors()->add(
+            'registration_document',
+            'The registration document must be a '.strtoupper(implode(', ', $allowedExtensions)).' file.'
+        );
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function allowedDocumentExtensionsForType(string $documentType): array
+    {
+        return match ($documentType) {
+            'birth_certificate' => ['pdf', 'jpg', 'jpeg', 'png'],
+            'cv' => ['pdf', 'doc', 'docx'],
+            default => [],
+        };
+    }
+
+    private function storeRegistrationDocument(User $user, UploadedFile|null $uploadedDocument, ?string $documentType): void
+    {
+        if ($uploadedDocument === null || $documentType === null) {
+            return;
+        }
+
+        $storedPath = Storage::disk('public')->putFile("registration-documents/{$documentType}/{$user->id}", $uploadedDocument);
+
+        if (! is_string($storedPath) || $storedPath === '') {
+            throw ValidationException::withMessages([
+                'registration_document' => 'Document upload failed while saving to local storage. Please try again.',
+            ]);
+        }
+
+        $user->forceFill([
+            'registration_document_type' => $documentType,
+            'registration_document_original_filename' => $uploadedDocument->getClientOriginalName(),
+            'registration_document_path' => $storedPath,
+            'registration_document_mime_type' => $uploadedDocument->getClientMimeType(),
+            'registration_document_size' => (int) $uploadedDocument->getSize(),
+        ])->save();
     }
 }
