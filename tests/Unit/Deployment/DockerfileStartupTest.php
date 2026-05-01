@@ -3,9 +3,11 @@
 test('railway container uses the deployment entrypoint script', function () {
     $dockerfile = file_get_contents(__DIR__.'/../../../Dockerfile');
 
-    expect($dockerfile)->toContain("sed -i 's/\\r$//' /app/docker-entrypoint.sh")
-        ->and($dockerfile)->toContain('chmod +x /app/docker-entrypoint.sh')
-        ->and($dockerfile)->toContain('CMD ["/app/docker-entrypoint.sh"]');
+    expect($dockerfile)->toContain("sed -i 's/\\r$//' ./docker-entrypoint.sh")
+        ->and($dockerfile)->toContain('chmod +x ./docker-entrypoint.sh')
+        ->and($dockerfile)->toContain('ENTRYPOINT ["./docker-entrypoint.sh"]')
+        ->and($dockerfile)->not->toContain('CMD ["/app/docker-entrypoint.sh"]')
+        ->and($dockerfile)->not->toContain('php -S');
 });
 
 test('deployment entrypoint verifies the database and runs migrations before the php server', function () {
@@ -17,7 +19,8 @@ test('deployment entrypoint verifies the database and runs migrations before the
         ->and($entrypoint)->toContain('exec php -S 0.0.0.0:"${PORT:-8080}" -t public')
         ->and($entrypoint)->toContain('Database connection verification failed')
         ->and($entrypoint)->toContain('Running database migrations...')
-        ->and($entrypoint)->toContain('Clearing Laravel optimization caches...');
+        ->and($entrypoint)->toContain('Clearing Laravel optimization caches...')
+        ->and($entrypoint)->not->toContain("\r");
 
     expect(strpos($entrypoint, 'php artisan db:show --no-interaction'))->toBeLessThan(strpos($entrypoint, 'php artisan migrate --force'))
         ->and(strpos($entrypoint, 'php artisan migrate --force'))->toBeLessThan(strpos($entrypoint, 'php artisan optimize:clear'))
