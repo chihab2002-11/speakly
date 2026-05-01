@@ -1,39 +1,36 @@
 <?php
 
-test('railway container uses the deployment entrypoint script', function () {
+test('dockerfile builds frontend assets with composer vendor dependencies available', function () {
     $dockerfile = file_get_contents(__DIR__.'/../../../Dockerfile');
 
-    expect($dockerfile)->toContain('WORKDIR /app')
-        ->and($dockerfile)->toContain('COPY . .')
-        ->and($dockerfile)->toContain("sed -i 's/\\r$//' /app/docker-entrypoint.sh")
-        ->and($dockerfile)->toContain('chmod +x /app/docker-entrypoint.sh')
-        ->and($dockerfile)->toContain('ENTRYPOINT ["/app/docker-entrypoint.sh"]')
-        ->and($dockerfile)->not->toContain('CMD ["/app/docker-entrypoint.sh"]')
-        ->and($dockerfile)->not->toContain('php -S');
+    expect($dockerfile)->toContain('FROM composer:2 AS vendor')
+        ->and($dockerfile)->toContain('COPY composer.json composer.lock ./')
+        ->and($dockerfile)->toContain('--no-scripts')
+        ->and($dockerfile)->toContain('FROM node:22-bookworm-slim AS frontend')
+        ->and($dockerfile)->toContain('COPY resources ./resources')
+        ->and($dockerfile)->toContain('COPY --from=vendor /app/vendor ./vendor')
+        ->and($dockerfile)->toContain('RUN npm ci')
+        ->and($dockerfile)->toContain('RUN npm run build');
+
+    expect(strpos($dockerfile, 'FROM composer:2 AS vendor'))->toBeLessThan(strpos($dockerfile, 'FROM node:22-bookworm-slim AS frontend'))
+        ->and(strpos($dockerfile, 'COPY --from=vendor /app/vendor ./vendor'))->toBeLessThan(strpos($dockerfile, 'RUN npm run build'));
 });
 
-test('deployment entrypoint verifies the database and runs migrations before the php server', function () {
-    $entrypoint = file_get_contents(__DIR__.'/../../../docker-entrypoint.sh');
+test('dockerfile keeps railway compatible php runtime without baked in startup commands', function () {
+    $dockerfile = file_get_contents(__DIR__.'/../../../Dockerfile');
 
-    expect($entrypoint)->toContain('#!/bin/sh')
-        ->and($entrypoint)->toContain('set -e')
-        ->and($entrypoint)->toContain('set -x')
-        ->and($entrypoint)->not->toContain('set -eu')
-        ->and($entrypoint)->toContain('=== ENTRYPOINT STARTED ===')
-        ->and($entrypoint)->toContain('php artisan db:show --no-interaction')
-        ->and($entrypoint)->toContain('php artisan migrate --force')
-        ->and($entrypoint)->toContain('php artisan optimize:clear')
-        ->and($entrypoint)->toContain('exec php -S 0.0.0.0:${PORT:-8080} -t public')
-        ->and($entrypoint)->toContain('Database connection verification failed')
-        ->and($entrypoint)->toContain('Running database migrations...')
-        ->and($entrypoint)->toContain('Clearing Laravel optimization caches...')
-        ->and($entrypoint)->not->toContain("\r")
-        ->and($entrypoint)->not->toContain('>/dev/null 2>&1');
-
-    expect(strpos($entrypoint, '=== ENTRYPOINT STARTED ==='))->toBeLessThan(strpos($entrypoint, 'php artisan db:show --no-interaction'))
-        ->and(strpos($entrypoint, 'php artisan db:show --no-interaction'))->toBeLessThan(strpos($entrypoint, 'php artisan migrate --force'))
-        ->and(strpos($entrypoint, 'php artisan migrate --force'))->toBeLessThan(strpos($entrypoint, 'php artisan optimize:clear'))
-        ->and(strpos($entrypoint, 'php artisan optimize:clear'))->toBeLessThan(strpos($entrypoint, 'exec php -S 0.0.0.0:${PORT:-8080} -t public'));
+    expect($dockerfile)->toContain('FROM php:8.4-cli')
+        ->and($dockerfile)->toContain('mbstring')
+        ->and($dockerfile)->toContain('pdo')
+        ->and($dockerfile)->toContain('pdo_mysql')
+        ->and($dockerfile)->toContain('xml')
+        ->and($dockerfile)->toContain('zip')
+        ->and($dockerfile)->toContain('COPY --from=frontend /app/public/build ./public/build')
+        ->and($dockerfile)->toContain('composer install')
+        ->and($dockerfile)->toContain('--no-dev')
+        ->and($dockerfile)->toContain('WORKDIR /app')
+        ->and($dockerfile)->not->toContain('ENTRYPOINT')
+        ->and($dockerfile)->not->toContain('CMD ');
 });
 
 test('required session and sanctum token table migrations exist', function () {
