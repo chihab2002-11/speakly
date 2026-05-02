@@ -9,10 +9,10 @@
         .mat-pill-dot { width: 8px; height: 8px; border-radius: 50%; }
         .mat-pill.total { background: #f3f4f6; color: #374151; }
         .mat-pill.total .mat-pill-dot { background: #9ca3af; }
-        .mat-pill.hw { background: #fef3c7; color: #92400e; }
-        .mat-pill.hw .mat-pill-dot { background: #f59e0b; }
-        .mat-pill.course { background: #dbeafe; color: #1e40af; }
-        .mat-pill.course .mat-pill-dot { background: #3b82f6; }
+        .mat-pill.hw { background: #ffedd5; color: #c2410c; }
+        .mat-pill.hw .mat-pill-dot { background: #f97316; }
+        .mat-pill.course { background: #dbeafe; color: #1d4ed8; }
+        .mat-pill.course .mat-pill-dot { background: #2563eb; }
         .mat-filter-bar { padding: 12px 24px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         .mat-filter-label { font-size: 11px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .06em; margin-right: 2px; }
         .mat-filter-select { appearance: none; background: #fff; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 6px 26px 6px 10px; font-size: 12px; font-weight: 600; color: #374151; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
@@ -28,10 +28,8 @@
         .mat-card { border: 1.5px solid #e5e7eb; border-radius: 12px; background: #fff; display: flex; flex-direction: column; overflow: hidden; transition: box-shadow .2s, transform .15s; }
         .mat-card:hover { box-shadow: 0 6px 20px rgba(0, 0, 0, .1); transform: translateY(-2px); }
         .mat-stripe { height: 4px; }
-        .mat-card.pdf .mat-stripe { background: #ef4444; }
-        .mat-card.doc .mat-stripe { background: #3b82f6; }
-        .mat-card.docx .mat-stripe { background: #3aaa80; }
-        .mat-card.zip .mat-stripe { background: #f59e0b; }
+        .mat-card.homework .mat-stripe { background: #f97316; }
+        .mat-card.course .mat-stripe { background: #2563eb; }
         .mat-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
         .mat-top { display: flex; align-items: flex-start; gap: 12px; }
         .mat-file-icon { width: 40px; height: 46px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; letter-spacing: .04em; gap: 2px; }
@@ -45,9 +43,9 @@
         .mat-tags { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .mat-tag { font-size: 10px; font-weight: 700; border-radius: 999px; padding: 2px 8px; }
         .mat-tag.class { background: #eaf5f0; color: #1a6b4a; }
-        .mat-tag.hw { background: #fef3c7; color: #92400e; }
-        .mat-tag.course { background: #dbeafe; color: #1e40af; }
-        .mat-deadline { align-self: flex-start; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 700; padding: 4px 8px; }
+        .mat-tag.hw { background: #ffedd5; color: #c2410c; }
+        .mat-tag.course { background: #dbeafe; color: #1d4ed8; }
+        .mat-deadline { align-self: flex-start; border-radius: 8px; background: #fff7ed; color: #c2410c; font-size: 11px; font-weight: 700; padding: 4px 8px; }
         .mat-detail { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #9ca3af; font-weight: 500; flex-wrap: wrap; }
         .mat-detail .dot { width: 3px; height: 3px; border-radius: 50%; background: #d1d5db; }
         .mat-actions { padding: 10px 16px 14px; display: flex; gap: 8px; }
@@ -270,7 +268,7 @@
                         : 'pdf';
 
                     return `
-                    <div class="mat-card ${type}">
+                    <div class="mat-card ${type} ${item.category === 'homework' ? 'homework' : 'course'}">
                         <div class="mat-stripe"></div>
                         <div class="mat-body">
                             <div class="mat-top">

@@ -63,6 +63,23 @@
         $selectedSort = $activeFilters['sort_by'] ?? 'recent';
         $selectedClassId = $activeFilters['class_id'] ?? '';
         $homeworkCategory = \App\Models\TeacherResource::CATEGORY_HOMEWORK;
+        $courseMaterialsCategory = \App\Models\TeacherResource::CATEGORY_COURSE_MATERIALS;
+        $resourceCategoryStyles = [
+            $homeworkCategory => [
+                'label' => 'Homework',
+                'background' => '#FFEDD5',
+                'border' => '#FDBA74',
+                'text' => '#C2410C',
+                'icon' => '#F97316',
+            ],
+            $courseMaterialsCategory => [
+                'label' => 'Course Material',
+                'background' => '#DBEAFE',
+                'border' => '#BFDBFE',
+                'text' => '#1D4ED8',
+                'icon' => '#2563EB',
+            ],
+        ];
 
         $baseFilterQuery = array_filter([
             'search' => $search,
@@ -201,29 +218,36 @@
                             $categoryFilterQuery = $isSelectedCategory
                                 ? $baseFilterQuery
                                 : array_merge($baseFilterQuery, ['category_id' => $category['id']]);
+                            $categoryStyle = $resourceCategoryStyles[$category['id']] ?? [
+                                'background' => 'var(--lumina-accent-green-bg)',
+                                'border' => 'var(--lumina-border-light)',
+                                'text' => 'var(--lumina-primary)',
+                                'icon' => 'var(--lumina-primary)',
+                            ];
                         @endphp
                         <a 
                             href="{{ route('teacher.resources', $categoryFilterQuery) }}"
                             class="flex items-center gap-3 p-4 transition-all hover:bg-gray-50 {{ $isSelectedCategory ? 'bg-gray-50' : '' }}"
+                            style="{{ $isSelectedCategory ? 'background-color: '.$categoryStyle['background'].';' : '' }}"
                         >
                             {{-- Category Icon --}}
                             <div 
-                                class="flex h-10 w-10 items-center justify-center rounded-xl"
-                                style="background-color: var(--lumina-accent-green-bg);"
+                                class="flex h-10 w-10 items-center justify-center rounded-xl border"
+                                style="background-color: {{ $categoryStyle['background'] }}; border-color: {{ $categoryStyle['border'] }};"
                             >
                                 @if($category['icon'] === 'homework')
                                     {{-- Homework icon (clipboard/checklist) --}}
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-primary);">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $categoryStyle['icon'] }};">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                                     </svg>
                                 @elseif($category['icon'] === 'course_materials')
                                     {{-- Course Materials icon (book/document) --}}
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-primary);">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $categoryStyle['icon'] }};">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                                     </svg>
                                 @else
                                     {{-- Default folder icon --}}
-                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-primary);">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $categoryStyle['icon'] }};">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                                     </svg>
                                 @endif
@@ -231,7 +255,7 @@
 
                             {{-- Category Info --}}
                             <div class="flex-1">
-                                <h4 class="text-sm font-semibold" style="color: var(--lumina-text-primary);">
+                                <h4 class="text-sm font-semibold" style="color: {{ $categoryStyle['text'] }};">
                                     {{ $category['name'] }}
                                 </h4>
                                 <p class="text-xs" style="color: var(--lumina-text-muted);">
@@ -352,14 +376,23 @@
                 {{-- Resource Items --}}
                 <div class="divide-y" style="border-color: var(--lumina-border);">
                     @forelse($recentResources as $resource)
+                        @php
+                            $resourceCategoryStyle = $resourceCategoryStyles[$resource['category_id'] ?? ''] ?? [
+                                'label' => 'Resource',
+                                'background' => 'var(--lumina-bg-card)',
+                                'border' => 'var(--lumina-border-light)',
+                                'text' => 'var(--lumina-text-muted)',
+                                'icon' => 'var(--lumina-text-muted)',
+                            ];
+                        @endphp
                         <div class="flex items-center gap-4 p-4 transition-all hover:bg-gray-50">
                             {{-- File Type Icon --}}
                             <div 
-                                class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl"
-                                style="background-color: #FEE2E2;"
+                                class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border"
+                                style="background-color: {{ $resourceCategoryStyle['background'] }}; border-color: {{ $resourceCategoryStyle['border'] }};"
                             >
                                 {{-- PDF Document Icon --}}
-                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: #DC2626;">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $resourceCategoryStyle['icon'] }};">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
                                 </svg>
                             </div>
@@ -372,6 +405,9 @@
                                 <div class="mt-1 flex flex-wrap items-center gap-2 text-xs" style="color: var(--lumina-text-muted);">
                                     <span class="rounded-full px-2 py-0.5" style="background-color: var(--lumina-bg-card);">
                                         {{ $resource['type'] }}
+                                    </span>
+                                    <span class="rounded-full border px-2 py-0.5 font-semibold" style="background-color: {{ $resourceCategoryStyle['background'] }}; border-color: {{ $resourceCategoryStyle['border'] }}; color: {{ $resourceCategoryStyle['text'] }};">
+                                        {{ $resourceCategoryStyle['label'] }}
                                     </span>
                                     <span>{{ $resource['size'] }}</span>
                                     <span>&bull;</span>
@@ -602,6 +638,11 @@
                             </option>
                         @endforeach
                     </select>
+                    <div
+                        id="uploadCategoryColorPreview"
+                        class="mt-2 hidden rounded-xl border px-3 py-2 text-xs font-semibold"
+                        aria-live="polite"
+                    ></div>
                 </div>
 
                 {{-- Homework Deadline --}}
@@ -757,6 +798,11 @@
                             <option value="{{ $category['id'] }}">{{ $category['name'] }}</option>
                         @endforeach
                     </select>
+                    <div
+                        id="editCategoryColorPreview"
+                        class="mt-2 hidden rounded-xl border px-3 py-2 text-xs font-semibold"
+                        aria-live="polite"
+                    ></div>
                 </div>
 
                 {{-- Homework Deadline --}}
@@ -820,17 +866,20 @@
             const fileInputLabel = document.getElementById('fileInputLabel');
             const fileInputHint = document.getElementById('fileInputHint');
             const uploadResourceCategoryInput = document.getElementById('uploadResourceCategory');
+            const uploadCategoryColorPreview = document.getElementById('uploadCategoryColorPreview');
             const uploadDeadlineGroup = document.getElementById('uploadDeadlineGroup');
             const uploadDeadlineInput = document.getElementById('uploadDeadlineInput');
             const editResourceIdInput = document.getElementById('editResourceId');
             const editResourceClassInput = document.getElementById('editResourceClass');
             const editResourceNameInput = document.getElementById('editResourceName');
             const editResourceCategoryInput = document.getElementById('editResourceCategory');
+            const editCategoryColorPreview = document.getElementById('editCategoryColorPreview');
             const editDeadlineGroup = document.getElementById('editDeadlineGroup');
             const editResourceDeadlineInput = document.getElementById('editResourceDeadline');
             const editResourceDescriptionInput = document.getElementById('editResourceDescription');
             const updateUrlTemplate = editModal.dataset.updateUrlTemplate ?? '';
             const homeworkCategory = @json($homeworkCategory);
+            const categoryColorStyles = @json($resourceCategoryStyles);
             const defaultFileLabel = 'Click to select file';
             const defaultFileHint = 'PDF, DOC, DOCX, ZIP up to {{ $maxUploadSizeLabel ?? '50 MB' }}';
 
@@ -894,6 +943,28 @@
                 fileInputHint.textContent = 'Selected file';
             }
 
+            function syncCategoryColorPreview(categoryInput, preview) {
+                if (!categoryInput || !preview) {
+                    return;
+                }
+
+                const categoryStyle = categoryColorStyles[categoryInput.value];
+
+                if (!categoryStyle) {
+                    preview.classList.add('hidden');
+                    preview.textContent = '';
+                    preview.removeAttribute('style');
+
+                    return;
+                }
+
+                preview.textContent = categoryStyle.label;
+                preview.classList.remove('hidden');
+                preview.style.backgroundColor = categoryStyle.background;
+                preview.style.borderColor = categoryStyle.border;
+                preview.style.color = categoryStyle.text;
+            }
+
             function syncDeadlineField(categoryInput, deadlineGroup, deadlineInput, shouldClear) {
                 if (!categoryInput || !deadlineGroup || !deadlineInput) {
                     return;
@@ -921,6 +992,7 @@
                 editResourceCategoryInput.value = String(resource.category_id ?? '');
                 editResourceDeadlineInput.value = String(resource.deadline ?? '');
                 editResourceDescriptionInput.value = String(resource.description ?? '');
+                syncCategoryColorPreview(editResourceCategoryInput, editCategoryColorPreview);
                 syncDeadlineField(editResourceCategoryInput, editDeadlineGroup, editResourceDeadlineInput, false);
             }
 
@@ -947,14 +1019,18 @@
             observeModal(uploadModal);
             observeModal(editModal);
             syncSelectedFileLabel();
+            syncCategoryColorPreview(uploadResourceCategoryInput, uploadCategoryColorPreview);
+            syncCategoryColorPreview(editResourceCategoryInput, editCategoryColorPreview);
             syncDeadlineField(uploadResourceCategoryInput, uploadDeadlineGroup, uploadDeadlineInput, true);
             syncDeadlineField(editResourceCategoryInput, editDeadlineGroup, editResourceDeadlineInput, true);
 
             fileInput?.addEventListener('change', syncSelectedFileLabel);
             uploadResourceCategoryInput?.addEventListener('change', function () {
+                syncCategoryColorPreview(uploadResourceCategoryInput, uploadCategoryColorPreview);
                 syncDeadlineField(uploadResourceCategoryInput, uploadDeadlineGroup, uploadDeadlineInput, true);
             });
             editResourceCategoryInput?.addEventListener('change', function () {
+                syncCategoryColorPreview(editResourceCategoryInput, editCategoryColorPreview);
                 syncDeadlineField(editResourceCategoryInput, editDeadlineGroup, editResourceDeadlineInput, true);
             });
 

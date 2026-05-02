@@ -688,6 +688,7 @@ it('student can see homework resource deadline in learning materials', function 
 
     $response->assertOk();
     $response->assertSee('Deadline:', false);
+    $response->assertSee('.mat-card.homework .mat-stripe', false);
     $response->assertViewHas('materials', function (array $materials) use ($deadline): bool {
         $material = collect($materials)->firstWhere('resourceName', 'Student Homework With Deadline');
 
@@ -721,6 +722,7 @@ it('student does not see a deadline for non-homework resources', function () {
     $response = $this->actingAs($student)->get(route('student.materials'));
 
     $response->assertOk();
+    $response->assertSee('.mat-card.course .mat-stripe', false);
     $response->assertViewHas('materials', function (array $materials): bool {
         $material = collect($materials)->firstWhere('resourceName', 'Student Course Material Without Deadline Display');
 
