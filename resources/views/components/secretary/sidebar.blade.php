@@ -37,6 +37,16 @@
         ];
     }
 
+    if ($user?->hasRole('secretary')) {
+        $navItems[] = [
+            'name' => 'My Payments',
+            'route' => 'secretary.my-payments',
+            'routeParams' => [],
+            'icon' => 'wallet',
+            'activeMatch' => fn () => request()->routeIs('secretary.my-payments*'),
+        ];
+    }
+
     if ($user?->can('groups.manage')) {
         $navItems[] = [
             'name' => 'Manage Groups',

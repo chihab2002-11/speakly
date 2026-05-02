@@ -10,6 +10,7 @@ use App\Http\Controllers\AdminScheduleController;
 use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\AdminTimetableHubController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\EmployeeMyPaymentsController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ParentChildPortalController;
 use App\Http\Controllers\ParentDashboardController;
@@ -440,6 +441,9 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:teacher'])
         Route::get('/attendance/export', [TeacherAttendanceController::class, 'export'])->name('attendance.export');
         Route::post('/attendance', [TeacherAttendanceController::class, 'store'])->name('attendance.store');
 
+        Route::get('/my-payments', [EmployeeMyPaymentsController::class, 'teacherIndex'])->name('my-payments');
+        Route::get('/my-payments/pdf', [EmployeeMyPaymentsController::class, 'teacherReceiptPdf'])->name('my-payments.receipt-pdf');
+
         Route::get('/resources', [TeacherResourceController::class, 'index'])->name('resources');
         Route::post('/resources', [TeacherResourceController::class, 'store'])->name('resources.store');
         Route::get('/resources/{resource}/download', [TeacherResourceController::class, 'download'])
@@ -510,6 +514,11 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:secretary|ad
     ->prefix('secretary')
     ->name('secretary.')
     ->group(function () {
+        Route::middleware('role:secretary')->group(function () {
+            Route::get('/my-payments', [EmployeeMyPaymentsController::class, 'secretaryIndex'])->name('my-payments');
+            Route::get('/my-payments/pdf', [EmployeeMyPaymentsController::class, 'secretaryReceiptPdf'])->name('my-payments.receipt-pdf');
+        });
+
         Route::middleware('permission:registrations.manage')->group(function () {
             Route::get('/registrations', [SecretaryOperationsController::class, 'registrations'])->name('registrations');
             Route::post('/registrations', [SecretaryOperationsController::class, 'storeRegistration'])->name('registrations.store');

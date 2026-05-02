@@ -14,6 +14,12 @@
             'icon' => 'grid',
         ],
         [
+            'name' => 'My Payments',
+            'route' => 'teacher.my-payments',
+            'routeParams' => [],
+            'icon' => 'wallet',
+        ],
+        [
             'name' => 'Manage Attendance',
             'route' => 'teacher.attendance',
             'routeParams' => [],
@@ -106,6 +112,12 @@
                         @case('chat')
                             <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                                 <path d="M21 6h-2v9H6v2c0 .55.45 1 1 1h11l4 4V7c0-.55-.45-1-1-1zm-4 6V3c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v14l4-4h10c.55 0 1-.45 1-1z"/>
+                            </svg>
+                            @break
+                        @case('wallet')
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M21 7H5a2 2 0 00-2 2v10a3 3 0 003 3h14a2 2 0 002-2V9a2 2 0 00-2-2zm0 13H6a1 1 0 01-1-1V9a1 1 0 011-1h15v12z"/>
+                                <path d="M17 13h4v2h-4a2 2 0 010-4h4v2h-4v0z"/>
                             </svg>
                             @break
                     @endswitch
