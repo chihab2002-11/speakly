@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TeacherResource;
 use App\Models\User;
 use App\Notifications\TeacherResourceActionNotification;
+use App\Support\RoleNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -17,6 +18,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class TeacherResourceController extends Controller
 {
     private const MAX_UPLOAD_KILOBYTES = 20480;
+
+    public function __construct(
+        private RoleNotificationService $roleNotificationService,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -210,6 +215,8 @@ class TeacherResourceController extends Controller
             resourceId: $resource->id,
             className: $resource->courseClass?->course?->name,
         ));
+
+        $this->roleNotificationService->notifyClassResourceUploaded($resource);
 
         return redirect()
             ->route('teacher.resources')

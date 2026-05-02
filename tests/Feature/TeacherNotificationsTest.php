@@ -5,6 +5,7 @@ use App\Models\CourseClass;
 use App\Models\Message;
 use App\Models\TeacherResource;
 use App\Models\User;
+use App\Notifications\ClassResourceUploadedNotification;
 use App\Notifications\NewMessageNotification;
 use App\Notifications\TeacherAttendanceSavedNotification;
 use App\Notifications\TeacherResourceActionNotification;
@@ -17,7 +18,7 @@ use Tests\TestCase;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    foreach (['teacher', 'student'] as $role) {
+    foreach (['teacher', 'student', 'parent'] as $role) {
         Role::findOrCreate($role, 'web');
     }
 });
@@ -68,6 +69,117 @@ it('creates a resource notification when teacher uploads a resource', function (
     expect($notification->data['action'])->toBe('uploaded');
     expect($notification->data['resource_name'])->toBe('Lesson Notes');
     expect($notification->data['url'])->toBe(route('teacher.resources'));
+});
+
+it('notifies enrolled students and linked parents when teacher uploads homework', function () {
+    /** @var TestCase $this */
+    Storage::fake('public');
+
+    $teacher = createApprovedTeacherForNotifications();
+    $class = createClassForTeacherNotifications($teacher);
+    $class->course->update([
+        'name' => 'English',
+        'code' => 'A1',
+    ]);
+    $deadline = now()->addWeek()->toDateString();
+
+    $parent = User::factory()->create(['approved_at' => now()]);
+    $parent->assignRole('parent');
+
+    $student = User::factory()->create([
+        'name' => 'Karim',
+        'approved_at' => now(),
+        'parent_id' => $parent->id,
+    ]);
+    $student->assignRole('student');
+
+    $outsideParent = User::factory()->create(['approved_at' => now()]);
+    $outsideParent->assignRole('parent');
+
+    $outsideStudent = User::factory()->create([
+        'approved_at' => now(),
+        'parent_id' => $outsideParent->id,
+    ]);
+    $outsideStudent->assignRole('student');
+
+    $class->students()->attach([$student->id]);
+
+    $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('homework.pdf', 120, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Homework Week 1',
+        'category_id' => TeacherResource::CATEGORY_HOMEWORK,
+        'deadline' => $deadline,
+        'description' => 'Read chapter one.',
+    ]);
+
+    $response->assertRedirect(route('teacher.resources'));
+
+    $studentNotification = $student->fresh()->notifications()->latest()->first();
+    $parentNotification = $parent->fresh()->notifications()->latest()->first();
+
+    expect($studentNotification)->not()->toBeNull();
+    expect($studentNotification->type)->toBe(ClassResourceUploadedNotification::class);
+    expect($studentNotification->data['type'])->toBe('homework_uploaded');
+    expect($studentNotification->data['title'])->toBe('New homework uploaded');
+    expect($studentNotification->data['message'])->toContain('English A1 - Group #'.$class->id);
+    expect($studentNotification->data['message'])->toContain('Deadline: '.$deadline);
+    expect($studentNotification->data['message'])->not->toContain('your child');
+    expect($studentNotification->data['url'])->toBe(route('student.materials'));
+
+    expect($parentNotification)->not()->toBeNull();
+    expect($parentNotification->type)->toBe(ClassResourceUploadedNotification::class);
+    expect($parentNotification->data['title'])->toBe('New homework for your child');
+    expect($parentNotification->data['message'])->toContain('your child Karim');
+    expect($parentNotification->data['message'])->toContain('Deadline: '.$deadline);
+    expect($parentNotification->data['child_id'])->toBe($student->id);
+    expect($parentNotification->data['url'])->toBe(route('parent.child.materials', ['child' => $student->id]));
+
+    expect($outsideStudent->fresh()->notifications()->count())->toBe(0);
+    expect($outsideParent->fresh()->notifications()->count())->toBe(0);
+});
+
+it('notifies enrolled students and linked parents when teacher uploads a course resource', function () {
+    /** @var TestCase $this */
+    Storage::fake('public');
+
+    $teacher = createApprovedTeacherForNotifications();
+    $class = createClassForTeacherNotifications($teacher);
+
+    $parent = User::factory()->create(['approved_at' => now()]);
+    $parent->assignRole('parent');
+
+    $student = User::factory()->create([
+        'name' => 'Lina',
+        'approved_at' => now(),
+        'parent_id' => $parent->id,
+    ]);
+    $student->assignRole('student');
+    $class->students()->attach([$student->id]);
+
+    $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('lesson.pdf', 120, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Lesson Notes',
+        'category_id' => TeacherResource::CATEGORY_COURSE_MATERIALS,
+        'description' => 'Chapter one notes',
+    ]);
+
+    $response->assertRedirect(route('teacher.resources'));
+
+    $studentNotification = $student->fresh()->notifications()->latest()->first();
+    $parentNotification = $parent->fresh()->notifications()->latest()->first();
+
+    expect($studentNotification)->not()->toBeNull();
+    expect($studentNotification->data['type'])->toBe('class_resource_uploaded');
+    expect($studentNotification->data['title'])->toBe('New course resource uploaded');
+    expect($studentNotification->data['message'])->toContain('A new course resource was uploaded');
+    expect($studentNotification->data['deadline'])->toBeNull();
+
+    expect($parentNotification)->not()->toBeNull();
+    expect($parentNotification->data['type'])->toBe('class_resource_uploaded');
+    expect($parentNotification->data['title'])->toBe('New course resource for your child');
+    expect($parentNotification->data['message'])->toContain('your child Lina');
 });
 
 it('creates a resource notification when teacher deletes a resource', function () {

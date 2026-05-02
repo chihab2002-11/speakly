@@ -16,6 +16,7 @@ use App\Models\StudentTuition;
 use App\Models\TeacherResource;
 use App\Models\TuitionPayment;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -70,7 +71,7 @@ class PresentationDemoSeeder extends Seeder
         $students = [
             'alex' => $this->createStudent('Alex Benali', 'student.alex@lumina.test', '2003-04-12', $parents['maya'], $courses['ielts'], $admin),
             'lina' => $this->createStudent('Lina Benali', 'student.lina@lumina.test', '2010-09-18', $parents['maya'], $courses['english'], $admin),
-            'yacine' => $this->createStudent('Yacine Benali', 'student.yacine@lumina.test', '2008-02-05', $parents['maya'], $courses['french'], $admin),
+            'yacine' => $this->createStudent('Yacine Benali', 'student.yacine@lumina.test', '2011-02-05', $parents['maya'], $courses['french'], $admin),
             'omar' => $this->createStudent('Omar Haddad', 'student.omar@lumina.test', '2002-11-28', $parents['amine'], $courses['french'], $admin),
             'sara' => $this->createStudent('Sara Haddad', 'student.sara@lumina.test', '2009-07-09', $parents['amine'], $courses['spanish'], $admin),
             'nour' => $this->createStudent('Nour Bensaid', 'student.nour@lumina.test', '2001-01-21', null, $courses['german'], $admin),
@@ -110,7 +111,7 @@ class PresentationDemoSeeder extends Seeder
     {
         $student = $this->createUser($name, $email, 'student', [
             'date_of_birth' => $birthDate,
-            'parent_id' => $parent?->id,
+            'parent_id' => $this->parentIdForStudent($parent, $birthDate),
             'requested_course_id' => $requestedCourse->id,
         ], $approver);
 
@@ -130,6 +131,15 @@ class PresentationDemoSeeder extends Seeder
         ]);
 
         return $student;
+    }
+
+    private function parentIdForStudent(?User $parent, string $birthDate): ?int
+    {
+        if (! $parent instanceof User) {
+            return null;
+        }
+
+        return CarbonImmutable::parse($birthDate)->age < 18 ? $parent->id : null;
     }
 
     /**
@@ -299,17 +309,19 @@ class PresentationDemoSeeder extends Seeder
      */
     private function seedFinancials(array $students, array $parents, User $secretary): void
     {
-        ScholarshipActivation::query()->create([
-            'parent_id' => $parents['maya']->id,
-            'student_id' => null,
-            'offer_key' => 'family_3_children',
-            'discount_percent' => 12,
-            'activated_at' => now()->subWeeks(2),
-            'meta' => ['reason' => 'Three linked children enrolled for the presentation demo.'],
-        ]);
+        if ($this->linkedChildrenCount($students, $parents['maya']) >= 3) {
+            ScholarshipActivation::query()->create([
+                'parent_id' => $parents['maya']->id,
+                'student_id' => null,
+                'offer_key' => 'family_3_children',
+                'discount_percent' => 12,
+                'activated_at' => now()->subWeeks(2),
+                'meta' => ['reason' => 'Three linked children enrolled for the presentation demo.'],
+            ]);
+        }
 
         ScholarshipActivation::query()->create([
-            'parent_id' => $parents['maya']->id,
+            'parent_id' => $students['alex']->parent_id ?? $students['alex']->id,
             'student_id' => $students['alex']->id,
             'offer_key' => 'multi_course_4_plus',
             'discount_percent' => 10,
@@ -318,19 +330,19 @@ class PresentationDemoSeeder extends Seeder
         ]);
 
         $payments = [
-            ['alex', $parents['maya'], 42000, 'cash', 'PAY-ALEX-001', now()->subWeeks(5)],
-            ['alex', $parents['maya'], 18000, 'bank_transfer', 'PAY-ALEX-002', now()->subWeeks(2)],
-            ['lina', $parents['maya'], 12000, 'card', 'PAY-LINA-001', now()->subWeeks(3)],
-            ['yacine', $parents['maya'], 10000, 'cash', 'PAY-YACINE-001', now()->subDays(12)],
-            ['omar', $parents['amine'], 16000, 'bank_transfer', 'PAY-OMAR-001', now()->subWeeks(4)],
-            ['sara', $parents['amine'], 8000, 'cash', 'PAY-SARA-001', now()->subDays(10)],
-            ['nour', null, 28000, 'card', 'PAY-NOUR-001', now()->subWeeks(2)],
+            ['alex', 42000, 'cash', 'PAY-ALEX-001', now()->subWeeks(5)],
+            ['alex', 18000, 'bank_transfer', 'PAY-ALEX-002', now()->subWeeks(2)],
+            ['lina', 12000, 'card', 'PAY-LINA-001', now()->subWeeks(3)],
+            ['yacine', 10000, 'cash', 'PAY-YACINE-001', now()->subDays(12)],
+            ['omar', 16000, 'bank_transfer', 'PAY-OMAR-001', now()->subWeeks(4)],
+            ['sara', 8000, 'cash', 'PAY-SARA-001', now()->subDays(10)],
+            ['nour', 28000, 'card', 'PAY-NOUR-001', now()->subWeeks(2)],
         ];
 
-        foreach ($payments as [$studentKey, $parent, $amount, $method, $reference, $paidOn]) {
+        foreach ($payments as [$studentKey, $amount, $method, $reference, $paidOn]) {
             TuitionPayment::query()->create([
                 'student_id' => $students[$studentKey]->id,
-                'parent_id' => $parent?->id,
+                'parent_id' => $students[$studentKey]->parent_id,
                 'recorded_by' => $secretary->id,
                 'amount' => $amount,
                 'paid_on' => $paidOn->toDateString(),
@@ -339,6 +351,16 @@ class PresentationDemoSeeder extends Seeder
                 'notes' => 'Seeded presentation payment.',
             ]);
         }
+    }
+
+    /**
+     * @param  array<string, User>  $students
+     */
+    private function linkedChildrenCount(array $students, User $parent): int
+    {
+        return collect($students)
+            ->filter(fn (User $student): bool => (int) $student->parent_id === (int) $parent->id)
+            ->count();
     }
 
     /**

@@ -2,6 +2,7 @@
 
 use App\Models\EmployeePayment;
 use App\Models\User;
+use App\Notifications\EmployeePaymentRecordedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -157,6 +158,91 @@ it('updates employee salary payment details from the admin page', function () {
         'amount_paid' => 25000,
         'notes' => 'April payroll',
     ]);
+});
+
+it('notifies a teacher when admin records a partial employee payment', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $teacher = createApprovedUserWithRole('teacher');
+    $unrelatedTeacher = createApprovedUserWithRole('teacher');
+
+    $this->actingAs($admin)
+        ->patch(route('admin.employee-payments.update', $teacher), [
+            'expected_salary' => 5000,
+            'amount_paid' => 1000,
+            'notes' => 'Partial salary',
+        ])
+        ->assertRedirect(route('admin.employee-payments.index'));
+
+    $notification = $teacher->fresh()->notifications()->latest()->first();
+
+    expect($notification)->not()->toBeNull();
+    expect($notification->type)->toBe(EmployeePaymentRecordedNotification::class);
+    expect($notification->data['type'])->toBe('employee_payment_recorded');
+    expect($notification->data['title'])->toBe('Payment recorded');
+    expect($notification->data['message'])->toContain('1,000 DZD');
+    expect($notification->data['message'])->toContain('Remaining salary: 4,000 DZD');
+    expect($notification->data['full_salary'])->toBe(5000);
+    expect($notification->data['status'])->toBe('partial');
+    expect($notification->data['url'])->toBe(route('teacher.my-payments'));
+    expect($unrelatedTeacher->fresh()->notifications()->count())->toBe(0);
+});
+
+it('notifies a secretary when admin records a fully paid employee payment', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $secretary = createApprovedUserWithRole('secretary');
+
+    $this->actingAs($admin)
+        ->patch(route('admin.employee-payments.update', $secretary), [
+            'expected_salary' => 5000,
+            'amount_paid' => 5000,
+            'notes' => 'Full salary',
+        ])
+        ->assertRedirect(route('admin.employee-payments.index'));
+
+    $notification = $secretary->fresh()->notifications()->latest()->first();
+
+    expect($notification)->not()->toBeNull();
+    expect($notification->type)->toBe(EmployeePaymentRecordedNotification::class);
+    expect($notification->data['title'])->toBe('Salary fully paid');
+    expect($notification->data['message'])->toContain('5,000 DZD');
+    expect($notification->data['message'])->toContain('fully paid');
+    expect($notification->data['remaining_amount'])->toBe(0);
+    expect($notification->data['status'])->toBe('paid');
+    expect($notification->data['url'])->toBe(route('secretary.my-payments'));
+});
+
+it('does not duplicate employee payment notifications when paid amount is unchanged', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $teacher = createApprovedUserWithRole('teacher');
+
+    EmployeePayment::factory()->create([
+        'employee_id' => $teacher->id,
+        'expected_salary' => 5000,
+        'amount_paid' => 1000,
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('admin.employee-payments.update', $teacher), [
+            'expected_salary' => 6000,
+            'amount_paid' => 1000,
+            'notes' => 'Salary changed only',
+        ])
+        ->assertRedirect(route('admin.employee-payments.index'));
+
+    expect($teacher->fresh()->notifications()->count())->toBe(0);
+
+    $this->actingAs($admin)
+        ->patch(route('admin.employee-payments.update', $teacher), [
+            'expected_salary' => 6000,
+            'amount_paid' => 2000,
+            'notes' => 'Paid amount changed',
+        ])
+        ->assertRedirect(route('admin.employee-payments.index'));
+
+    expect($teacher->fresh()->notifications()->count())->toBe(1);
 });
 
 it('allows admins and blocks non admin employees from employee payments', function () {

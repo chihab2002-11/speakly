@@ -13,6 +13,7 @@ use App\Models\TuitionPayment;
 use App\Models\User;
 use App\Notifications\SecretaryAnnouncementNotification;
 use App\Support\PaymentReceiptPdf;
+use App\Support\RoleNotificationService;
 use App\Support\TuitionFinancialService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -37,6 +38,7 @@ class SecretaryOperationsController extends Controller
         private TuitionFinancialService $tuitionFinancialService,
         private PaymentReceiptPdf $paymentReceiptPdf,
         private CreateNewUser $createNewUser,
+        private RoleNotificationService $roleNotificationService,
     ) {}
 
     public function registrations(): View
@@ -338,6 +340,7 @@ class SecretaryOperationsController extends Controller
         ]);
 
         $this->notifyAdminsAboutCreatedGroup($request->user(), $group);
+        $this->roleNotificationService->notifyTeacherAssignedToGroup($group, null, $request->user());
 
         return redirect()
             ->route('secretary.groups')
@@ -588,6 +591,8 @@ class SecretaryOperationsController extends Controller
                 ]);
         }
 
+        $previousTeacherId = $group->teacher_id === null ? null : (int) $group->teacher_id;
+
         $group->update([
             'course_id' => (int) $validated['course_id'],
             'teacher_id' => isset($validated['teacher_id']) && $validated['teacher_id'] !== ''
@@ -595,6 +600,8 @@ class SecretaryOperationsController extends Controller
                 : null,
             'capacity' => $newCapacity,
         ]);
+
+        $this->roleNotificationService->notifyTeacherAssignedToGroup($group->refresh(), $previousTeacherId, $request->user());
 
         return redirect()
             ->route('secretary.groups')

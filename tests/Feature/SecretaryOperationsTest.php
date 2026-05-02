@@ -10,6 +10,7 @@ use App\Models\StudentTuition;
 use App\Models\TuitionPayment;
 use App\Models\User;
 use App\Notifications\SecretaryAnnouncementNotification;
+use App\Notifications\TeacherGroupAssignedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
@@ -1127,6 +1128,85 @@ it('secretary can update and delete group without schedules', function () {
     $this->assertDatabaseMissing('classes', [
         'id' => $group->id,
     ]);
+});
+
+it('notifies the assigned teacher when secretary creates a group with a teacher', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $teacher = createApprovedUserWithRole('teacher');
+    $otherTeacher = createApprovedUserWithRole('teacher');
+    $course = Course::factory()->create([
+        'name' => 'English',
+        'code' => 'A1',
+    ]);
+
+    $this->actingAs($secretary)
+        ->post(route('secretary.groups.store'), [
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'capacity' => 24,
+        ])
+        ->assertRedirect(route('secretary.groups'));
+
+    $notification = $teacher->fresh()->notifications()->latest()->first();
+
+    expect($notification)->not()->toBeNull();
+    expect($notification->type)->toBe(TeacherGroupAssignedNotification::class);
+    expect($notification->data['type'])->toBe('teacher_group_assigned');
+    expect($notification->data['title'])->toBe('New group assignment');
+    expect($notification->data['message'])->toContain('Group #');
+    expect($notification->data['message'])->toContain('English A1');
+    expect($notification->data['issuer_name'])->toBe($secretary->name);
+    expect($notification->data['url'])->toBe(route('timetable.teacher'));
+    expect($otherTeacher->fresh()->notifications()->count())->toBe(0);
+});
+
+it('does not notify again when secretary updates a group without changing teacher', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $teacher = createApprovedUserWithRole('teacher');
+    $course = Course::factory()->create();
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'capacity' => 20,
+    ]);
+
+    $this->actingAs($secretary)
+        ->patch(route('secretary.groups.update', $group), [
+            'course_id' => $course->id,
+            'teacher_id' => $teacher->id,
+            'capacity' => 25,
+        ])
+        ->assertRedirect(route('secretary.groups'));
+
+    expect($teacher->fresh()->notifications()->count())->toBe(0);
+});
+
+it('notifies only the new teacher when secretary replaces a group teacher', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $teacherA = createApprovedUserWithRole('teacher');
+    $teacherB = createApprovedUserWithRole('teacher');
+    $otherTeacher = createApprovedUserWithRole('teacher');
+    $course = Course::factory()->create();
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'teacher_id' => $teacherA->id,
+        'capacity' => 20,
+    ]);
+
+    $this->actingAs($secretary)
+        ->patch(route('secretary.groups.update', $group), [
+            'course_id' => $course->id,
+            'teacher_id' => $teacherB->id,
+            'capacity' => 20,
+        ])
+        ->assertRedirect(route('secretary.groups'));
+
+    expect($teacherA->fresh()->notifications()->count())->toBe(0);
+    expect($teacherB->fresh()->notifications()->count())->toBe(1);
+    expect($otherTeacher->fresh()->notifications()->count())->toBe(0);
 });
 
 it('secretary cannot delete group with schedules', function () {

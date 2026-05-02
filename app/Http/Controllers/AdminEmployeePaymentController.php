@@ -6,6 +6,7 @@ use App\Models\EmployeePayment;
 use App\Models\User;
 use App\Support\EmployeePaymentReceiptPdf;
 use App\Support\EmployeePaymentService;
+use App\Support\RoleNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -16,6 +17,7 @@ class AdminEmployeePaymentController extends Controller
     public function __construct(
         private EmployeePaymentService $employeePaymentService,
         private EmployeePaymentReceiptPdf $receiptPdf,
+        private RoleNotificationService $roleNotificationService,
     ) {}
 
     public function index(Request $request): View
@@ -48,6 +50,9 @@ class AdminEmployeePaymentController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $employee->loadMissing('employeePayment');
+        $previousAmountPaid = $employee->employeePayment?->amount_paid;
+
         $employee->employeePayment()->updateOrCreate(
             [],
             [
@@ -56,6 +61,14 @@ class AdminEmployeePaymentController extends Controller
                 'amount_paid' => (int) $validated['amount_paid'],
                 'notes' => $validated['notes'] ?? null,
             ]
+        );
+
+        $employee->refresh()->loadMissing(['employeePayment', 'roles:id,name']);
+
+        $this->roleNotificationService->notifyEmployeePaymentChanged(
+            employee: $employee,
+            previousAmountPaid: $previousAmountPaid,
+            paymentData: $this->employeePaymentService->employeeRow($employee),
         );
 
         return redirect()
