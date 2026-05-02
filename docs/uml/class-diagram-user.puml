@@ -1,0 +1,58 @@
+@startuml
+title User Class - School Management System
+
+hide circle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+skinparam NoteBackgroundColor #FEF9C3
+skinparam NoteBorderColor #A16207
+
+class User {
+    -id: bigint
+    -name: string
+    -email: string
+    -phone: string
+    -preferred_language: string
+    -bio: text
+    -requested_role: string
+    -date_of_birth: date
+    -parent_id: bigint
+    -requested_course_id: bigint
+    -approved_at: datetime
+    -rejected_at: datetime
+    -rejection_reason: text
+    -approved_by: bigint
+    -email_verified_at: datetime
+    -password_changed_at: datetime
+
+    +enrolledClasses()
+    +taughtClasses()
+    +parent()
+    +children()
+    +requestedCourse()
+    +attendanceRecords()
+    +latestStudentCard()
+    +currentStudentCard()
+    +studentTuition()
+    +employeePayment()
+    +getStudentAgeAttribute(): int
+}
+
+note right of User
+Student, Teacher, Secretary, Parent,
+and Admin are roles of the User model.
+
+The User entity stores common account data,
+approval information, parent-child links,
+and course registration requests.
+
+Role-specific behavior is handled through
+permissions, controllers, middleware,
+and services.
+end note
+
+@enduml

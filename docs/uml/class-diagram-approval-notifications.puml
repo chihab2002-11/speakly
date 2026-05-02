@@ -1,75 +1,114 @@
 @startuml
-title Final Project - Approval and Accounts Diagram
+title Final Project - Approval and Notification Diagram
 
 left to right direction
-skinparam classAttributeIconSize 0
-skinparam linetype ortho
-skinparam shadowing false
-skinparam nodesep 70
-skinparam ranksep 70
-hide methods
 hide circle
+hide methods
 
-skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
 skinparam backgroundColor white
 skinparam defaultFontName Arial
-skinparam ArrowColor #475569
-skinparam PackageBorderColor #334155
-skinparam PackageBackgroundColor #F8FAFC
-skinparam ClassBorderColor #334155
-skinparam ClassBackgroundColor white
+skinparam nodesep 95
+skinparam ranksep 90
 
-package "1) User, Roles & Approval" {
-    class User {
-        +id
-        +name
-        +requested_role
-        +approved_at
-        +rejected_at
-    }
+skinparam packageStyle rectangle
 
-    class Role {
-        +id
-        +name
-    }
-
-    class Course {
-        +id
-        +code
-        +name
-        +price
-    }
-
-    class StudentTuition {
-        +id
-        +course_price
-    }
-
-    class Notification {
-        +id
-        +type
-        +read_at
-    }
+skinparam Class {
+  BorderColor #334155
+  BackgroundColor white
+  FontColor #0F172A
 }
 
-User "1" -- "0..*" Role : assigned after approval
-User "0..1" <-- "0..*" User : parent account
-User "0..1" <-- "0..*" User : approved_by
-User "0..1" <-- "0..*" User : rejected_by
-Course "1" <-- "0..*" User : requested course
-User "1" <-- "0..1" StudentTuition : created for approved student
-Course "1" <-- "0..*" StudentTuition : approved course
-User "1" <-- "0..*" Notification : receives approval notice
+skinparam Arrow {
+  Color #475569
+  Thickness 1
+}
 
-Role -[hidden]-> User
-User -[hidden]-> Course
-Course -[hidden]-> StudentTuition
-StudentTuition -[hidden]-> Notification
+skinparam Note {
+  BackgroundColor #FFF7ED
+  BorderColor #F97316
+  FontColor #7C2D12
+}
 
-note right of User
-ApprovalController approves or rejects requested accounts.
-When an approved user requested the Student role,
-a StudentTuition record is created from the selected course.
+package "Approval Workflow" {
+  class User {
+    +id: bigint
+    +name: string
+    +email: string
+    +requested_role: string
+    +requested_course_id: bigint?
+    +approved_at: datetime?
+    +approved_by: bigint?
+    +rejected_at: datetime?
+    +rejected_by: bigint?
+    +rejection_reason: text?
+  }
+
+  class Role {
+    +id: bigint
+    +name: string
+  }
+}
+
+package "Academic / Finance Outcome" {
+  class Course {
+    +id: bigint
+    +code: string
+    +name: string
+    +price: integer
+  }
+
+  class StudentTuition {
+    +id: bigint
+    +student_id: bigint
+    +course_id: bigint
+    +course_price: integer
+  }
+}
+
+package "Notification Outcome" {
+  class DatabaseNotification {
+    +id: uuid
+    +type: string
+    +notifiable_id: bigint
+    +data: json
+    +read_at: datetime?
+    +created_at: datetime
+  }
+}
+
+User "*" --> "*" Role : assigned roles
+User "*" --> "0..1" Course : requested course
+User "1" --> "0..1" StudentTuition : tuition after approval
+Course "1" --> "*" StudentTuition : pricing source
+
+User "0..*" --> "0..1" User : approved by
+User "0..*" --> "0..1" User : rejected by
+
+DatabaseNotification "*" --> "1" User : received by
+
+note as N1
+  New accounts are stored with
+  a requested role and remain pending.
+  Approval assigns the final role.
+  Rejection stores the reason.
 end note
+
+note bottom of StudentTuition
+  For approved student accounts,
+  the selected course price is copied
+  into StudentTuition as course_price.
+end note
+
+note as N3
+  Approval and rejection actions
+  create database notifications
+  for the affected user.
+end note
+
+User .. N1
+DatabaseNotification .. N3
 
 @enduml

@@ -1,0 +1,63 @@
+@startuml
+title Final Project - Notification Class Diagram
+
+left to right direction
+hide circle
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+
+skinparam Class {
+  BorderColor #334155
+  BackgroundColor white
+  FontColor #0F172A
+}
+
+skinparam ArrowColor #475569
+
+skinparam Note {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #334155
+}
+
+class DatabaseNotification {
+  +id: uuid
+  +type: string
+  +notifiable_id: bigint
+  +data: json
+  +read_at: datetime
+  +created_at: datetime
+
+  --
+  +markAsRead()
+}
+
+class User {
+  +id: bigint
+  +name: string
+  +email: string
+  +requested_role: string
+
+  --
+  +notify()
+}
+
+DatabaseNotification "*" --> "1" User : receiver
+
+note right of DatabaseNotification
+Stores system notifications such as
+messages, approvals, attendance
+updates, resources, and announcements.
+end note
+
+note bottom of User
+All roles receive notifications through
+the User entity using Laravel's
+notifiable mechanism.
+end note
+
+@enduml

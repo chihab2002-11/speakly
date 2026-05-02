@@ -1,89 +1,149 @@
 @startuml
-title Final Project - Finance Diagram
+title Final Project - Financial Management Diagram
 
-left to right direction
-skinparam classAttributeIconSize 0
-skinparam linetype ortho
-skinparam shadowing false
-skinparam nodesep 70
-skinparam ranksep 70
-hide methods
+top to bottom direction
 hide circle
+hide methods
 
-skinparam packageStyle rectangle
+scale 1.15
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
 skinparam backgroundColor white
 skinparam defaultFontName Arial
-skinparam ArrowColor #475569
-skinparam PackageBorderColor #334155
-skinparam PackageBackgroundColor #F8FAFC
-skinparam ClassBorderColor #334155
-skinparam ClassBackgroundColor white
+skinparam defaultFontSize 15
+skinparam nodesep 35
+skinparam ranksep 85
 
-package "4) Finance" {
-    class User {
-        +id
-        +name
-        +requested_role
-        +approved_at
-    }
+skinparam packageStyle rectangle
 
-    class Course {
-        +id
-        +code
-        +name
-        +price
-    }
-
-    class StudentTuition {
-        +id
-        +course_price
-    }
-
-    class TuitionPayment {
-        +id
-        +amount
-        +paid_on
-        +method
-    }
-
-    class EmployeePayment {
-        +id
-        +expected_salary
-        +amount_paid
-    }
-
-    class ScholarshipActivation {
-        +id
-        +offer_key
-        +discount_percent
-        +activated_at
-    }
+skinparam package {
+  BorderColor #CBD5E1
+  BackgroundColor #F8FAFC
+  FontColor #0F172A
+  FontSize 16
 }
 
-User "1" <-- "0..1" StudentTuition : tuition profile for student
-Course "1" <-- "0..*" StudentTuition : selected course
-StudentTuition "1" .. "0..*" TuitionPayment : settled by payments
+skinparam class {
+  BorderColor #334155
+  BackgroundColor #FFFFFF
+  HeaderBackgroundColor #E2E8F0
+  FontColor #0F172A
+  FontSize 14
+  AttributeFontSize 13
+  AttributeFontColor #334155
+}
 
-User "1" <-- "0..*" TuitionPayment : payment for student
-User "0..1" <-- "0..*" TuitionPayment : paid by parent
-User "0..1" <-- "0..*" TuitionPayment : recorded by staff
+skinparam arrow {
+  Color #64748B
+  Thickness 1.2
+  FontColor #334155
+  FontSize 12
+}
 
-User "1" <-- "0..1" EmployeePayment : salary record for employee
-User "0..1" <-- "0..*" EmployeePayment : recorded by staff
+skinparam note {
+  BackgroundColor #FFF7ED
+  BorderColor #FB923C
+  FontColor #7C2D12
+  FontSize 12
+}
 
-User "1" <-- "0..*" ScholarshipActivation : activated by parent
-User "0..1" <-- "0..*" ScholarshipActivation : applied to student
+package "Core Data" {
+  class User {
+    +id: bigint
+    +name: string
+    +email: string
+    +requested_role: string
+  }
 
-User -[hidden]-> Course
-Course -[hidden]-> StudentTuition
-StudentTuition -[hidden]-> TuitionPayment
-TuitionPayment -[hidden]-> EmployeePayment
-EmployeePayment -[hidden]-> ScholarshipActivation
+  class Course {
+    +id: bigint
+    +code: string
+    +name: string
+    +price: integer
+  }
+}
 
-note bottom of TuitionPayment
-Payments are stored against users in the codebase.
-The dotted link to StudentTuition represents the
-business flow used by the financial services.
+package "Student Tuition Management" {
+  class StudentTuition {
+    +id: bigint
+    +student_id: bigint
+    +course_id: bigint
+    +course_price: integer
+  }
+
+  class TuitionPayment {
+    +id: bigint
+    +student_id: bigint
+    +parent_id: bigint
+    +recorded_by: bigint
+    +amount: integer
+    +paid_on: date
+    +method: string
+  }
+
+  class ScholarshipActivation {
+    +id: bigint
+    +parent_id: bigint
+    +student_id: bigint?
+    +offer_key: string
+    +discount_percent: decimal
+  }
+}
+
+package "Employee Payment Management" {
+  class EmployeePayment {
+    +id: bigint
+    +employee_id: bigint
+    +recorded_by: bigint
+    +expected_salary: integer
+    +amount_paid: integer
+  }
+}
+
+package "Financial Services" {
+  class TuitionFinancialService {
+    +calculateSummary()
+    +calculateRemainingBalance()
+    +calculateDiscounts()
+  }
+
+  class EmployeePaymentService {
+    +calculateStatus()
+    +calculateRemainingSalary()
+  }
+}
+
+User -down-> StudentTuition : student
+Course -down-> StudentTuition : course price
+
+StudentTuition -down-> TuitionPayment : tuition payments
+ScholarshipActivation -down-> StudentTuition : discount
+
+User -down-> TuitionPayment : pays / records
+User -down-> ScholarshipActivation : parent / student
+
+User -down-> EmployeePayment : employee / admin
+
+StudentTuition -down-> TuitionFinancialService : tuition data
+TuitionPayment -down-> TuitionFinancialService : payment data
+ScholarshipActivation -down-> TuitionFinancialService : discount data
+
+EmployeePayment -down-> EmployeePaymentService : salary data
+
+note right of StudentTuition
+  Created after student approval.
+  Stores selected course and price.
+end note
+
+note right of TuitionPayment
+  Stores tuition payments.
+  Used for paid amount and balance.
+end note
+
+note right of EmployeePayment
+  Tracks staff salary payments.
 end note
 
 @enduml

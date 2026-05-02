@@ -1,0 +1,104 @@
+@startuml
+title Final Project - Simplified Global Class Diagram
+
+top to bottom direction
+hide circle
+hide methods
+hide attributes
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam nodesep 30
+skinparam ranksep 50
+
+skinparam packageStyle rectangle
+
+skinparam Package {
+  BorderColor #CBD5E1
+  BackgroundColor #F8FAFC
+  FontColor #0F172A
+  FontSize 12
+  FontStyle bold
+}
+
+skinparam Class {
+  BorderColor #334155
+  BackgroundColor #FFFFFF
+  FontColor #0F172A
+  HeaderBackgroundColor #E2E8F0
+  FontSize 12
+  FontStyle bold
+}
+
+skinparam Arrow {
+  Color #94A3B8
+  Thickness 1
+  FontColor #334155
+  FontSize 10
+  FontStyle bold
+}
+
+package "Users & Access Control" {
+  class User
+  class Role
+  class Permission
+}
+
+package "Academic Management" {
+  class LanguageProgram
+  class Course
+  class CourseClass
+}
+
+package "Timetable & Attendance" {
+  class Schedule
+  class Room
+  class AttendanceRecord
+  class TeacherResource
+}
+
+package "Financial Management" {
+  class StudentTuition
+  class TuitionPayment
+  class EmployeePayment
+  class ScholarshipActivation
+}
+
+package "Communication & Feedback" {
+  class Message
+  class DatabaseNotification
+  class Review
+}
+
+' Access control
+User "*" -- "*" Role
+Role "*" -- "*" Permission
+
+' Academic structure
+LanguageProgram "1" -- "*" Course
+Course "1" -- "*" CourseClass
+User "1" -- "*" CourseClass : teaches
+User "*" -- "*" CourseClass : enrolls
+
+' Timetable
+CourseClass "1" -- "*" Schedule
+Schedule "*" -- "0..1" Room
+CourseClass "1" -- "*" AttendanceRecord
+CourseClass "1" -- "*" TeacherResource
+
+' Finance
+User "1" -- "0..1" StudentTuition
+Course "1" -- "*" StudentTuition
+StudentTuition "1" .. "*" TuitionPayment
+User "1" -- "0..1" EmployeePayment
+User "1" -- "*" ScholarshipActivation
+
+' Communication
+User "1" -- "*" Message
+User "1" -- "*" DatabaseNotification
+User "1" -- "*" Review
+
+@enduml

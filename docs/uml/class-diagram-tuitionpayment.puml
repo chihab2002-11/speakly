@@ -1,0 +1,41 @@
+@startuml
+title TuitionPayment Class Diagram - School Management System
+
+hide circle
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+skinparam NoteBackgroundColor #FEF9C3
+skinparam NoteBorderColor #A16207
+
+class TuitionPayment {
+  -id: bigint
+  -student_id: bigint
+  -parent_id: bigint
+  -recorded_by: bigint
+  -amount: integer
+  -paid_on: date
+  -method: string
+  -reference: string
+  -notes: string
+
+  --
+  +student(): BelongsTo
+  +parent(): BelongsTo
+  +recorder(): BelongsTo
+}
+
+note right of TuitionPayment
+TuitionPayment stores payments made
+for a student's course tuition.
+
+It links each payment to the student,
+optionally to the parent, and to the
+user who recorded the payment.
+end note
+
+@enduml

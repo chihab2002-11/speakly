@@ -1,0 +1,35 @@
+@startuml
+title StudentTuition Class Diagram - School Management System
+
+hide circle
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+skinparam NoteBackgroundColor #FEF9C3
+skinparam NoteBorderColor #A16207
+
+class StudentTuition {
+  -id: bigint
+  -student_id: bigint
+  -course_id: bigint
+  -course_price: integer
+
+  --
+  +student(): BelongsTo
+  +course(): BelongsTo
+}
+
+note right of StudentTuition
+StudentTuition stores the course
+price assigned to a student at
+the time of enrollment.
+
+It links the student to the course
+used for tuition calculation.
+end note
+
+@enduml

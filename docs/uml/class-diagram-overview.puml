@@ -7,7 +7,6 @@ skinparam linetype ortho
 skinparam shadowing false
 skinparam nodesep 70
 skinparam ranksep 70
-hide methods
 hide circle
 
 skinparam packageStyle rectangle

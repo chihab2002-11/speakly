@@ -1,0 +1,52 @@
+@startuml
+title Final Project - Employee Payment Class Diagram
+
+left to right direction
+hide circle
+hide methods
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #475569
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+skinparam NoteBackgroundColor #FFF7ED
+skinparam NoteBorderColor #F97316
+
+class EmployeePayment {
+  +id: bigint
+  +employee_id: bigint
+  +recorded_by: bigint
+  +expected_salary: integer
+  +amount_paid: integer
+  +notes: text
+}
+
+class User {
+  +id: bigint
+  +name: string
+  +email: string
+  +requested_role: string
+}
+
+EmployeePayment "*" --> "1" User : employee
+EmployeePayment "*" --> "0..1" User : recorder
+
+note right of EmployeePayment
+Stores staff salary and payment
+information for teachers and secretaries.
+
+Business calculations and updates are
+handled by controllers/services, so no
+business methods are shown here.
+end note
+
+note bottom of User
+Employees and recorders are represented
+as User records with specific roles.
+end note
+
+@enduml

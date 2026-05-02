@@ -1,0 +1,36 @@
+@startuml
+title Schedule Class Diagram - School Management System
+
+hide circle
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+skinparam NoteBackgroundColor #FEF9C3
+skinparam NoteBorderColor #A16207
+
+class Schedule {
+  -id: bigint
+  -class_id: bigint
+  -room_id: bigint
+  -day_of_week: string
+  -start_time: time
+  -end_time: time
+
+  --
+  +courseClass()
+  +room()
+}
+
+note right of Schedule
+Schedule represents a planned session
+for a class group.
+
+It defines the day, start time,
+end time, and assigned room.
+end note
+
+@enduml

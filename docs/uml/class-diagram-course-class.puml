@@ -1,0 +1,65 @@
+@startuml
+title Course Structure Diagram - School Management System
+
+left to right direction
+hide circle
+
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ArrowColor #475569
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+skinparam NoteBackgroundColor #FEF9C3
+skinparam NoteBorderColor #A16207
+
+class Course {
+  -id: bigint
+  -program_id: bigint
+  -code: string
+  -name: string
+  -description: text
+  -price: decimal
+  -is_active: boolean
+
+  --
+  +languageProgram()
+  +classes()
+  +students()
+  +reviews()
+}
+
+class CourseClass {
+  -id: bigint
+  -course_id: bigint
+  -teacher_id: bigint
+  -capacity: integer
+
+  --
+  +course()
+  +teacher()
+  +students()
+  +schedules()
+  +teacherResources()
+  +attendanceRecords()
+}
+
+Course "1" -- "0..*" CourseClass : contains
+
+note bottom of Course
+Course represents the learning offer,
+such as a language level or subject.
+
+Example: English A1, French B2.
+end note
+
+note bottom of CourseClass
+CourseClass represents a concrete group
+created for a course.
+
+Example: English A1 - Group 1.
+end note
+
+@enduml

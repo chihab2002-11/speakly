@@ -1,0 +1,95 @@
+@startuml
+title Final Project - Timetable and Room Relationships Diagram
+
+left to right direction
+hide circle
+hide methods
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam nodesep 85
+skinparam ranksep 75
+
+skinparam packageStyle rectangle
+skinparam package {
+  BorderColor #CBD5E1
+  BackgroundColor #F8FAFC
+  FontColor #0F172A
+}
+
+skinparam class {
+  BorderColor #334155
+  BackgroundColor white
+  FontColor #0F172A
+  HeaderBackgroundColor #E2E8F0
+}
+
+skinparam arrow {
+  Color #475569
+  Thickness 1.2
+  FontColor #334155
+}
+
+skinparam note {
+  BackgroundColor #FFF7ED
+  BorderColor #FB923C
+  FontColor #7C2D12
+}
+
+package "Timetable Structure" {
+  class CourseClass {
+    +id: bigint
+    +course_id: bigint
+    +teacher_id: bigint?
+    +capacity: integer
+  }
+
+  class Schedule {
+    +id: bigint
+    +class_id: bigint
+    +room_id: bigint?
+    +day_of_week: string
+    +start_time: time
+    +end_time: time
+  }
+
+  class Room {
+    +id: bigint
+    +name: string
+    +capacity: integer
+    +location: string
+  }
+}
+
+package "Role-Based Users" {
+  class User {
+    +id: bigint
+    +name: string
+    +email: string
+    +requested_role: string
+  }
+}
+
+CourseClass "1" -right-> "*" Schedule : sessions
+Schedule "*" -right-> "0..1" Room : assigned room
+
+User "1" -down-> "*" CourseClass : teaches
+User "*" -down-> "*" CourseClass : enrolled in
+
+note "Defines the day and time\nof each class session." as N1
+
+note "Rooms are assigned to schedules\nto organize classroom usage\nand avoid room conflicts." as N2
+
+note "CourseClass connects the course,\nteacher, students, and scheduled\nsessions." as N3
+
+note "Teachers, students, and secretaries\nare represented as User records\nwith different roles.\n\nSecretaries manage timetable views\nand monitor class, teacher, student,\nand room availability." as N4
+
+Schedule .. N1
+Room .. N2
+CourseClass .. N3
+User .. N4
+
+@endumla

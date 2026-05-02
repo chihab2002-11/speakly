@@ -1,0 +1,43 @@
+@startuml
+title TeacherResource Class Diagram - School Management System
+
+hide circle
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+skinparam NoteBackgroundColor #FEF9C3
+skinparam NoteBorderColor #A16207
+
+class TeacherResource {
+  -id: bigint
+  -teacher_id: bigint
+  -class_id: bigint
+  -category: string
+  -name: string
+  -description: text
+  -original_filename: string
+  -file_path: string
+  -mime_type: string
+  -file_size: bigint
+  -download_count: integer
+
+  --
+  +allowedCategories(): array
+  +teacher(): BelongsTo
+  +courseClass(): BelongsTo
+}
+
+note right of TeacherResource
+TeacherResource represents learning
+material uploaded by a teacher for
+a specific class group.
+
+The allowedCategories() method defines
+the accepted resource categories.
+end note
+
+@enduml

@@ -1,0 +1,38 @@
+@startuml
+title AttendanceRecord Class Diagram - School Management System
+
+hide circle
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+skinparam NoteBackgroundColor #FEF9C3
+skinparam NoteBorderColor #A16207
+
+class AttendanceRecord {
+  -id: bigint
+  -class_id: bigint
+  -student_id: bigint
+  -attendance_date: date
+  -status: enum
+  -grade: integer
+  -feedback: text
+
+  --
+  +courseClass(): BelongsTo
+  +student(): BelongsTo
+}
+
+note right of AttendanceRecord
+AttendanceRecord stores a student's
+attendance status for a specific
+class group and date.
+
+It can also include a grade and
+feedback related to the session.
+end note
+
+@enduml

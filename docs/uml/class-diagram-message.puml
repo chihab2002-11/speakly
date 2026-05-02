@@ -1,0 +1,22 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+hide circle
+
+class Message {
+  +id: bigint
+  +sender_id: bigint
+  +receiver_id: bigint
+  +subject: string
+  +body: text
+  +read_at: datetime
+}
+
+class User
+
+Message "0..*" -- "1" User : sender
+Message "0..*" -- "1" User : receiver
+
+@enduml

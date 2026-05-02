@@ -1,0 +1,32 @@
+@startuml
+title Final Project - Notification Class Diagram
+
+hide circle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+skinparam ClassBorderColor #334155
+skinparam ClassBackgroundColor white
+skinparam ArrowColor #475569
+
+class DatabaseNotification {
+  +id: uuid
+  +type: string
+  +notifiable_type: string
+  +notifiable_id: bigint
+  +data: text
+  +read_at: datetime
+  +created_at: datetime
+}
+
+class User {
+  +id: bigint
+  +name: string
+  +email: string
+}
+
+User "1" -- "0..*" DatabaseNotification : receiver / notifiable
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+left to right direction
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam shadowing false
+hide circle
+
+class Course {
+  +id: bigint
+  +name: string
+  +code: string
+  +price: integer
+  +program_id: bigint
+  +description: text
+  --
+  +available()
+}
+
+class LanguageProgram
+class CourseClass
+class StudentTuition
+class User
+
+Course "0..*" -- "0..1" LanguageProgram : program
+Course "1" -- "0..*" CourseClass : classes
+Course "1" -- "0..*" StudentTuition : studentTuitions
+Course "0..1" -- "0..*" User : requestedCourse
+
+@enduml

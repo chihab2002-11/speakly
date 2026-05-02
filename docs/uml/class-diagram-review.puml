@@ -1,0 +1,66 @@
+@startuml
+title Final Project - Review Class Diagram
+
+left to right direction
+hide circle
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+
+skinparam Class {
+  BorderColor #334155
+  BackgroundColor white
+  FontColor #0F172A
+}
+
+skinparam ArrowColor #475569
+
+skinparam Note {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #334155
+}
+
+class Review {
+  +id: bigint
+  +student_id: bigint
+  +student_name: string
+  +student_group: string
+  +review_text: text
+  +profile_picture_url: string
+  +rating_score: decimal
+  +likes_count: integer
+  +dislikes_count: integer
+  +uploaded_at: datetime
+
+  --
+  +student()
+}
+
+class User {
+  +id: bigint
+  +name: string
+  +email: string
+  +requested_role: string
+}
+
+Review "*" --> "1" User : student
+
+note right of Review
+Stores student feedback shown
+on the public visitor page.
+
+Visitors can like or dislike reviews,
+which updates the rating score.
+end note
+
+note bottom of User
+Only approved student users can
+submit reviews after enrollment
+in at least one class/group.
+end note
+
+@enduml

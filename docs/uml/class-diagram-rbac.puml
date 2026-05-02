@@ -1,0 +1,86 @@
+@startuml
+title Final Project - Role-Based Access Control Diagram
+
+left to right direction
+hide circle
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+
+skinparam Class {
+  BorderColor #334155
+  BackgroundColor white
+  FontColor #0F172A
+}
+
+skinparam Arrow {
+  Color #475569
+  Thickness 1
+}
+
+skinparam Note {
+  BackgroundColor #F8FAFC
+  BorderColor #CBD5E1
+  FontColor #334155
+}
+
+class User {
+  +id: bigint
+  +name: string
+  +email: string
+  +requested_role: string
+  +approved_at: datetime
+
+  --
+  +assignRole()
+  +removeRole()
+  +hasRole()
+  +can()
+}
+
+class Role {
+  +id: bigint
+  +name: string
+  +guard_name: string
+
+  --
+  +givePermissionTo()
+  +revokePermissionTo()
+}
+
+class Permission {
+  +id: bigint
+  +name: string
+  +guard_name: string
+}
+
+User "0..*" -- "0..*" Role : assigned roles
+Role "0..*" -- "0..*" Permission : grants permissions
+User ..> Permission : checked through roles
+
+note bottom of User
+All authenticated actors are stored
+as User records.
+
+Student, Teacher, Parent, Secretary,
+and Administrator are represented
+through assigned roles.
+end note
+
+note right of Role
+Roles define the main access level
+of each user and group permissions
+related to system features.
+end note
+
+note bottom of Permission
+Permissions control access to
+specific actions such as managing
+users, courses, timetables,
+payments, and resources.
+end note
+
+@enduml
