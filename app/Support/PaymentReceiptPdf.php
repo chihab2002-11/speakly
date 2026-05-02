@@ -7,6 +7,12 @@ use App\Models\User;
 
 class PaymentReceiptPdf
 {
+    private const PAGE_WIDTH = 283.46;
+
+    private const PAGE_HEIGHT = 425.20;
+
+    private const PAGE_MARGIN = 16;
+
     /**
      * @param  array<string, mixed>  $financialSummary
      */
@@ -20,23 +26,23 @@ class PaymentReceiptPdf
             : 'None';
 
         $lines = [
-            ['text' => 'Lumina Academy', 'x' => 18, 'y' => 392, 'size' => 14, 'style' => 'bold'],
-            ['text' => 'Payment Receipt', 'x' => 18, 'y' => 374, 'size' => 10, 'style' => 'bold'],
-            ['text' => 'Ref: '.$reference, 'x' => 18, 'y' => 346, 'size' => 9],
-            ['text' => 'Student: '.$student->name, 'x' => 18, 'y' => 330, 'size' => 9],
-            ['text' => 'Date: '.($payment->paid_on?->format('Y-m-d') ?? '-'), 'x' => 18, 'y' => 314, 'size' => 9],
-            ['text' => 'Method: '.$this->methodLabel((string) $payment->method), 'x' => 18, 'y' => 298, 'size' => 9],
-            ['text' => 'Amount Paid', 'x' => 18, 'y' => 268, 'size' => 10, 'style' => 'bold'],
-            ['text' => $this->formatMoney((int) $payment->amount), 'x' => 18, 'y' => 248, 'size' => 16, 'style' => 'bold'],
-            ['text' => 'Tuition Summary', 'x' => 18, 'y' => 214, 'size' => 10, 'style' => 'bold'],
-            ['text' => 'Course total: '.$this->formatMoney((int) ($financialSummary['totalCoursesPrice'] ?? 0)), 'x' => 18, 'y' => 196, 'size' => 9],
-            ['text' => 'Applied discount: '.$discountLabel, 'x' => 18, 'y' => 180, 'size' => 9],
-            ['text' => 'Due after discount: '.$this->formatMoney((int) ($financialSummary['totalDueAfterDiscount'] ?? $financialSummary['totalCoursesPrice'] ?? 0)), 'x' => 18, 'y' => 164, 'size' => 9],
-            ['text' => 'Total paid: '.$this->formatMoney((int) ($financialSummary['totalPaid'] ?? 0)), 'x' => 18, 'y' => 148, 'size' => 9],
-            ['text' => 'Remaining: '.$this->formatMoney((int) ($financialSummary['totalRemaining'] ?? 0)), 'x' => 18, 'y' => 132, 'size' => 9],
-            ['text' => 'Progress: '.(int) ($financialSummary['paidPercentage'] ?? 0).'%', 'x' => 18, 'y' => 116, 'size' => 9],
-            ['text' => 'Generated: '.now()->format('Y-m-d H:i'), 'x' => 18, 'y' => 72, 'size' => 8],
-            ['text' => 'Thank you.', 'x' => 18, 'y' => 56, 'size' => 8, 'style' => 'bold'],
+            ['text' => 'Lumina Academy', 'x' => self::PAGE_MARGIN, 'y' => 398, 'size' => 14, 'style' => 'bold'],
+            ['text' => 'Payment Receipt', 'x' => self::PAGE_MARGIN, 'y' => 380, 'size' => 10, 'style' => 'bold'],
+            ['text' => 'Ref: '.$reference, 'x' => self::PAGE_MARGIN, 'y' => 352, 'size' => 9],
+            ['text' => 'Student: '.$student->name, 'x' => self::PAGE_MARGIN, 'y' => 336, 'size' => 9],
+            ['text' => 'Date: '.($payment->paid_on?->format('Y-m-d') ?? '-'), 'x' => self::PAGE_MARGIN, 'y' => 320, 'size' => 9],
+            ['text' => 'Method: '.$this->methodLabel((string) $payment->method), 'x' => self::PAGE_MARGIN, 'y' => 304, 'size' => 9],
+            ['text' => 'Amount Paid', 'x' => self::PAGE_MARGIN, 'y' => 274, 'size' => 10, 'style' => 'bold'],
+            ['text' => $this->formatMoney((int) $payment->amount), 'x' => self::PAGE_MARGIN, 'y' => 254, 'size' => 16, 'style' => 'bold'],
+            ['text' => 'Tuition Summary', 'x' => self::PAGE_MARGIN, 'y' => 220, 'size' => 10, 'style' => 'bold'],
+            ['text' => 'Course total: '.$this->formatMoney((int) ($financialSummary['totalCoursesPrice'] ?? 0)), 'x' => self::PAGE_MARGIN, 'y' => 202, 'size' => 9],
+            ['text' => 'Applied discount: '.$discountLabel, 'x' => self::PAGE_MARGIN, 'y' => 186, 'size' => 9],
+            ['text' => 'Due after discount: '.$this->formatMoney((int) ($financialSummary['totalDueAfterDiscount'] ?? $financialSummary['totalCoursesPrice'] ?? 0)), 'x' => self::PAGE_MARGIN, 'y' => 170, 'size' => 9],
+            ['text' => 'Total paid: '.$this->formatMoney((int) ($financialSummary['totalPaid'] ?? 0)), 'x' => self::PAGE_MARGIN, 'y' => 154, 'size' => 9],
+            ['text' => 'Remaining: '.$this->formatMoney((int) ($financialSummary['totalRemaining'] ?? 0)), 'x' => self::PAGE_MARGIN, 'y' => 138, 'size' => 9],
+            ['text' => 'Progress: '.(int) ($financialSummary['paidPercentage'] ?? 0).'%', 'x' => self::PAGE_MARGIN, 'y' => 122, 'size' => 9],
+            ['text' => 'Generated: '.now()->format('Y-m-d H:i'), 'x' => self::PAGE_MARGIN, 'y' => 78, 'size' => 8],
+            ['text' => 'Thank you.', 'x' => self::PAGE_MARGIN, 'y' => 62, 'size' => 8, 'style' => 'bold'],
         ];
 
         return $this->buildPdf($lines);
@@ -44,9 +50,12 @@ class PaymentReceiptPdf
 
     private function buildPdf(array $lines): string
     {
-        $content = "0 0 0 RG\n0.7 w\n18 360 m 208 360 l S\n";
-        $content .= "18 232 m 208 232 l S\n";
-        $content .= "18 92 m 208 92 l S\n";
+        $rightEdge = $this->pdfNumber(self::PAGE_WIDTH - self::PAGE_MARGIN);
+
+        $content = "0 0 0 RG\n0.7 w\n";
+        $content .= self::PAGE_MARGIN." 366 m {$rightEdge} 366 l S\n";
+        $content .= self::PAGE_MARGIN." 238 m {$rightEdge} 238 l S\n";
+        $content .= self::PAGE_MARGIN." 98 m {$rightEdge} 98 l S\n";
 
         foreach ($lines as $line) {
             $content .= $this->text(
@@ -61,7 +70,7 @@ class PaymentReceiptPdf
         $objects = [
             '<< /Type /Catalog /Pages 2 0 R >>',
             '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-            '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 226 420] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>',
+            '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '.$this->pdfNumber(self::PAGE_WIDTH).' '.$this->pdfNumber(self::PAGE_HEIGHT).'] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>',
             '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
             '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>',
             '<< /Length '.strlen($content)." >>\nstream\n".$content."\nendstream",
@@ -97,6 +106,11 @@ class PaymentReceiptPdf
         return "0 0 0 rg\nBT /".$font.' '.$size.' Tf '.$x.' '.$y.' Td ('.$this->escapeText($text).") Tj ET\n";
     }
 
+    private function pdfNumber(float $number): string
+    {
+        return rtrim(rtrim(number_format($number, 2, '.', ''), '0'), '.');
+    }
+
     private function escapeText(string $text): string
     {
         return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
@@ -110,7 +124,7 @@ class PaymentReceiptPdf
     private function methodLabel(string $method): string
     {
         return match ($method) {
-            'bank_transfer' => 'Bank Transfer',
+            'bank_transfer' => 'Baridi Mob',
             'card' => 'Card',
             'online' => 'Online',
             default => 'Cash',

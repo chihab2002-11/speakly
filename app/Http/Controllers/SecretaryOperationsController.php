@@ -109,9 +109,8 @@ class SecretaryOperationsController extends Controller
             'search' => $search,
             'methods' => [
                 'cash' => 'Cash',
-                'bank_transfer' => 'Bank Transfer',
+                'bank_transfer' => 'Baridi Mob',
                 'card' => 'Card',
-                'online' => 'Online',
             ],
             'paymentsEnabled' => $this->tuitionFinancialService->canRecordPayments(),
             'coursePricingEnabled' => $this->tuitionFinancialService->hasCoursePricing(),
@@ -130,7 +129,7 @@ class SecretaryOperationsController extends Controller
             'student_id' => ['required', 'integer', 'exists:users,id'],
             'amount' => ['required', 'integer', 'min:1', 'max:100000000'],
             'paid_on' => ['nullable', 'date'],
-            'method' => ['required', Rule::in(['cash', 'bank_transfer', 'card', 'online'])],
+            'method' => ['required', Rule::in(['cash', 'bank_transfer', 'card'])],
             'reference' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:500'],
         ]);
