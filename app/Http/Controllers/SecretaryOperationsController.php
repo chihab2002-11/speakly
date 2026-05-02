@@ -14,6 +14,8 @@ use App\Models\User;
 use App\Notifications\SecretaryAnnouncementNotification;
 use App\Support\PaymentReceiptPdf;
 use App\Support\TuitionFinancialService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -203,7 +205,7 @@ class SecretaryOperationsController extends Controller
 
         $groupsQuery = CourseClass::query()
             ->with([
-                'course:id,name,code',
+                'course:id,name,code,program_id',
                 'teacher:id,name',
                 'schedules:id,class_id,day_of_week,start_time,end_time,room_id',
                 'schedules.room:id,name',
@@ -254,6 +256,22 @@ class SecretaryOperationsController extends Controller
             ->get(['capacity'])
             ->sum('capacity') - $allAssignedStudents;
 
+        $availablePrograms = Schema::hasTable('language_programs')
+            ? LanguageProgram::query()
+                ->ordered()
+                ->where('is_active', true)
+                ->get(['id', 'name', 'code'])
+            : collect();
+
+        $enrollGroups = CourseClass::query()
+            ->with(['course:id,name,code,program_id', 'teacher:id,name,email'])
+            ->withCount('students')
+            ->orderByDesc('updated_at')
+            ->get();
+
+        $teachers = $this->teacherOptionsQuery()->get(['id', 'name', 'email']);
+        $courses = $this->courseOptionsQuery()->get(['id', 'name', 'code', 'program_id']);
+
         return view('secretary.groups', [
             'groups' => $groups,
             'totalGroups' => $groups->total(),
@@ -263,17 +281,20 @@ class SecretaryOperationsController extends Controller
                     $query->where('day_of_week', strtolower(now()->englishDayOfWeek));
                 })
                 ->count(),
-            'teachers' => User::query()->role('teacher')->orderBy('name')->get(['id', 'name']),
-            'courses' => Course::query()->orderBy('name')->get(['id', 'name', 'code']),
-            'students' => User::query()
-                ->role('student')
-                ->whereNotNull('approved_at')
-                ->orderBy('name')
-                ->get(['id', 'name', 'email']),
+            'teachers' => $teachers,
+            'courses' => $courses,
+            'availablePrograms' => $availablePrograms,
+            'enrollGroups' => $enrollGroups,
             'search' => $search,
             'teacherId' => $teacherId,
             'courseId' => $courseId,
             'day' => $day,
+            'groupListFilters' => [
+                'search' => $search,
+                'teacher_id' => $teacherId,
+                'course_id' => $courseId,
+                'day' => $day,
+            ],
             'statsTotalGroups' => $allGroupsCount,
             'statsActiveToday' => $allActiveToday,
             'statsAssignedStudents' => $allAssignedStudents,
@@ -284,18 +305,39 @@ class SecretaryOperationsController extends Controller
     public function storeGroup(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'program_id' => ['nullable', 'integer', Rule::exists('language_programs', 'id')->where('is_active', true)],
             'course_id' => ['required', 'integer', 'exists:courses,id'],
             'teacher_id' => ['nullable', 'integer', 'exists:users,id'],
             'capacity' => ['required', 'integer', 'min:1', 'max:1000'],
         ]);
 
-        CourseClass::query()->create([
+        $programId = isset($validated['program_id']) && $validated['program_id'] !== ''
+            ? (int) $validated['program_id']
+            : null;
+
+        if ($programId !== null) {
+            $courseBelongsToProgram = Course::query()
+                ->whereKey((int) $validated['course_id'])
+                ->where('program_id', $programId)
+                ->exists();
+
+            if (! $courseBelongsToProgram) {
+                return redirect()
+                    ->back()
+                    ->withErrors(['course_id' => 'Selected course does not belong to the selected program.'])
+                    ->withInput();
+            }
+        }
+
+        $group = CourseClass::query()->create([
             'course_id' => (int) $validated['course_id'],
             'teacher_id' => isset($validated['teacher_id']) && $validated['teacher_id'] !== ''
                 ? (int) $validated['teacher_id']
                 : null,
             'capacity' => (int) $validated['capacity'],
         ]);
+
+        $this->notifyAdminsAboutCreatedGroup($request->user(), $group);
 
         return redirect()
             ->route('secretary.groups')
@@ -305,37 +347,135 @@ class SecretaryOperationsController extends Controller
     public function enrollStudent(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'enroll_program_id' => ['required', 'integer', Rule::exists('language_programs', 'id')->where('is_active', true)],
+            'enroll_course_id' => ['required', 'integer', 'exists:courses,id'],
             'class_id' => ['required', 'integer', 'exists:classes,id'],
             'student_id' => ['required', 'integer', 'exists:users,id'],
         ]);
 
-        $group = CourseClass::query()->withCount('students')->findOrFail((int) $validated['class_id']);
+        $programId = (int) $validated['enroll_program_id'];
+        $courseId = (int) $validated['enroll_course_id'];
+        $classId = (int) $validated['class_id'];
+        $studentId = (int) $validated['student_id'];
 
+        // Verify course belongs to program
+        $courseBelongsToProgram = Course::query()
+            ->where('id', $courseId)
+            ->where('program_id', $programId)
+            ->exists();
+
+        if (! $courseBelongsToProgram) {
+            return redirect()
+                ->back()
+                ->withErrors(['enroll_course_id' => 'Selected course does not belong to the selected program.'])
+                ->withInput();
+        }
+
+        // Load and verify group
+        $group = CourseClass::query()->withCount('students')->findOrFail($classId);
+
+        // Verify class belongs to course
+        if ($group->course_id !== $courseId) {
+            return redirect()
+                ->back()
+                ->withErrors(['class_id' => 'Selected group does not belong to the selected course.'])
+                ->withInput();
+        }
+
+        // Verify student is approved and has student role
         $student = User::query()
-            ->where('id', (int) $validated['student_id'])
+            ->where('id', $studentId)
+            ->whereNotNull('approved_at')
             ->whereHas('roles', function ($query): void {
                 $query->where('name', 'student');
             })
-            ->firstOrFail();
+            ->first();
 
-        $alreadyEnrolled = $group->students()->where('users.id', $student->id)->exists();
-
-        if (! $alreadyEnrolled && $group->students_count >= $group->capacity) {
+        if (! $student) {
             return redirect()
-                ->route('secretary.groups')
+                ->back()
+                ->withErrors(['student_id' => 'Selected student is not approved or does not have student role.'])
+                ->withInput();
+        }
+
+        // Check if already enrolled
+        $alreadyEnrolled = $group->students()->where('users.id', $studentId)->exists();
+
+        if ($alreadyEnrolled) {
+            return redirect()
+                ->back()
+                ->withErrors(['student_id' => 'Student is already enrolled in this group.'])
+                ->withInput();
+        }
+
+        // Check capacity
+        if ($group->students_count >= $group->capacity) {
+            return redirect()
+                ->back()
                 ->withErrors(['class_id' => 'This group is already full.'])
                 ->withInput();
         }
 
-        $group->students()->syncWithoutDetaching([
-            $student->id => ['enrolled_at' => now()],
-        ]);
+        $group->students()->attach($studentId, ['enrolled_at' => now()]);
 
         return redirect()
             ->route('secretary.groups')
-            ->with('success', $alreadyEnrolled
-                ? 'Student is already enrolled in this group.'
-                : 'Student enrolled in group successfully.');
+            ->with('success', 'Student enrolled in group successfully.');
+    }
+
+    public function searchStudents(Request $request): JsonResponse
+    {
+        $query = trim((string) $request->query('q', ''));
+
+        if (strlen($query) < 2) {
+            return response()->json(['students' => []]);
+        }
+
+        $students = User::query()
+            ->role('student')
+            ->whereNotNull('approved_at')
+            ->where(function ($q) use ($query): void {
+                $q->where('name', 'like', '%'.$query.'%')
+                    ->orWhere('email', 'like', '%'.$query.'%');
+            })
+            ->orderBy('name')
+            ->limit(15)
+            ->get(['id', 'name', 'email'])
+            ->map(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ])
+            ->values();
+
+        return response()->json(['students' => $students]);
+    }
+
+    public function searchTeachers(Request $request): JsonResponse
+    {
+        $query = trim((string) $request->query('q', ''));
+
+        if (strlen($query) < 2) {
+            return response()->json(['teachers' => []]);
+        }
+
+        $teachers = User::query()
+            ->role('teacher')
+            ->where(function ($q) use ($query): void {
+                $q->where('name', 'like', '%'.$query.'%')
+                    ->orWhere('email', 'like', '%'.$query.'%');
+            })
+            ->orderBy('name')
+            ->limit(15)
+            ->get(['id', 'name', 'email'])
+            ->map(fn ($user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ])
+            ->values();
+
+        return response()->json(['teachers' => $teachers]);
     }
 
     public function updateGroup(Request $request, CourseClass $group): RedirectResponse
@@ -388,6 +528,53 @@ class SecretaryOperationsController extends Controller
         return redirect()
             ->route('secretary.groups')
             ->with('success', 'Group deleted successfully.');
+    }
+
+    private function teacherOptionsQuery(): Builder
+    {
+        return User::query()
+            ->role('teacher')
+            ->orderBy('name');
+    }
+
+    private function studentOptionsQuery(): Builder
+    {
+        return User::query()
+            ->role('student')
+            ->whereNotNull('approved_at')
+            ->orderBy('name');
+    }
+
+    private function courseOptionsQuery(): Builder
+    {
+        return Course::query()
+            ->with('program:id,name,code')
+            ->orderBy('name');
+    }
+
+    private function notifyAdminsAboutCreatedGroup(User $creator, CourseClass $group): void
+    {
+        $group->loadMissing(['course:id,name,code', 'teacher:id,name']);
+
+        $groupName = 'Group #'.$group->id;
+        $courseName = (string) ($group->course?->name ?? 'Unassigned course');
+        $teacherName = (string) ($group->teacher?->name ?? 'Unassigned teacher');
+        $message = "{$creator->name} created {$groupName} for {$courseName}. Teacher: {$teacherName}. Capacity: {$group->capacity}. Please assign this group to a classroom.";
+
+        User::query()
+            ->role('admin')
+            ->whereNotNull('approved_at')
+            ->orderBy('id')
+            ->get()
+            ->each(function (User $admin) use ($creator, $message): void {
+                $admin->notify(new SecretaryAnnouncementNotification(
+                    title: 'New group created',
+                    message: $message,
+                    url: route('admin.schedule.index'),
+                    issuerId: $creator->id,
+                    issuerName: $creator->name,
+                ));
+            });
     }
 
     public function accounts(Request $request): View

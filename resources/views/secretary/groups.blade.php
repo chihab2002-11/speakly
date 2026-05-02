@@ -24,39 +24,79 @@
         </div>
     @endif
 
+    @php
+        $oldEnrollGroupId = old('class_id');
+        $oldEnrollProgramId = (string) old('enroll_program_id', '');
+
+        if ($oldEnrollProgramId === '' && $oldEnrollGroupId) {
+            $oldEnrollGroup = ($enrollGroups ?? collect())->firstWhere('id', (int) $oldEnrollGroupId);
+            $oldEnrollProgramId = (string) ($oldEnrollGroup?->course?->program_id ?? '');
+        }
+
+        $secretaryGroupCoursesData = ($courses ?? collect())->map(fn ($course): array => [
+            'id' => $course->id,
+            'name' => $course->name,
+            'code' => $course->code,
+            'program_id' => $course->program_id,
+        ])->values()->all();
+
+        $secretaryGroupClassesData = ($enrollGroups ?? collect())->map(fn ($group): array => [
+            'id' => $group->id,
+            'course_name' => $group->course?->name ?? 'Course',
+            'course_code' => $group->course?->code,
+            'program_id' => $group->course?->program_id,
+            'teacher_name' => $group->teacher?->name,
+            'students_count' => $group->students_count,
+            'capacity' => $group->capacity,
+        ])->values()->all();
+    @endphp
+
     <div class="mb-6 grid gap-4 lg:grid-cols-2">
         <section class="rounded-2xl border p-5" style="background: white; border-color: var(--lumina-border-light);">
             <h2 class="text-lg font-bold" style="color: var(--lumina-text-primary);">Create Group</h2>
-            <p class="mt-1 text-sm" style="color: var(--lumina-text-muted);">Choose a course, optional teacher, and capacity.</p>
+            <p class="mt-1 text-sm" style="color: var(--lumina-text-muted);">Choose a program, course, optional teacher, and capacity.</p>
 
             <form method="POST" action="{{ route('secretary.groups.store') }}" class="mt-4 grid gap-3 md:grid-cols-2">
                 @csrf
 
                 <div>
-                    <label class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Course</label>
-                    <select name="course_id" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
-                        <option value="">Select course</option>
-                        @foreach($courses as $course)
-                            <option value="{{ $course->id }}" @selected((int) old('course_id') === $course->id)>
-                                {{ $course->name }} ({{ $course->code }})
+                    <label for="create_group_program_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Program</label>
+                    <select id="create_group_program_id" name="program_id" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        <option value="">Select program</option>
+                        @foreach($availablePrograms as $program)
+                            <option value="{{ $program->id }}" @selected((string) old('program_id') === (string) $program->id)>
+                                {{ $program->name }}
                             </option>
                         @endforeach
                     </select>
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Teacher</label>
-                    <select name="teacher_id" class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
-                        <option value="">Unassigned</option>
-                        @foreach($teachers as $teacher)
-                            <option value="{{ $teacher->id }}" @selected((int) old('teacher_id') === $teacher->id)>{{ $teacher->name }}</option>
-                        @endforeach
+                    <label for="create_group_course_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Course</label>
+                    <select id="create_group_course_id" name="course_id" data-selected-course="{{ old('course_id') }}" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        <option value="">Select a program first</option>
                     </select>
                 </div>
 
-                <div>
-                    <label class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Capacity</label>
+                <div class="relative">
+                    <label for="create_group_teacher_search" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Teacher</label>
                     <input
+                        id="create_group_teacher_search"
+                        type="text"
+                        placeholder="Search teacher by name or email"
+                        class="w-full rounded-lg border px-3 py-2 text-sm"
+                        style="border-color: var(--lumina-border); background: #F8FAFC;"
+                        autocomplete="off"
+                    >
+                    <div id="create_group_teacher_results" class="absolute left-0 right-0 top-full mt-1 hidden max-h-48 overflow-y-auto rounded-lg border bg-white shadow-lg" style="border-color: var(--lumina-border);"></div>
+                </div>
+
+                <input type="hidden" id="create_group_teacher_id" name="teacher_id" value="">
+
+                <div>
+                    <label for="create_group_capacity" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Capacity</label>
+                    <input
+                        id="create_group_capacity"
                         type="number"
                         name="capacity"
                         min="1"
@@ -78,38 +118,64 @@
 
         <section class="rounded-2xl border p-5" style="background: white; border-color: var(--lumina-border-light);">
             <h2 class="text-lg font-bold" style="color: var(--lumina-text-primary);">Enroll Student</h2>
-            <p class="mt-1 text-sm" style="color: var(--lumina-text-muted);">Attach an approved student to an existing group.</p>
+            <p class="mt-1 text-sm" style="color: var(--lumina-text-muted);">Select program → course → group, then search and select a student.</p>
 
             <form method="POST" action="{{ route('secretary.groups.enroll') }}" class="mt-4 grid gap-3 md:grid-cols-2">
                 @csrf
 
                 <div>
-                    <label class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Group</label>
-                    <select name="class_id" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
-                        <option value="">Select group</option>
-                        @foreach($groups as $group)
-                            <option value="{{ $group->id }}" @selected((int) old('class_id') === $group->id)>
-                                #{{ $group->id }} - {{ $group->course?->name ?? 'Course' }}
+                    <label for="enroll_program_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Program</label>
+                    <select id="enroll_program_id" name="enroll_program_id" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        <option value="">Select program</option>
+                        @foreach($availablePrograms as $program)
+                            <option value="{{ $program->id }}" @selected($oldEnrollProgramId !== '' && (string) $program->id === $oldEnrollProgramId)>
+                                {{ $program->name }}
                             </option>
                         @endforeach
                     </select>
                 </div>
 
                 <div>
-                    <label class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Student</label>
-                    <select name="student_id" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
-                        <option value="">Select student</option>
-                        @foreach($students as $student)
-                            <option value="{{ $student->id }}" @selected((int) old('student_id') === $student->id)>
-                                {{ $student->name }} ({{ $student->email }})
-                            </option>
-                        @endforeach
+                    <label for="enroll_course_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Course</label>
+                    <select id="enroll_course_id" name="enroll_course_id" data-selected-course="{{ old('enroll_course_id') }}" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        <option value="">Select course</option>
                     </select>
                 </div>
 
-                <div class="md:col-span-2">
+                <div>
+                    <label for="enroll_class_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Group</label>
+                    <select id="enroll_class_id" name="class_id" data-selected-class="{{ old('class_id') }}" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                        <option value="">Select group</option>
+                    </select>
+                </div>
+
+                <div class="relative">
+                    <label for="enroll_student_search" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Student</label>
+                    <input
+                        id="enroll_student_search"
+                        type="text"
+                        placeholder="Search student by name or email"
+                        class="w-full rounded-lg border px-3 py-2 text-sm"
+                        style="border-color: var(--lumina-border); background: #F8FAFC;"
+                        autocomplete="off"
+                    >
+                    <div id="enroll_student_results" class="absolute left-0 right-0 top-full mt-1 hidden max-h-48 overflow-y-auto rounded-lg border bg-white shadow-lg" style="border-color: var(--lumina-border);">
+                    </div>
+                </div>
+
+                <input type="hidden" id="enroll_student_id" name="student_id" value="">
+
+                <div id="enroll_student_selected" class="hidden rounded-lg border p-3" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                    <p class="text-xs font-semibold" style="color: var(--lumina-text-muted);">Selected Student</p>
+                    <p id="enroll_student_display" class="mt-1 text-sm font-semibold" style="color: var(--lumina-text-primary);"></p>
+                </div>
+
+                <div class="md:col-span-2 flex gap-2">
                     <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background-color: var(--lumina-primary);">
                         Enroll Student
+                    </button>
+                    <button type="reset" class="rounded-lg border px-4 py-2 text-sm font-semibold" style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);">
+                        Clear
                     </button>
                 </div>
             </form>
@@ -358,7 +424,299 @@
         </div>
     </div>
 
+    <script id="secretaryGroupCoursesData" type="application/json">
+        @json($secretaryGroupCoursesData)
+    </script>
+
+    <script id="secretaryGroupClassesData" type="application/json">
+        @json($secretaryGroupClassesData)
+    </script>
+
     <script>
+        function secretaryGroupJson(scriptId) {
+            const element = document.getElementById(scriptId);
+
+            if (!element) {
+                return [];
+            }
+
+            try {
+                return JSON.parse(element.textContent || '[]');
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function setSecretaryCreateCourseOptions(programId, selectedCourseId) {
+            const select = document.getElementById('create_group_course_id');
+
+            if (!select) {
+                return;
+            }
+
+            const courses = secretaryGroupJson('secretaryGroupCoursesData');
+            const filteredCourses = courses.filter((course) => String(course.program_id) === String(programId));
+            const placeholder = !programId
+                ? 'Select a program first'
+                : filteredCourses.length === 0
+                    ? 'No courses for this program'
+                    : 'Select course';
+
+            select.innerHTML = '';
+            select.appendChild(new Option(placeholder, ''));
+
+            filteredCourses.forEach((course) => {
+                const label = course.code ? `${course.name} (${course.code})` : course.name;
+                select.appendChild(new Option(label, String(course.id)));
+            });
+
+            const courseExists = filteredCourses.some((course) => String(course.id) === String(selectedCourseId));
+            select.value = courseExists ? String(selectedCourseId) : '';
+            select.disabled = !programId || filteredCourses.length === 0;
+            select.dataset.selectedCourse = select.value;
+        }
+
+        function setEnrollCourseOptions(programId, selectedCourseId) {
+            const select = document.getElementById('enroll_course_id');
+
+            if (!select) {
+                return;
+            }
+
+            const courses = secretaryGroupJson('secretaryGroupCoursesData');
+            const filteredCourses = courses.filter((course) => String(course.program_id) === String(programId));
+            const placeholder = !programId
+                ? 'Select a program first'
+                : filteredCourses.length === 0
+                    ? 'No courses for this program'
+                    : 'Select course';
+
+            select.innerHTML = '';
+            select.appendChild(new Option(placeholder, ''));
+
+            filteredCourses.forEach((course) => {
+                const label = course.code ? `${course.name} (${course.code})` : course.name;
+                select.appendChild(new Option(label, String(course.id)));
+            });
+
+            const courseExists = filteredCourses.some((course) => String(course.id) === String(selectedCourseId));
+            select.value = courseExists ? String(selectedCourseId) : '';
+            select.disabled = !programId || filteredCourses.length === 0;
+            select.dataset.selectedCourse = select.value;
+
+            // Reset group select when course changes
+            setEnrollGroupOptions('');
+        }
+
+        function setEnrollGroupOptions(selectedGroupId) {
+            const select = document.getElementById('enroll_class_id');
+            const courseSelect = document.getElementById('enroll_course_id');
+
+            if (!select || !courseSelect) {
+                return;
+            }
+
+            const courseId = courseSelect.value;
+            const groups = secretaryGroupJson('secretaryGroupClassesData');
+            const filteredGroups = groups.filter((group) => String(group.course_id) === String(courseId));
+            const placeholder = !courseId
+                ? 'Select a course first'
+                : filteredGroups.length === 0
+                    ? 'No groups for this course'
+                    : 'Select group';
+
+            select.innerHTML = '';
+            select.appendChild(new Option(placeholder, ''));
+
+            filteredGroups.forEach((group) => {
+                const courseCode = group.course_code ? ` (${group.course_code})` : '';
+                const teacherName = group.teacher_name ? ` - ${group.teacher_name}` : '';
+                const label = `#${group.id} - ${group.course_name}${courseCode}${teacherName} (${group.students_count}/${group.capacity})`;
+
+                select.appendChild(new Option(label, String(group.id)));
+            });
+
+            const groupExists = filteredGroups.some((group) => String(group.id) === String(selectedGroupId));
+            select.value = groupExists ? String(selectedGroupId) : '';
+            select.disabled = !courseId || filteredGroups.length === 0;
+            select.dataset.selectedClass = select.value;
+        }
+
+        let searchDebounceTimer = null;
+        let teacherSearchDebounceTimer = null;
+
+        function performTeacherSearch(query) {
+            const resultsPanel = document.getElementById('create_group_teacher_results');
+            const trimmedQuery = (query || '').trim();
+
+            if (trimmedQuery.length < 2) {
+                resultsPanel.classList.add('hidden');
+                return;
+            }
+
+            fetch(`{{ route('secretary.groups.teachers.search') }}?q=${encodeURIComponent(trimmedQuery)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!Array.isArray(data.teachers) || data.teachers.length === 0) {
+                        resultsPanel.innerHTML = '<div class="px-3 py-2 text-sm" style="color: var(--lumina-text-muted);">No teachers found</div>';
+                        resultsPanel.classList.remove('hidden');
+                        return;
+                    }
+
+                    resultsPanel.innerHTML = '';
+                    data.teachers.forEach((teacher) => {
+                        const item = document.createElement('div');
+                        item.className = 'cursor-pointer border-b px-3 py-2 last:border-b-0 hover:bg-gray-50';
+                        item.innerHTML = `<p class="text-sm font-semibold" style="color: var(--lumina-text-primary);">${escapeHtml(teacher.name)}</p><p class="text-xs" style="color: var(--lumina-text-muted);">${escapeHtml(teacher.email)}</p>`;
+                        item.addEventListener('click', () => selectTeacher(teacher.id, teacher.name, teacher.email));
+                        resultsPanel.appendChild(item);
+                    });
+
+                    resultsPanel.classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Teacher search error:', error);
+                    resultsPanel.innerHTML = '<div class="px-3 py-2 text-sm" style="color: #991B1B;">Search error</div>';
+                    resultsPanel.classList.remove('hidden');
+                });
+        }
+
+        function selectTeacher(id, name, email) {
+            document.getElementById('create_group_teacher_id').value = id;
+            document.getElementById('create_group_teacher_search').value = `${name} (${email})`;
+            document.getElementById('create_group_teacher_search').blur();
+            document.getElementById('create_group_teacher_results').classList.add('hidden');
+        }
+
+        function performStudentSearch(query) {
+            const resultsPanel = document.getElementById('enroll_student_results');
+            const trimmedQuery = (query || '').trim();
+
+            if (trimmedQuery.length < 2) {
+                resultsPanel.classList.add('hidden');
+                return;
+            }
+
+            fetch(`{{ route('secretary.groups.students.search') }}?q=${encodeURIComponent(trimmedQuery)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!Array.isArray(data.students) || data.students.length === 0) {
+                        resultsPanel.innerHTML = '<div class="px-3 py-2 text-sm" style="color: var(--lumina-text-muted);">No students found</div>';
+                        resultsPanel.classList.remove('hidden');
+                        return;
+                    }
+
+                    resultsPanel.innerHTML = '';
+                    data.students.forEach((student) => {
+                        const item = document.createElement('div');
+                        item.className = 'cursor-pointer border-b px-3 py-2 last:border-b-0 hover:bg-gray-50';
+                        item.innerHTML = `<p class="text-sm font-semibold" style="color: var(--lumina-text-primary);">${escapeHtml(student.name)}</p><p class="text-xs" style="color: var(--lumina-text-muted);">${escapeHtml(student.email)}</p>`;
+                        item.addEventListener('click', () => selectStudent(student.id, student.name, student.email));
+                        resultsPanel.appendChild(item);
+                    });
+
+                    resultsPanel.classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Student search error:', error);
+                    resultsPanel.innerHTML = '<div class="px-3 py-2 text-sm" style="color: #991B1B;">Search error</div>';
+                    resultsPanel.classList.remove('hidden');
+                });
+        }
+
+        function selectStudent(id, name, email) {
+            document.getElementById('enroll_student_id').value = id;
+            document.getElementById('enroll_student_search').value = `${name} (${email})`;
+            document.getElementById('enroll_student_search').blur();
+            document.getElementById('enroll_student_results').classList.add('hidden');
+            document.getElementById('enroll_student_display').textContent = `${name} (${email})`;
+            document.getElementById('enroll_student_selected').classList.remove('hidden');
+        }
+
+        function escapeHtml(text) {
+            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+            return text.replace(/[&<>"']/g, (m) => map[m]);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            // Setup Create Group form
+            const createProgramSelect = document.getElementById('create_group_program_id');
+            const createCourseSelect = document.getElementById('create_group_course_id');
+            const createTeacherSearch = document.getElementById('create_group_teacher_search');
+
+            if (createProgramSelect && createCourseSelect) {
+                setSecretaryCreateCourseOptions(createProgramSelect.value, createCourseSelect.dataset.selectedCourse || '');
+
+                createProgramSelect.addEventListener('change', function () {
+                    setSecretaryCreateCourseOptions(this.value, '');
+                });
+            }
+
+            if (createTeacherSearch) {
+                createTeacherSearch.addEventListener('input', function () {
+                    clearTimeout(teacherSearchDebounceTimer);
+                    teacherSearchDebounceTimer = setTimeout(() => {
+                        performTeacherSearch(this.value);
+                    }, 300);
+                });
+
+                createTeacherSearch.addEventListener('focus', function () {
+                    if (this.value.length >= 2) {
+                        document.getElementById('create_group_teacher_results').classList.remove('hidden');
+                    }
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('#create_group_teacher_search') && !e.target.closest('#create_group_teacher_results')) {
+                        document.getElementById('create_group_teacher_results').classList.add('hidden');
+                    }
+                });
+            }
+
+            // Setup Enroll Student form
+            const enrollProgramSelect = document.getElementById('enroll_program_id');
+            const enrollCourseSelect = document.getElementById('enroll_course_id');
+            const enrollClassSelect = document.getElementById('enroll_class_id');
+            const enrollStudentSearch = document.getElementById('enroll_student_search');
+
+            if (enrollProgramSelect) {
+                setEnrollCourseOptions(enrollProgramSelect.value, enrollCourseSelect?.dataset.selectedCourse || '');
+
+                enrollProgramSelect.addEventListener('change', function () {
+                    setEnrollCourseOptions(this.value, '');
+                });
+            }
+
+            if (enrollCourseSelect) {
+                setEnrollGroupOptions(enrollClassSelect?.dataset.selectedClass || '');
+
+                enrollCourseSelect.addEventListener('change', function () {
+                    setEnrollGroupOptions('');
+                });
+            }
+
+            if (enrollStudentSearch) {
+                enrollStudentSearch.addEventListener('input', function () {
+                    clearTimeout(searchDebounceTimer);
+                    searchDebounceTimer = setTimeout(() => {
+                        performStudentSearch(this.value);
+                    }, 300);
+                });
+
+                enrollStudentSearch.addEventListener('focus', function () {
+                    if (this.value.length >= 2) {
+                        document.getElementById('enroll_student_results').classList.remove('hidden');
+                    }
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!e.target.closest('#enroll_student_search') && !e.target.closest('#enroll_student_results')) {
+                        document.getElementById('enroll_student_results').classList.add('hidden');
+                    }
+                });
+            }
+        });
+
         function openEditGroupModal(button) {
             const modal = document.getElementById('editGroupModal');
             const form = document.getElementById('editGroupForm');
