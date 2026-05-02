@@ -539,6 +539,9 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:secretary|ad
                 ->whereNumber('group')
                 ->name('groups.destroy');
             Route::post('/groups/enroll', [SecretaryOperationsController::class, 'enrollStudent'])->name('groups.enroll');
+            Route::post('/groups/remove-student', [SecretaryOperationsController::class, 'removeStudentFromGroup'])
+                ->middleware('role:secretary')
+                ->name('groups.remove-student');
             Route::get('/groups/students/search', [SecretaryOperationsController::class, 'searchStudents'])->name('groups.students.search');
             Route::get('/groups/teachers/search', [SecretaryOperationsController::class, 'searchTeachers'])->name('groups.teachers.search');
         });

@@ -423,28 +423,119 @@ class SecretaryOperationsController extends Controller
             ->with('success', 'Student enrolled in group successfully.');
     }
 
+    public function removeStudentFromGroup(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'remove_program_id' => ['required', 'integer', Rule::exists('language_programs', 'id')->where('is_active', true)],
+            'remove_course_id' => ['required', 'integer', 'exists:courses,id'],
+            'remove_class_id' => ['required', 'integer', 'exists:classes,id'],
+            'remove_student_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        $programId = (int) $validated['remove_program_id'];
+        $courseId = (int) $validated['remove_course_id'];
+        $classId = (int) $validated['remove_class_id'];
+        $studentId = (int) $validated['remove_student_id'];
+
+        $courseBelongsToProgram = Course::query()
+            ->where('id', $courseId)
+            ->where('program_id', $programId)
+            ->exists();
+
+        if (! $courseBelongsToProgram) {
+            return redirect()
+                ->back()
+                ->withErrors(['remove_course_id' => 'Selected course does not belong to the selected program.'])
+                ->withInput();
+        }
+
+        $group = CourseClass::query()
+            ->with(['course.program:id,name', 'course:id,name,program_id', 'students:id,name,email'])
+            ->findOrFail($classId);
+
+        if ($group->course_id !== $courseId) {
+            return redirect()
+                ->back()
+                ->withErrors(['remove_class_id' => 'Selected group does not belong to the selected course.'])
+                ->withInput();
+        }
+
+        $student = User::query()
+            ->where('id', $studentId)
+            ->whereNotNull('approved_at')
+            ->whereHas('roles', function ($query): void {
+                $query->where('name', 'student');
+            })
+            ->first();
+
+        if (! $student) {
+            return redirect()
+                ->back()
+                ->withErrors(['remove_student_id' => 'Selected student is not approved or does not have student role.'])
+                ->withInput();
+        }
+
+        $isEnrolled = $group->students()->where('users.id', $studentId)->exists();
+
+        if (! $isEnrolled) {
+            return redirect()
+                ->back()
+                ->withErrors(['remove_student_id' => 'Selected student is not enrolled in the selected group.'])
+                ->withInput();
+        }
+
+        $group->students()->detach($studentId);
+
+        $groupName = 'Group #'.$group->id;
+        $courseName = (string) ($group->course?->name ?? 'the course');
+        $programName = (string) ($group->course?->program?->name ?? 'the program');
+
+        $student->notify(new SecretaryAnnouncementNotification(
+            title: 'Removed from group',
+            message: "You have been removed from {$groupName} for {$courseName} in {$programName}.",
+            url: route('student.academic'),
+            issuerId: $request->user()->id,
+            issuerName: (string) $request->user()->name,
+        ));
+
+        return redirect()
+            ->route('secretary.groups')
+            ->with('success', 'Student removed from group successfully.');
+    }
+
     public function searchStudents(Request $request): JsonResponse
     {
         $query = trim((string) $request->query('q', ''));
+        $classId = (string) $request->query('class_id', '');
 
         if (strlen($query) < 2) {
             return response()->json(['students' => []]);
         }
 
-        $students = User::query()
+        $studentsQuery = User::query()
             ->role('student')
             ->whereNotNull('approved_at')
             ->where(function ($q) use ($query): void {
                 $q->where('name', 'like', '%'.$query.'%')
                     ->orWhere('email', 'like', '%'.$query.'%');
             })
+            ->when($classId !== '' && ctype_digit($classId), function ($query) use ($classId): void {
+                $query->withExists([
+                    'enrolledClasses as is_enrolled' => function ($classQuery) use ($classId): void {
+                        $classQuery->where('classes.id', (int) $classId);
+                    },
+                ]);
+            })
             ->orderBy('name')
-            ->limit(15)
+            ->limit(15);
+
+        $students = $studentsQuery
             ->get(['id', 'name', 'email'])
             ->map(fn ($user) => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'is_enrolled' => (bool) ($user->is_enrolled ?? false),
             ])
             ->values();
 

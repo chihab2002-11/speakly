@@ -446,6 +446,28 @@ it('renders secretary groups page with group data', function () {
     $response->assertOk();
     $response->assertViewIs('secretary.groups');
     $response->assertSee('Manage Groups');
+    $response->assertSee('Create Group');
+    $response->assertSee('Students in Group');
+    $response->assertDontSee('Remove Student from Group');
+    $response->assertDontSee('Enroll Student');
+});
+
+it('displays group capacity as enrolled over capacity', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $course = Course::factory()->create();
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'capacity' => 6,
+    ]);
+
+    $response = $this->actingAs($secretary)->get(route('secretary.groups'));
+
+    $response->assertOk();
+    $response->assertSee('Enrolled: 0 / 6');
+    $response->assertDontSee('6 / 0');
+    $response->assertSee("data-capacity=\"{$group->capacity}\"", false);
+    $response->assertSee('secretaryGroupClassesData', false);
 });
 
 it('keeps create group program selection independent from enroll student selection', function () {
@@ -521,9 +543,10 @@ it('keeps create group program selection independent from enroll student selecti
     $response->assertViewHas('enrollGroups', fn ($groups): bool => $groups->pluck('id')->contains($frenchGroup->id));
     $response->assertSee('id="create_group_program_id"', false);
     $response->assertSee('id="create_group_course_id"', false);
-    $response->assertSee('id="enroll_program_id"', false);
-    $response->assertSee('id="enroll_course_id"', false);
-    $response->assertSee('id="enroll_class_id"', false);
+    $response->assertSee('id="group_student_program_id"', false);
+    $response->assertSee('id="group_student_course_id"', false);
+    $response->assertSee('id="group_student_class_id"', false);
+    $response->assertSee('id="group_student_search"', false);
     $response->assertSee('secretaryGroupCoursesData', false);
     $response->assertSee('secretaryGroupClassesData', false);
     $response->assertDontSee('Course Search');
@@ -759,9 +782,176 @@ it('rejects duplicate enrollment in same group', function () {
         ]);
 });
 
-it('student search endpoint returns only approved students with student role', function () {
+it('secretary can remove an enrolled student from a group and notify the student', function () {
+    /** @var TestCase $this */
+    Notification::fake();
+
+    $secretary = createApprovedSecretaryForOperations();
+    $program = createLanguageProgramForSecretaryOperations([
+        'name' => 'English Program',
+    ]);
+    $course = Course::factory()->create([
+        'name' => 'English B2',
+        'program_id' => $program->id,
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'capacity' => 10,
+    ]);
+    $student = User::factory()->create([
+        'approved_at' => now(),
+        'name' => 'Enrolled Student',
+        'email' => 'enrolled.student@example.com',
+    ]);
+    $student->assignRole('student');
+    $group->students()->attach($student->id, ['enrolled_at' => now()]);
+
+    $this->actingAs($secretary)
+        ->post(route('secretary.groups.remove-student'), [
+            'remove_program_id' => $program->id,
+            'remove_course_id' => $course->id,
+            'remove_class_id' => $group->id,
+            'remove_student_id' => $student->id,
+        ])
+        ->assertRedirect(route('secretary.groups'))
+        ->assertSessionHas('success', 'Student removed from group successfully.');
+
+    $this->assertDatabaseMissing('class_student', [
+        'class_id' => $group->id,
+        'user_id' => $student->id,
+    ]);
+
+    Notification::assertSentTo($student, SecretaryAnnouncementNotification::class, function (SecretaryAnnouncementNotification $notification) use ($course): bool {
+        return $notification->title === 'Removed from group'
+            && str_contains($notification->message, 'Group #')
+            && str_contains($notification->message, $course->name)
+            && str_contains($notification->message, 'English Program');
+    });
+});
+
+it('secretary cannot remove a student who is not enrolled in the selected group', function () {
     /** @var TestCase $this */
     $secretary = createApprovedSecretaryForOperations();
+    $program = createLanguageProgramForSecretaryOperations();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+    ]);
+    $student = User::factory()->create([
+        'approved_at' => now(),
+    ]);
+    $student->assignRole('student');
+
+    $this->actingAs($secretary)
+        ->from(route('secretary.groups'))
+        ->post(route('secretary.groups.remove-student'), [
+            'remove_program_id' => $program->id,
+            'remove_course_id' => $course->id,
+            'remove_class_id' => $group->id,
+            'remove_student_id' => $student->id,
+        ])
+        ->assertRedirect(route('secretary.groups'))
+        ->assertSessionHasErrors([
+            'remove_student_id' => 'Selected student is not enrolled in the selected group.',
+        ]);
+});
+
+it('blocks mismatched program course and group combinations when removing a student from a group', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+
+    $programA = createLanguageProgramForSecretaryOperations([
+        'name' => 'Program A',
+    ]);
+    $programB = createLanguageProgramForSecretaryOperations([
+        'name' => 'Program B',
+        'code' => 'SECB',
+        'locale_code' => 'secb',
+        'title' => 'Program B',
+    ]);
+    $courseA = Course::factory()->create([
+        'program_id' => $programA->id,
+    ]);
+    $courseB = Course::factory()->create([
+        'program_id' => $programB->id,
+    ]);
+    $courseC = Course::factory()->create([
+        'program_id' => $programB->id,
+    ]);
+    $groupB = CourseClass::factory()->create([
+        'course_id' => $courseB->id,
+    ]);
+    $student = User::factory()->create([
+        'approved_at' => now(),
+    ]);
+    $student->assignRole('student');
+    $groupB->students()->attach($student->id, ['enrolled_at' => now()]);
+
+    $this->actingAs($secretary)
+        ->from(route('secretary.groups'))
+        ->post(route('secretary.groups.remove-student'), [
+            'remove_program_id' => $programA->id,
+            'remove_course_id' => $courseB->id,
+            'remove_class_id' => $groupB->id,
+            'remove_student_id' => $student->id,
+        ])
+        ->assertRedirect(route('secretary.groups'))
+        ->assertSessionHasErrors([
+            'remove_course_id' => 'Selected course does not belong to the selected program.',
+        ]);
+
+    $this->actingAs($secretary)
+        ->from(route('secretary.groups'))
+        ->post(route('secretary.groups.remove-student'), [
+            'remove_program_id' => $programB->id,
+            'remove_course_id' => $courseC->id,
+            'remove_class_id' => $groupB->id,
+            'remove_student_id' => $student->id,
+        ])
+        ->assertRedirect(route('secretary.groups'))
+        ->assertSessionHasErrors([
+            'remove_class_id' => 'Selected group does not belong to the selected course.',
+        ]);
+});
+
+it('non secretaries cannot remove students from groups', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedAdminForOperations();
+    $program = createLanguageProgramForSecretaryOperations();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+    ]);
+    $student = User::factory()->create([
+        'approved_at' => now(),
+    ]);
+    $student->assignRole('student');
+    $group->students()->attach($student->id, ['enrolled_at' => now()]);
+
+    $this->actingAs($admin)
+        ->post(route('secretary.groups.remove-student'), [
+            'remove_program_id' => $program->id,
+            'remove_course_id' => $course->id,
+            'remove_class_id' => $group->id,
+            'remove_student_id' => $student->id,
+        ])
+        ->assertForbidden();
+});
+
+it('student search endpoint returns only approved students with student role and enrollment status', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $program = createLanguageProgramForSecretaryOperations();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+    ]);
 
     $approvedStudent = User::factory()->create([
         'name' => 'Alice Student',
@@ -783,9 +973,13 @@ it('student search endpoint returns only approved students with student role', f
         'approved_at' => now(),
     ]);
     $approvedTeacher->assignRole('teacher');
+    $group->students()->attach($approvedStudent->id, ['enrolled_at' => now()]);
 
     $response = $this->actingAs($secretary)
-        ->get(route('secretary.groups.students.search', ['q' => 'Alice']));
+        ->get(route('secretary.groups.students.search', [
+            'q' => 'Alice',
+            'class_id' => $group->id,
+        ]));
 
     $response->assertOk();
     $data = $response->json();
@@ -793,6 +987,38 @@ it('student search endpoint returns only approved students with student role', f
     expect($data['students'][0]['id'])->toBe($approvedStudent->id);
     expect($data['students'][0]['name'])->toBe('Alice Student');
     expect($data['students'][0]['email'])->toBe('alice@example.com');
+    expect($data['students'][0]['is_enrolled'])->toBeTrue();
+});
+
+it('student search endpoint marks non enrolled approved students as addable', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $program = createLanguageProgramForSecretaryOperations();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+    ]);
+
+    $student = User::factory()->create([
+        'name' => 'Chris Student',
+        'email' => 'chris@example.com',
+        'approved_at' => now(),
+    ]);
+    $student->assignRole('student');
+
+    $response = $this->actingAs($secretary)
+        ->get(route('secretary.groups.students.search', [
+            'q' => 'Chris',
+            'class_id' => $group->id,
+        ]));
+
+    $response->assertOk();
+    $data = $response->json();
+    expect($data['students'])->toHaveCount(1);
+    expect($data['students'][0]['id'])->toBe($student->id);
+    expect($data['students'][0]['is_enrolled'])->toBeFalse();
 });
 
 it('notifies admins when secretary creates a group', function () {

@@ -25,12 +25,15 @@
     @endif
 
     @php
-        $oldEnrollGroupId = old('class_id');
-        $oldEnrollProgramId = (string) old('enroll_program_id', '');
+        $oldStudentGroupId = old('class_id', old('remove_class_id'));
+        $oldStudentCourseId = (string) old('enroll_course_id', old('remove_course_id', ''));
+        $oldStudentProgramId = (string) old('enroll_program_id', old('remove_program_id', ''));
+        $oldStudentAction = (string) old('group_student_action', old('remove_student_id') ? 'remove' : 'add');
 
-        if ($oldEnrollProgramId === '' && $oldEnrollGroupId) {
-            $oldEnrollGroup = ($enrollGroups ?? collect())->firstWhere('id', (int) $oldEnrollGroupId);
-            $oldEnrollProgramId = (string) ($oldEnrollGroup?->course?->program_id ?? '');
+        if ($oldStudentProgramId === '' && $oldStudentGroupId) {
+            $oldStudentGroup = ($enrollGroups ?? collect())->firstWhere('id', (int) $oldStudentGroupId);
+            $oldStudentProgramId = (string) ($oldStudentGroup?->course?->program_id ?? '');
+            $oldStudentCourseId = (string) ($oldStudentGroup?->course_id ?? $oldStudentCourseId);
         }
 
         $secretaryGroupCoursesData = ($courses ?? collect())->map(fn ($course): array => [
@@ -42,6 +45,7 @@
 
         $secretaryGroupClassesData = ($enrollGroups ?? collect())->map(fn ($group): array => [
             'id' => $group->id,
+            'course_id' => $group->course_id,
             'course_name' => $group->course?->name ?? 'Course',
             'course_code' => $group->course?->code,
             'program_id' => $group->course?->program_id,
@@ -117,18 +121,18 @@
         </section>
 
         <section class="rounded-2xl border p-5" style="background: white; border-color: var(--lumina-border-light);">
-            <h2 class="text-lg font-bold" style="color: var(--lumina-text-primary);">Enroll Student</h2>
-            <p class="mt-1 text-sm" style="color: var(--lumina-text-muted);">Select program → course → group, then search and select a student.</p>
+            <h2 class="text-lg font-bold" style="color: var(--lumina-text-primary);">Students in Group</h2>
+            <p class="mt-1 text-sm" style="color: var(--lumina-text-muted);">Select program -> course -> group, then search for a student. The form switches automatically between add and remove.</p>
 
-            <form method="POST" action="{{ route('secretary.groups.enroll') }}" class="mt-4 grid gap-3 md:grid-cols-2">
+            <form id="group_student_form" method="POST" action="{{ route('secretary.groups.enroll') }}" class="mt-4 grid gap-3 md:grid-cols-2">
                 @csrf
 
                 <div>
-                    <label for="enroll_program_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Program</label>
-                    <select id="enroll_program_id" name="enroll_program_id" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                    <label for="group_student_program_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Program</label>
+                    <select id="group_student_program_id" name="enroll_program_id" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
                         <option value="">Select program</option>
                         @foreach($availablePrograms as $program)
-                            <option value="{{ $program->id }}" @selected($oldEnrollProgramId !== '' && (string) $program->id === $oldEnrollProgramId)>
+                            <option value="{{ $program->id }}" @selected($oldStudentProgramId !== '' && (string) $program->id === $oldStudentProgramId)>
                                 {{ $program->name }}
                             </option>
                         @endforeach
@@ -136,50 +140,60 @@
                 </div>
 
                 <div>
-                    <label for="enroll_course_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Course</label>
-                    <select id="enroll_course_id" name="enroll_course_id" data-selected-course="{{ old('enroll_course_id') }}" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                    <label for="group_student_course_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Course</label>
+                    <select id="group_student_course_id" name="enroll_course_id" data-selected-course="{{ $oldStudentCourseId }}" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
                         <option value="">Select course</option>
                     </select>
                 </div>
 
                 <div>
-                    <label for="enroll_class_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Group</label>
-                    <select id="enroll_class_id" name="class_id" data-selected-class="{{ old('class_id') }}" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                    <label for="group_student_class_id" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Group</label>
+                    <select id="group_student_class_id" name="class_id" data-selected-class="{{ $oldStudentGroupId }}" required class="w-full rounded-lg border px-3 py-2 text-sm" style="border-color: var(--lumina-border); background: #F8FAFC;">
                         <option value="">Select group</option>
                     </select>
                 </div>
 
                 <div class="relative">
-                    <label for="enroll_student_search" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Student</label>
+                    <label for="group_student_search" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Student</label>
                     <input
-                        id="enroll_student_search"
+                        id="group_student_search"
                         type="text"
-                        placeholder="Search student by name or email"
+                        placeholder="Select a group first"
                         class="w-full rounded-lg border px-3 py-2 text-sm"
                         style="border-color: var(--lumina-border); background: #F8FAFC;"
                         autocomplete="off"
+                        disabled
                     >
-                    <div id="enroll_student_results" class="absolute left-0 right-0 top-full mt-1 hidden max-h-48 overflow-y-auto rounded-lg border bg-white shadow-lg" style="border-color: var(--lumina-border);">
+                    <div id="group_student_results" class="absolute left-0 right-0 top-full mt-1 hidden max-h-48 overflow-y-auto rounded-lg border bg-white shadow-lg" style="border-color: var(--lumina-border);">
                     </div>
                 </div>
 
-                <input type="hidden" id="enroll_student_id" name="student_id" value="">
+                <input type="hidden" id="group_student_id" name="student_id" value="{{ old('student_id', old('remove_student_id', '')) }}">
+                <input type="hidden" id="group_student_action" name="group_student_action" value="{{ $oldStudentAction }}">
+                <input type="hidden" id="remove_program_id_sync" name="remove_program_id" value="{{ $oldStudentProgramId }}">
+                <input type="hidden" id="remove_course_id_sync" name="remove_course_id" value="{{ $oldStudentCourseId }}">
+                <input type="hidden" id="remove_class_id_sync" name="remove_class_id" value="{{ $oldStudentGroupId }}">
+                <input type="hidden" id="remove_student_id_sync" name="remove_student_id" value="{{ old('remove_student_id', '') }}">
 
-                <div id="enroll_student_selected" class="hidden rounded-lg border p-3" style="border-color: var(--lumina-border); background: #F8FAFC;">
+                <div id="group_student_selected" class="hidden rounded-lg border p-3 md:col-span-2" style="border-color: var(--lumina-border); background: #F8FAFC;">
                     <p class="text-xs font-semibold" style="color: var(--lumina-text-muted);">Selected Student</p>
-                    <p id="enroll_student_display" class="mt-1 text-sm font-semibold" style="color: var(--lumina-text-primary);"></p>
+                    <p id="group_student_display" class="mt-1 text-sm font-semibold" style="color: var(--lumina-text-primary);"></p>
+                    <p id="group_student_status" class="mt-2 text-xs font-semibold" style="color: var(--lumina-text-muted);"></p>
                 </div>
 
                 <div class="md:col-span-2 flex gap-2">
-                    <button type="submit" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background-color: var(--lumina-primary);">
-                        Enroll Student
+                    <button id="group_student_submit" type="submit" disabled class="rounded-lg px-4 py-2 text-sm font-semibold text-white" style="background-color: #94A3B8;">
+                        Select a Student
                     </button>
                     <button type="reset" class="rounded-lg border px-4 py-2 text-sm font-semibold" style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);">
                         Clear
                     </button>
                 </div>
+
+                <p id="group_student_hint" class="md:col-span-2 text-xs" style="color: var(--lumina-text-muted);">Select a group first to search approved students by name or email.</p>
             </form>
         </section>
+
     </div>
 
     <section class="mb-6 grid gap-4 lg:grid-cols-4">
@@ -309,7 +323,7 @@
                             </p>
                         </div>
                         <span class="rounded-full px-2.5 py-1 text-xs font-semibold" style="background: #ECFDF5; color: #065F46;">
-                            {{ $group->students_count }}/{{ $group->capacity }} students
+                            Enrolled: {{ $group->students_count }} / {{ $group->capacity }}
                         </span>
                     </div>
 
@@ -476,8 +490,8 @@
             select.dataset.selectedCourse = select.value;
         }
 
-        function setEnrollCourseOptions(programId, selectedCourseId) {
-            const select = document.getElementById('enroll_course_id');
+        function setGroupStudentCourseOptions(programId, selectedCourseId) {
+            const select = document.getElementById('group_student_course_id');
 
             if (!select) {
                 return;
@@ -504,13 +518,13 @@
             select.disabled = !programId || filteredCourses.length === 0;
             select.dataset.selectedCourse = select.value;
 
-            // Reset group select when course changes
-            setEnrollGroupOptions('');
+            syncGroupStudentHiddenFields();
+            setGroupStudentGroupOptions('');
         }
 
-        function setEnrollGroupOptions(selectedGroupId) {
-            const select = document.getElementById('enroll_class_id');
-            const courseSelect = document.getElementById('enroll_course_id');
+        function setGroupStudentGroupOptions(selectedGroupId) {
+            const select = document.getElementById('group_student_class_id');
+            const courseSelect = document.getElementById('group_student_course_id');
 
             if (!select || !courseSelect) {
                 return;
@@ -531,7 +545,7 @@
             filteredGroups.forEach((group) => {
                 const courseCode = group.course_code ? ` (${group.course_code})` : '';
                 const teacherName = group.teacher_name ? ` - ${group.teacher_name}` : '';
-                const label = `#${group.id} - ${group.course_name}${courseCode}${teacherName} (${group.students_count}/${group.capacity})`;
+                const label = `#${group.id} - ${group.course_name}${courseCode}${teacherName} (Enrolled: ${group.students_count} / ${group.capacity})`;
 
                 select.appendChild(new Option(label, String(group.id)));
             });
@@ -540,6 +554,10 @@
             select.value = groupExists ? String(selectedGroupId) : '';
             select.disabled = !courseId || filteredGroups.length === 0;
             select.dataset.selectedClass = select.value;
+
+            syncGroupStudentHiddenFields();
+            updateGroupStudentSearchState();
+            clearGroupStudentSelection();
         }
 
         let searchDebounceTimer = null;
@@ -589,15 +607,21 @@
         }
 
         function performStudentSearch(query) {
-            const resultsPanel = document.getElementById('enroll_student_results');
+            const resultsPanel = document.getElementById('group_student_results');
+            const groupSelect = document.getElementById('group_student_class_id');
             const trimmedQuery = (query || '').trim();
+            const classId = groupSelect?.value || '';
+
+            if (!resultsPanel || !classId) {
+                return;
+            }
 
             if (trimmedQuery.length < 2) {
                 resultsPanel.classList.add('hidden');
                 return;
             }
 
-            fetch(`{{ route('secretary.groups.students.search') }}?q=${encodeURIComponent(trimmedQuery)}`)
+            fetch(`{{ route('secretary.groups.students.search') }}?q=${encodeURIComponent(trimmedQuery)}&class_id=${encodeURIComponent(classId)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (!Array.isArray(data.students) || data.students.length === 0) {
@@ -610,8 +634,10 @@
                     data.students.forEach((student) => {
                         const item = document.createElement('div');
                         item.className = 'cursor-pointer border-b px-3 py-2 last:border-b-0 hover:bg-gray-50';
-                        item.innerHTML = `<p class="text-sm font-semibold" style="color: var(--lumina-text-primary);">${escapeHtml(student.name)}</p><p class="text-xs" style="color: var(--lumina-text-muted);">${escapeHtml(student.email)}</p>`;
-                        item.addEventListener('click', () => selectStudent(student.id, student.name, student.email));
+                        const enrollmentText = student.is_enrolled ? 'Already in group' : 'Not in group';
+                        const enrollmentColor = student.is_enrolled ? '#B91C1C' : '#166534';
+                        item.innerHTML = `<p class="text-sm font-semibold" style="color: var(--lumina-text-primary);">${escapeHtml(student.name)}</p><p class="text-xs" style="color: var(--lumina-text-muted);">${escapeHtml(student.email)}</p><p class="mt-1 text-[11px] font-semibold" style="color: ${enrollmentColor};">${enrollmentText}</p>`;
+                        item.addEventListener('click', () => selectStudent(student.id, student.name, student.email, Boolean(student.is_enrolled)));
                         resultsPanel.appendChild(item);
                     });
 
@@ -624,13 +650,148 @@
                 });
         }
 
-        function selectStudent(id, name, email) {
-            document.getElementById('enroll_student_id').value = id;
-            document.getElementById('enroll_student_search').value = `${name} (${email})`;
-            document.getElementById('enroll_student_search').blur();
-            document.getElementById('enroll_student_results').classList.add('hidden');
-            document.getElementById('enroll_student_display').textContent = `${name} (${email})`;
-            document.getElementById('enroll_student_selected').classList.remove('hidden');
+        function selectStudent(id, name, email, isEnrolled) {
+            const studentInput = document.getElementById('group_student_id');
+            const searchInput = document.getElementById('group_student_search');
+            const resultsPanel = document.getElementById('group_student_results');
+            const display = document.getElementById('group_student_display');
+            const selected = document.getElementById('group_student_selected');
+            const status = document.getElementById('group_student_status');
+            const removeStudentInput = document.getElementById('remove_student_id_sync');
+            const actionInput = document.getElementById('group_student_action');
+
+            if (!studentInput || !searchInput || !resultsPanel || !display || !selected || !status || !removeStudentInput || !actionInput) {
+                return;
+            }
+
+            studentInput.value = id;
+            removeStudentInput.value = id;
+            actionInput.value = isEnrolled ? 'remove' : 'add';
+            searchInput.value = `${name} (${email})`;
+            searchInput.blur();
+            resultsPanel.classList.add('hidden');
+            display.textContent = `${name} (${email})`;
+            status.textContent = isEnrolled
+                ? 'This student is already enrolled in the selected group.'
+                : 'This student is not enrolled in the selected group.';
+            selected.classList.remove('hidden');
+
+            updateGroupStudentActionButton(isEnrolled);
+        }
+
+        function clearGroupStudentSelection() {
+            const studentInput = document.getElementById('group_student_id');
+            const removeStudentInput = document.getElementById('remove_student_id_sync');
+            const searchInput = document.getElementById('group_student_search');
+            const display = document.getElementById('group_student_display');
+            const selected = document.getElementById('group_student_selected');
+            const status = document.getElementById('group_student_status');
+            const actionInput = document.getElementById('group_student_action');
+
+            if (studentInput) {
+                studentInput.value = '';
+            }
+
+            if (removeStudentInput) {
+                removeStudentInput.value = '';
+            }
+
+            if (searchInput) {
+                searchInput.value = '';
+            }
+
+            if (display) {
+                display.textContent = '';
+            }
+
+            if (status) {
+                status.textContent = '';
+            }
+
+            if (selected) {
+                selected.classList.add('hidden');
+            }
+
+            if (actionInput) {
+                actionInput.value = 'add';
+            }
+
+            updateGroupStudentActionButton(false);
+        }
+
+        function syncGroupStudentHiddenFields() {
+            const programValue = document.getElementById('group_student_program_id')?.value || '';
+            const courseValue = document.getElementById('group_student_course_id')?.value || '';
+            const classValue = document.getElementById('group_student_class_id')?.value || '';
+
+            const removeProgram = document.getElementById('remove_program_id_sync');
+            const removeCourse = document.getElementById('remove_course_id_sync');
+            const removeClass = document.getElementById('remove_class_id_sync');
+
+            if (removeProgram) {
+                removeProgram.value = programValue;
+            }
+
+            if (removeCourse) {
+                removeCourse.value = courseValue;
+            }
+
+            if (removeClass) {
+                removeClass.value = classValue;
+            }
+        }
+
+        function updateGroupStudentSearchState() {
+            const groupSelect = document.getElementById('group_student_class_id');
+            const searchInput = document.getElementById('group_student_search');
+            const hint = document.getElementById('group_student_hint');
+
+            if (!groupSelect || !searchInput || !hint) {
+                return;
+            }
+
+            const hasGroup = groupSelect.value !== '';
+
+            searchInput.disabled = !hasGroup;
+            searchInput.placeholder = hasGroup ? 'Search student by name or email' : 'Select a group first';
+            hint.textContent = hasGroup
+                ? 'Search approved students by name or email. The action will switch to add or remove based on current enrollment.'
+                : 'Select a group first to search approved students by name or email.';
+        }
+
+        function updateGroupStudentActionButton(isEnrolled) {
+            const button = document.getElementById('group_student_submit');
+            const form = document.getElementById('group_student_form');
+            const actionInput = document.getElementById('group_student_action');
+            const hasStudent = (document.getElementById('group_student_id')?.value || '') !== '';
+
+            if (!button || !form || !actionInput) {
+                return;
+            }
+
+            if (!hasStudent) {
+                button.disabled = true;
+                button.textContent = 'Select a Student';
+                button.style.backgroundColor = '#94A3B8';
+                form.action = `{{ route('secretary.groups.enroll') }}`;
+                actionInput.value = 'add';
+                return;
+            }
+
+            if (isEnrolled) {
+                button.disabled = false;
+                button.textContent = 'Remove from Group';
+                button.style.backgroundColor = '#B91C1C';
+                form.action = `{{ route('secretary.groups.remove-student') }}`;
+                actionInput.value = 'remove';
+                return;
+            }
+
+            button.disabled = false;
+            button.textContent = 'Add to Group';
+            button.style.backgroundColor = '#15803D';
+            form.action = `{{ route('secretary.groups.enroll') }}`;
+            actionInput.value = 'add';
         }
 
         function escapeHtml(text) {
@@ -673,45 +834,70 @@
                 });
             }
 
-            // Setup Enroll Student form
-            const enrollProgramSelect = document.getElementById('enroll_program_id');
-            const enrollCourseSelect = document.getElementById('enroll_course_id');
-            const enrollClassSelect = document.getElementById('enroll_class_id');
-            const enrollStudentSearch = document.getElementById('enroll_student_search');
+            // Setup Students in Group form
+            const groupStudentForm = document.getElementById('group_student_form');
+            const groupStudentProgramSelect = document.getElementById('group_student_program_id');
+            const groupStudentCourseSelect = document.getElementById('group_student_course_id');
+            const groupStudentClassSelect = document.getElementById('group_student_class_id');
+            const groupStudentSearch = document.getElementById('group_student_search');
 
-            if (enrollProgramSelect) {
-                setEnrollCourseOptions(enrollProgramSelect.value, enrollCourseSelect?.dataset.selectedCourse || '');
-
-                enrollProgramSelect.addEventListener('change', function () {
-                    setEnrollCourseOptions(this.value, '');
+            if (groupStudentForm) {
+                groupStudentForm.addEventListener('reset', function () {
+                    requestAnimationFrame(() => {
+                        syncGroupStudentHiddenFields();
+                        updateGroupStudentSearchState();
+                        clearGroupStudentSelection();
+                    });
                 });
             }
 
-            if (enrollCourseSelect) {
-                setEnrollGroupOptions(enrollClassSelect?.dataset.selectedClass || '');
+            if (groupStudentProgramSelect) {
+                setGroupStudentCourseOptions(groupStudentProgramSelect.value, groupStudentCourseSelect?.dataset.selectedCourse || '');
 
-                enrollCourseSelect.addEventListener('change', function () {
-                    setEnrollGroupOptions('');
+                groupStudentProgramSelect.addEventListener('change', function () {
+                    setGroupStudentCourseOptions(this.value, '');
                 });
             }
 
-            if (enrollStudentSearch) {
-                enrollStudentSearch.addEventListener('input', function () {
+            if (groupStudentCourseSelect) {
+                setGroupStudentGroupOptions(groupStudentClassSelect?.dataset.selectedClass || '');
+
+                groupStudentCourseSelect.addEventListener('change', function () {
+                    syncGroupStudentHiddenFields();
+                    setGroupStudentGroupOptions('');
+                });
+            }
+
+            if (groupStudentClassSelect) {
+                updateGroupStudentSearchState();
+
+                groupStudentClassSelect.addEventListener('change', function () {
+                    syncGroupStudentHiddenFields();
+                    updateGroupStudentSearchState();
+                    clearGroupStudentSelection();
+                });
+            }
+
+            if (groupStudentSearch) {
+                updateGroupStudentSearchState();
+                updateGroupStudentActionButton(`{{ $oldStudentAction }}` === 'remove');
+
+                groupStudentSearch.addEventListener('input', function () {
                     clearTimeout(searchDebounceTimer);
                     searchDebounceTimer = setTimeout(() => {
                         performStudentSearch(this.value);
                     }, 300);
                 });
 
-                enrollStudentSearch.addEventListener('focus', function () {
-                    if (this.value.length >= 2) {
-                        document.getElementById('enroll_student_results').classList.remove('hidden');
+                groupStudentSearch.addEventListener('focus', function () {
+                    if (!this.disabled && this.value.length >= 2) {
+                        document.getElementById('group_student_results').classList.remove('hidden');
                     }
                 });
 
                 document.addEventListener('click', function (e) {
-                    if (!e.target.closest('#enroll_student_search') && !e.target.closest('#enroll_student_results')) {
-                        document.getElementById('enroll_student_results').classList.add('hidden');
+                    if (!e.target.closest('#group_student_search') && !e.target.closest('#group_student_results')) {
+                        document.getElementById('group_student_results').classList.add('hidden');
                     }
                 });
             }
