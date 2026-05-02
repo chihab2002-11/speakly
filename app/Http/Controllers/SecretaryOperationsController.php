@@ -27,6 +27,10 @@ class SecretaryOperationsController extends Controller
     use PasswordValidationRules;
     use ProfileValidationRules;
 
+    private const STANDARD_ACCOUNT_ROLES = ['student', 'parent', 'teacher'];
+
+    private const SUPPORTED_ACCOUNT_ROLES = ['student', 'parent', 'teacher', 'secretary', 'admin'];
+
     public function __construct(
         private TuitionFinancialService $tuitionFinancialService,
         private PaymentReceiptPdf $paymentReceiptPdf,
@@ -388,22 +392,23 @@ class SecretaryOperationsController extends Controller
 
     public function accounts(Request $request): View
     {
+        $manageableRoles = $this->manageableAccountRoles($request->user());
         $role = strtolower((string) $request->query('role', 'all'));
         $status = strtolower((string) $request->query('status', 'all'));
         $search = trim((string) $request->query('search', ''));
 
-        $allowedRoles = ['all', 'student', 'parent', 'teacher'];
+        $allowedRoles = ['all', ...$manageableRoles];
         $allowedStatus = ['all', 'approved', 'pending', 'rejected'];
         $role = in_array($role, $allowedRoles, true) ? $role : 'all';
         $status = in_array($status, $allowedStatus, true) ? $status : 'all';
 
         $accountsQuery = User::query()
             ->with('roles:id,name')
-            ->where(function ($query): void {
+            ->where(function ($query) use ($manageableRoles): void {
                 $query
-                    ->whereIn('requested_role', ['student', 'parent', 'teacher'])
-                    ->orWhereHas('roles', function ($roleQuery): void {
-                        $roleQuery->whereIn('name', ['student', 'parent', 'teacher']);
+                    ->whereIn('requested_role', $manageableRoles)
+                    ->orWhereHas('roles', function ($roleQuery) use ($manageableRoles): void {
+                        $roleQuery->whereIn('name', $manageableRoles);
                     });
             })
             ->when($role !== 'all', function ($query) use ($role): void {
@@ -435,11 +440,11 @@ class SecretaryOperationsController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        $baseScope = User::query()->where(function ($query): void {
+        $baseScope = User::query()->where(function ($query) use ($manageableRoles): void {
             $query
-                ->whereIn('requested_role', ['student', 'parent', 'teacher'])
-                ->orWhereHas('roles', function ($roleQuery): void {
-                    $roleQuery->whereIn('name', ['student', 'parent', 'teacher']);
+                ->whereIn('requested_role', $manageableRoles)
+                ->orWhereHas('roles', function ($roleQuery) use ($manageableRoles): void {
+                    $roleQuery->whereIn('name', $manageableRoles);
                 });
         });
 
@@ -452,6 +457,7 @@ class SecretaryOperationsController extends Controller
             'approvedAccounts' => (clone $baseScope)->whereNotNull('approved_at')->count(),
             'pendingAccounts' => (clone $baseScope)->whereNull('approved_at')->whereNull('rejected_at')->count(),
             'rejectedAccounts' => (clone $baseScope)->whereNotNull('rejected_at')->count(),
+            'accountRoleOptions' => $manageableRoles,
         ]);
     }
 
@@ -535,15 +541,91 @@ class SecretaryOperationsController extends Controller
             ->with('success', 'Account deleted successfully.');
     }
 
+    public function unapproveAccount(Request $request, User $account): RedirectResponse
+    {
+        $actor = $request->user();
+
+        if ($actor->id === $account->id && $actor->hasRole('admin')) {
+            return redirect()
+                ->route('secretary.accounts')
+                ->withErrors(['account' => 'You cannot unapprove your own account.']);
+        }
+
+        abort_unless($this->canUnapproveAccount($actor, $account), 403);
+
+        if ($account->approved_at === null) {
+            return redirect()
+                ->route('secretary.accounts')
+                ->withErrors(['account' => 'This account is already unapproved.']);
+        }
+
+        $account->forceFill([
+            'approved_at' => null,
+            'approved_by' => null,
+        ])->save();
+
+        return redirect()
+            ->route('secretary.accounts')
+            ->with('success', 'Account marked as unapproved.');
+    }
+
     private function isManageableAccount(User $account): bool
     {
         $account->loadMissing('roles:id,name');
 
-        if (in_array((string) $account->requested_role, ['student', 'parent', 'teacher'], true)) {
+        if (in_array((string) $account->requested_role, self::STANDARD_ACCOUNT_ROLES, true)) {
             return true;
         }
 
-        return $account->roles->pluck('name')->intersect(['student', 'parent', 'teacher'])->isNotEmpty();
+        return $account->roles->pluck('name')->intersect(self::STANDARD_ACCOUNT_ROLES)->isNotEmpty();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function manageableAccountRoles(User $actor): array
+    {
+        if ($actor->hasRole('admin')) {
+            return self::SUPPORTED_ACCOUNT_ROLES;
+        }
+
+        return self::STANDARD_ACCOUNT_ROLES;
+    }
+
+    private function canUnapproveAccount(User $actor, User $account): bool
+    {
+        $accountRole = $this->resolvedAccountRole($account);
+
+        if ($accountRole === null) {
+            return false;
+        }
+
+        if ($actor->hasRole('admin')) {
+            return in_array($accountRole, self::SUPPORTED_ACCOUNT_ROLES, true);
+        }
+
+        if ($actor->hasRole('secretary')) {
+            return in_array($accountRole, self::STANDARD_ACCOUNT_ROLES, true);
+        }
+
+        return false;
+    }
+
+    private function resolvedAccountRole(User $account): ?string
+    {
+        $account->loadMissing('roles:id,name');
+
+        $requestedRole = (string) $account->requested_role;
+
+        if (in_array($requestedRole, self::SUPPORTED_ACCOUNT_ROLES, true)) {
+            return $requestedRole;
+        }
+
+        $role = $account->roles
+            ->pluck('name')
+            ->first(fn (string $role): bool => in_array($role, self::SUPPORTED_ACCOUNT_ROLES, true));
+
+        return is_string($role) ? $role : null;
     }
 
     public function publishNotifications(): View

@@ -24,11 +24,18 @@
         </div>
     @endif
 
+    @php
+        $currentUser = auth()->user();
+        $standardAccountRoles = ['student', 'parent', 'teacher'];
+        $supportedAccountRoles = ['student', 'parent', 'teacher', 'secretary', 'admin'];
+        $isAdminAccountManager = (bool) $currentUser?->hasRole('admin');
+    @endphp
+
     <section class="mb-6 grid gap-4 lg:grid-cols-4">
         <article class="relative overflow-hidden rounded-2xl p-5 text-white" style="background: #2D8C5E; box-shadow: 0px 20px 25px -5px rgba(26, 27, 34, 0.04), 0px 8px 10px -6px rgba(26, 27, 34, 0.04); min-height: 150px;">
             <p class="text-xs font-bold uppercase tracking-[1.2px]">Managed Accounts</p>
             <p class="mt-3 text-4xl font-black leading-none">{{ $totalManagedAccounts }}</p>
-            <p class="mt-4 text-sm font-semibold">Student, parent, teacher lifecycle</p>
+            <p class="mt-4 text-sm font-semibold">{{ $isAdminAccountManager ? 'Supported role lifecycle' : 'Student, parent, teacher lifecycle' }}</p>
             <div class="pointer-events-none absolute -bottom-5 right-3 h-14 w-14 rounded-full border border-white/30"></div>
         </article>
 
@@ -75,9 +82,11 @@
                     style="border-color: var(--lumina-border); background: #F8FAFC;"
                 >
                     <option value="all" @selected($role === 'all')>All</option>
-                    <option value="student" @selected($role === 'student')>Student</option>
-                    <option value="parent" @selected($role === 'parent')>Parent</option>
-                    <option value="teacher" @selected($role === 'teacher')>Teacher</option>
+                    @foreach($accountRoleOptions as $accountRoleOption)
+                        <option value="{{ $accountRoleOption }}" @selected($role === $accountRoleOption)>
+                            {{ ucfirst($accountRoleOption) }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
 
@@ -141,6 +150,13 @@
                                 $resolvedStatus = $account->approved_at
                                     ? 'approved'
                                     : ($account->rejected_at ? 'rejected' : 'pending');
+                                $canEditAccount = in_array((string) $resolvedRole, $standardAccountRoles, true);
+                                $canUnapproveAccount = $resolvedStatus === 'approved'
+                                    && in_array((string) $resolvedRole, $supportedAccountRoles, true)
+                                    && (
+                                        ($isAdminAccountManager && (int) $account->id !== (int) $currentUser?->id)
+                                        || (! $isAdminAccountManager && in_array((string) $resolvedRole, $standardAccountRoles, true))
+                                    );
                             @endphp
                             <tr class="border-t" style="border-color: var(--lumina-border);">
                                 <td class="px-4 py-4">
@@ -174,31 +190,51 @@
                                 </td>
                                 <td class="px-4 py-4">
                                     <div class="flex justify-end gap-2">
-                                        <button
-                                            type="button"
-                                            onclick="openEditAccountModal(this)"
-                                            data-id="{{ $account->id }}"
-                                            data-name="{{ $account->name }}"
-                                            data-email="{{ $account->email }}"
-                                            data-role="{{ $resolvedRole }}"
-                                            data-date-of-birth="{{ optional($account->date_of_birth)->format('Y-m-d') }}"
-                                            class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
-                                            style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);"
-                                        >
-                                            Edit
-                                        </button>
-
-                                        <form method="POST" action="{{ route('secretary.accounts.destroy', $account) }}" onsubmit="return confirm('Delete this account?');">
-                                            @csrf
-                                            @method('DELETE')
+                                        @if($canEditAccount)
                                             <button
-                                                type="submit"
+                                                type="button"
+                                                onclick="openEditAccountModal(this)"
+                                                data-id="{{ $account->id }}"
+                                                data-name="{{ $account->name }}"
+                                                data-email="{{ $account->email }}"
+                                                data-role="{{ $resolvedRole }}"
+                                                data-date-of-birth="{{ optional($account->date_of_birth)->format('Y-m-d') }}"
                                                 class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
-                                                style="border-color: #FECACA; color: #991B1B;"
+                                                style="border-color: var(--lumina-border); color: var(--lumina-text-secondary);"
                                             >
-                                                Delete
+                                                Edit
                                             </button>
-                                        </form>
+
+                                            <form method="POST" action="{{ route('secretary.accounts.destroy', $account) }}" onsubmit="return confirm('Delete this account?');">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button
+                                                    type="submit"
+                                                    class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                                                    style="border-color: #FECACA; color: #991B1B;"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        @if($canUnapproveAccount)
+                                            <form method="POST" action="{{ route('secretary.accounts.unapprove', $account) }}" onsubmit="return confirm('Mark this account as unapproved? This will remove dashboard access until the account is approved again.');">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button
+                                                    type="submit"
+                                                    class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                                                    style="border-color: #FDBA74; color: #9A3412;"
+                                                >
+                                                    Unapprove
+                                                </button>
+                                            </form>
+                                        @endif
+
+                                        @unless($canEditAccount || $canUnapproveAccount)
+                                            <span class="px-3 py-1.5 text-xs" style="color: var(--lumina-text-muted);">No actions</span>
+                                        @endunless
                                     </div>
                                 </td>
                             </tr>

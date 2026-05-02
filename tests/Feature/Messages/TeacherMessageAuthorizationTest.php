@@ -5,6 +5,7 @@ namespace Tests\Feature\Messages;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
@@ -31,9 +32,7 @@ class TeacherMessageAuthorizationTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider allowedRecipientRolesProvider
-     */
+    #[DataProvider('allowedRecipientRolesProvider')]
     public function test_teacher_can_send_to_allowed_roles_only(string $recipientRole): void
     {
         $teacher = $this->createApprovedMessageUserWithRole('teacher');

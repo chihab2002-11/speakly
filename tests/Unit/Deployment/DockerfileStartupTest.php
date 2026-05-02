@@ -25,6 +25,8 @@ test('dockerfile keeps railway compatible php runtime without baked in startup c
         ->and($dockerfile)->toContain('pdo_mysql')
         ->and($dockerfile)->toContain('xml')
         ->and($dockerfile)->toContain('zip')
+        ->and($dockerfile)->toContain('upload_max_filesize=20M')
+        ->and($dockerfile)->toContain('post_max_size=25M')
         ->and($dockerfile)->toContain('COPY --from=frontend /app/public/build ./public/build')
         ->and($dockerfile)->toContain('composer install')
         ->and($dockerfile)->toContain('--no-dev')

@@ -23,7 +23,7 @@ it('sends approved notification when admin approves a pending user', function ()
     $pendingUser = User::factory()->create([
         'approved_at' => null,
         'rejected_at' => null,
-        'requested_role' => 'student',
+        'requested_role' => 'teacher',
     ]);
 
     $response = $this

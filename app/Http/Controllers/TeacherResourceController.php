@@ -11,11 +11,14 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TeacherResourceController extends Controller
 {
-    public function index(Request $request)
+    private const MAX_UPLOAD_KILOBYTES = 20480;
+
+    public function index(Request $request): View
     {
         $teacher = $request->user();
         $maxUploadKilobytes = $this->maxUploadKilobytes();
@@ -97,6 +100,7 @@ class TeacherResourceController extends Controller
                 'category_id' => $resource->category,
                 'class_id' => $resource->class_id,
                 'description' => (string) ($resource->description ?? ''),
+                'deadline' => $resource->deadline?->toDateString(),
             ])->all(),
             'categories' => $this->buildCategories($resources),
             'resourceStats' => $resourceStats,
@@ -120,12 +124,14 @@ class TeacherResourceController extends Controller
         $validated = $request->validate($this->resourceValidationRules($teacher));
 
         $description = trim((string) ($validated['description'] ?? ''));
+        $deadline = $this->resourceDeadline($validated);
 
         $resource->update([
             'class_id' => (int) $validated['class_id'],
             'name' => $validated['name'],
             'category' => $validated['category_id'],
             'description' => $description === '' ? null : $description,
+            'deadline' => $deadline,
         ]);
 
         return redirect()
@@ -137,6 +143,7 @@ class TeacherResourceController extends Controller
     {
         $teacher = $request->user();
         $maxUploadKilobytes = $this->maxUploadKilobytes();
+        $serverUploadLimitKilobytes = $this->serverUploadLimitKilobytes();
 
         if (! $teacher->taughtClasses()->exists()) {
             return redirect()
@@ -148,21 +155,25 @@ class TeacherResourceController extends Controller
         $uploadedFile = $request->file('file');
 
         if (! $uploadedFile instanceof UploadedFile) {
+            $serverLimitMessage = $serverUploadLimitKilobytes > 0 && $serverUploadLimitKilobytes < $maxUploadKilobytes
+                ? ' The server PHP upload limit is currently '.$this->formatKilobytes($serverUploadLimitKilobytes).'.'
+                : '';
+
             return redirect()
                 ->route('teacher.resources')
-                ->withErrors(['file' => 'Please choose a file to upload. If you already selected one, ensure it does not exceed '.$this->formatKilobytes($maxUploadKilobytes).'.'])
+                ->withErrors(['file' => 'Please choose a file to upload. Files must not exceed '.$this->formatKilobytes($maxUploadKilobytes).'.'.$serverLimitMessage])
                 ->withInput();
         }
 
         if (! $uploadedFile->isValid()) {
             return redirect()
                 ->route('teacher.resources')
-                ->withErrors(['file' => $this->uploadErrorMessage($uploadedFile->getError(), $maxUploadKilobytes)])
+                ->withErrors(['file' => $this->uploadErrorMessage($uploadedFile->getError(), $serverUploadLimitKilobytes ?: $maxUploadKilobytes)])
                 ->withInput();
         }
 
         $validated = $request->validate([
-            'file' => ['required', 'file', 'mimes:pdf,doc,docx,zip', 'max:'.$maxUploadKilobytes],
+            'file' => ['required', 'file', 'mimes:pdf,doc,docx,zip', 'max:20480'],
             ...$this->resourceValidationRules($teacher),
         ]);
 
@@ -176,6 +187,7 @@ class TeacherResourceController extends Controller
         }
 
         $description = trim((string) ($validated['description'] ?? ''));
+        $deadline = $this->resourceDeadline($validated);
 
         $resource = TeacherResource::query()->create([
             'teacher_id' => $teacher->id,
@@ -183,6 +195,7 @@ class TeacherResourceController extends Controller
             'category' => $validated['category_id'],
             'name' => $validated['name'],
             'description' => $description === '' ? null : $description,
+            'deadline' => $deadline,
             'original_filename' => $uploadedFile->getClientOriginalName(),
             'file_path' => $storedPath,
             'mime_type' => $uploadedFile->getClientMimeType(),
@@ -247,18 +260,21 @@ class TeacherResourceController extends Controller
 
     private function maxUploadKilobytes(): int
     {
-        $applicationLimit = 51200;
+        return self::MAX_UPLOAD_KILOBYTES;
+    }
 
+    private function serverUploadLimitKilobytes(): int
+    {
         $phpLimits = array_values(array_filter([
             $this->parseIniSizeToKilobytes((string) ini_get('upload_max_filesize')),
             $this->parseIniSizeToKilobytes((string) ini_get('post_max_size')),
         ], fn (int $value): bool => $value > 0));
 
         if ($phpLimits === []) {
-            return $applicationLimit;
+            return 0;
         }
 
-        return min($applicationLimit, min($phpLimits));
+        return min($phpLimits);
     }
 
     private function parseIniSizeToKilobytes(string $iniSize): int
@@ -324,8 +340,21 @@ class TeacherResourceController extends Controller
             ],
             'name' => ['required', 'string', 'max:255'],
             'category_id' => ['required', Rule::in(TeacherResource::allowedCategories())],
+            'deadline' => ['exclude_unless:category_id,'.TeacherResource::CATEGORY_HOMEWORK, 'required', 'date', 'after_or_equal:today'],
             'description' => ['nullable', 'string', 'max:1000'],
         ];
+    }
+
+    /**
+     * @param  array{category_id:string,deadline?:string}  $validated
+     */
+    private function resourceDeadline(array $validated): ?string
+    {
+        if ($validated['category_id'] !== TeacherResource::CATEGORY_HOMEWORK) {
+            return null;
+        }
+
+        return (string) $validated['deadline'];
     }
 
     /**

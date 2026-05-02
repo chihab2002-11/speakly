@@ -537,6 +537,9 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:secretary|ad
             Route::patch('/accounts/{account}', [SecretaryOperationsController::class, 'updateAccount'])
                 ->whereNumber('account')
                 ->name('accounts.update');
+            Route::patch('/accounts/{account}/unapprove', [SecretaryOperationsController::class, 'unapproveAccount'])
+                ->whereNumber('account')
+                ->name('accounts.unapprove');
             Route::delete('/accounts/{account}', [SecretaryOperationsController::class, 'destroyAccount'])
                 ->whereNumber('account')
                 ->name('accounts.destroy');

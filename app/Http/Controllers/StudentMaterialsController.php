@@ -20,32 +20,38 @@ class StudentMaterialsController extends Controller
         $classIds = $this->resolveAccessibleClassIds($student);
         $notifiedResourceIds = $this->resolveNotifiedResourceIds($student);
 
-        $resources = TeacherResource::query()
-            ->where(function ($query) use ($classIds, $notifiedResourceIds): void {
-                if ($classIds->isNotEmpty()) {
-                    $query->whereIn('class_id', $classIds);
-                }
+        $resources = collect();
 
-                if ($notifiedResourceIds->isNotEmpty()) {
-                    $method = $classIds->isNotEmpty() ? 'orWhereIn' : 'whereIn';
-                    $query->{$method}('id', $notifiedResourceIds);
-                }
-            })
-            ->with(['teacher:id,name', 'courseClass.course:id,name'])
-            ->orderByDesc('created_at')
-            ->get();
+        if ($classIds->isNotEmpty() || $notifiedResourceIds->isNotEmpty()) {
+            $resources = TeacherResource::query()
+                ->where(function ($query) use ($classIds, $notifiedResourceIds): void {
+                    if ($classIds->isNotEmpty()) {
+                        $query->whereIn('class_id', $classIds);
+                    }
+
+                    if ($notifiedResourceIds->isNotEmpty()) {
+                        $method = $classIds->isNotEmpty() ? 'orWhereIn' : 'whereIn';
+                        $query->{$method}('id', $notifiedResourceIds);
+                    }
+                })
+                ->with(['teacher:id,name', 'courseClass.course:id,name'])
+                ->orderByDesc('created_at')
+                ->get();
+        }
 
         $materials = $resources
             ->map(function (TeacherResource $resource): array {
                 $extension = strtolower(pathinfo($resource->original_filename, PATHINFO_EXTENSION));
                 $type = in_array($extension, ['pdf', 'doc', 'docx', 'zip'], true) ? $extension : 'pdf';
+                $isHomework = $resource->category === TeacherResource::CATEGORY_HOMEWORK;
 
                 return [
                     'id' => (int) $resource->id,
                     'resourceName' => (string) $resource->name,
                     'className' => (string) ($resource->courseClass?->course?->name ?? ('Class #'.$resource->class_id)),
                     'type' => $type,
-                    'category' => $resource->category === TeacherResource::CATEGORY_HOMEWORK ? 'homework' : 'course',
+                    'category' => $isHomework ? 'homework' : 'course',
+                    'deadline' => $isHomework ? $resource->deadline?->format('Y-m-d') : null,
                     'teacher' => (string) ($resource->teacher?->name ?? 'Teacher'),
                     'sizeMb' => round(((int) $resource->file_size) / (1024 * 1024), 2),
                     'description' => (string) ($resource->description ?? ''),

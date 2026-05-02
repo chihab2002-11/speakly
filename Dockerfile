@@ -40,6 +40,8 @@ RUN apt-get update \
         zip \
     && rm -rf /var/lib/apt/lists/*
 
+RUN printf "upload_max_filesize=20M\npost_max_size=25M\n" > /usr/local/etc/php/conf.d/uploads.ini
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app

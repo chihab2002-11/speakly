@@ -12,18 +12,26 @@ use Spatie\Permission\Models\Role;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    Role::findOrCreate('teacher', 'web');
+    foreach (['teacher', 'student', 'secretary', 'admin'] as $role) {
+        Role::findOrCreate($role, 'web');
+    }
 });
 
-function createResourceTeacher(): User
+function createResourceUser(string $role, array $attributes = []): User
 {
-    $teacher = User::factory()->create([
+    $user = User::factory()->create(array_merge([
         'approved_at' => now(),
-    ]);
+        'requested_role' => $role,
+    ], $attributes));
 
-    $teacher->assignRole('teacher');
+    $user->assignRole($role);
 
-    return $teacher;
+    return $user;
+}
+
+function createResourceTeacher(array $attributes = []): User
+{
+    return createResourceUser('teacher', $attributes);
 }
 
 function createClassForTeacher(User $teacher): CourseClass
@@ -36,17 +44,26 @@ function createClassForTeacher(User $teacher): CourseClass
     ]);
 }
 
-it('teacher can upload a resource for classes they teach', function () {
+function enrollResourceStudentInClass(User $student, CourseClass $class): void
+{
+    $student->enrolledClasses()->syncWithoutDetaching([
+        $class->id => ['enrolled_at' => now()],
+    ]);
+}
+
+it('approved teacher can upload a resource file up to 20MB', function () {
     Storage::fake('public');
 
     $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
+    $deadline = now()->addWeek()->toDateString();
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
-        'file' => UploadedFile::fake()->create('worksheet.pdf', 150, 'application/pdf'),
+        'file' => UploadedFile::fake()->create('worksheet.pdf', 20480, 'application/pdf'),
         'class_id' => $class->id,
         'name' => 'Worksheet Week 1',
         'category_id' => TeacherResource::CATEGORY_HOMEWORK,
+        'deadline' => $deadline,
         'description' => 'Intro worksheet',
     ]);
 
@@ -58,14 +75,179 @@ it('teacher can upload a resource for classes they teach', function () {
     expect($resource->teacher_id)->toBe($teacher->id);
     expect($resource->class_id)->toBe($class->id);
     expect($resource->category)->toBe(TeacherResource::CATEGORY_HOMEWORK);
+    expect($resource->deadline->toDateString())->toBe($deadline);
+    expect($resource->file_size)->toBe(20480 * 1024);
 
     Storage::disk('public')->assertExists($resource->file_path);
+});
+
+it('teacher can upload a homework resource with a deadline', function () {
+    Storage::fake('public');
+
+    $teacher = createResourceTeacher();
+    $class = createClassForTeacher($teacher);
+    $deadline = now()->addDays(3)->toDateString();
+
+    $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('homework.pdf', 150, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Homework Week 1',
+        'category_id' => TeacherResource::CATEGORY_HOMEWORK,
+        'deadline' => $deadline,
+        'description' => 'Complete before class.',
+    ]);
+
+    $response->assertRedirect(route('teacher.resources'));
+
+    $resource = TeacherResource::query()->where('name', 'Homework Week 1')->first();
+
+    expect($resource)->not()->toBeNull();
+    expect($resource->category)->toBe(TeacherResource::CATEGORY_HOMEWORK);
+    expect($resource->deadline->toDateString())->toBe($deadline);
+});
+
+it('homework resource upload fails when deadline is missing', function () {
+    Storage::fake('public');
+
+    $teacher = createResourceTeacher();
+    $class = createClassForTeacher($teacher);
+
+    $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('homework.pdf', 150, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Homework Without Deadline',
+        'category_id' => TeacherResource::CATEGORY_HOMEWORK,
+        'description' => 'Should fail.',
+    ]);
+
+    $response->assertSessionHasErrors('deadline');
+    expect(TeacherResource::query()->count())->toBe(0);
+});
+
+it('homework resource upload fails when deadline is in the past', function () {
+    Storage::fake('public');
+
+    $teacher = createResourceTeacher();
+    $class = createClassForTeacher($teacher);
+
+    $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('homework.pdf', 150, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Past Homework',
+        'category_id' => TeacherResource::CATEGORY_HOMEWORK,
+        'deadline' => now()->subDay()->toDateString(),
+        'description' => 'Should fail.',
+    ]);
+
+    $response->assertSessionHasErrors('deadline');
+    expect(TeacherResource::query()->count())->toBe(0);
+});
+
+it('non-homework resource upload succeeds without deadline', function () {
+    Storage::fake('public');
+
+    $teacher = createResourceTeacher();
+    $class = createClassForTeacher($teacher);
+
+    $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('lesson-plan.pdf', 150, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Lesson Plan Without Deadline',
+        'category_id' => TeacherResource::CATEGORY_COURSE_MATERIALS,
+        'description' => 'Course material upload.',
+    ]);
+
+    $response->assertRedirect(route('teacher.resources'));
+
+    $resource = TeacherResource::query()->where('name', 'Lesson Plan Without Deadline')->first();
+
+    expect($resource)->not()->toBeNull();
+    expect($resource->deadline)->toBeNull();
+});
+
+it('non-homework resource does not save a deadline', function () {
+    Storage::fake('public');
+
+    $teacher = createResourceTeacher();
+    $class = createClassForTeacher($teacher);
+
+    $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('course-material.pdf', 150, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Course Material With Ignored Deadline',
+        'category_id' => TeacherResource::CATEGORY_COURSE_MATERIALS,
+        'deadline' => now()->addDays(5)->toDateString(),
+        'description' => 'Deadline should not be stored for this category.',
+    ]);
+
+    $response->assertRedirect(route('teacher.resources'));
+
+    $resource = TeacherResource::query()->where('name', 'Course Material With Ignored Deadline')->first();
+
+    expect($resource)->not()->toBeNull();
+    expect($resource->category)->toBe(TeacherResource::CATEGORY_COURSE_MATERIALS);
+    expect($resource->deadline)->toBeNull();
+});
+
+it('upload fails for resource files larger than 20MB', function () {
+    Storage::fake('public');
+
+    $teacher = createResourceTeacher();
+    $class = createClassForTeacher($teacher);
+
+    $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('too-large.pdf', 20481, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Too Large Worksheet',
+        'category_id' => TeacherResource::CATEGORY_HOMEWORK,
+        'description' => 'Should fail max validation',
+    ]);
+
+    $response->assertSessionHasErrors('file');
+    expect(TeacherResource::query()->count())->toBe(0);
+});
+
+it('student secretary and admin users cannot upload teacher resources', function (string $role) {
+    Storage::fake('public');
+
+    $actor = createResourceUser($role);
+    $teacher = createResourceTeacher();
+    $class = createClassForTeacher($teacher);
+
+    $response = $this->actingAs($actor)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('worksheet.pdf', 150, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Blocked Upload',
+        'category_id' => TeacherResource::CATEGORY_HOMEWORK,
+        'description' => 'Should be blocked by role middleware',
+    ]);
+
+    $response->assertForbidden();
+    expect(TeacherResource::query()->count())->toBe(0);
+})->with(['student', 'secretary', 'admin']);
+
+it('unapproved teacher cannot upload teacher resources', function () {
+    Storage::fake('public');
+
+    $teacher = createResourceTeacher(['approved_at' => null]);
+    $class = createClassForTeacher($teacher);
+
+    $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
+        'file' => UploadedFile::fake()->create('worksheet.pdf', 150, 'application/pdf'),
+        'class_id' => $class->id,
+        'name' => 'Pending Teacher Upload',
+        'category_id' => TeacherResource::CATEGORY_HOMEWORK,
+        'description' => 'Should be blocked by approval middleware',
+    ]);
+
+    $response->assertRedirect(route('pending-approval'));
+    expect(TeacherResource::query()->count())->toBe(0);
 });
 
 it('teacher can upload a pdf successfully end to end', function () {
     Storage::fake('public');
 
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
@@ -92,7 +274,7 @@ it('teacher can upload a pdf successfully end to end', function () {
 it('teacher cannot upload resources for classes they do not teach', function () {
     Storage::fake('public');
 
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $otherTeacher = createResourceTeacher();
     $otherClass = createClassForTeacher($otherTeacher);
 
@@ -111,7 +293,7 @@ it('teacher cannot upload resources for classes they do not teach', function () 
 it('invalid upload requests are rejected', function () {
     Storage::fake('public');
 
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
@@ -129,7 +311,7 @@ it('invalid upload requests are rejected', function () {
 it('shows a clear error when php rejects an oversized upload before validation', function () {
     Storage::fake('public');
 
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
 
     $tempFilePath = tempnam(sys_get_temp_dir(), 'upload-limit-');
@@ -161,7 +343,7 @@ it('shows a clear error when php rejects an oversized upload before validation',
 });
 
 it('teacher can update own resource', function () {
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $initialClass = createClassForTeacher($teacher);
     $newClass = createClassForTeacher($teacher);
 
@@ -171,6 +353,7 @@ it('teacher can update own resource', function () {
         'category' => TeacherResource::CATEGORY_HOMEWORK,
         'name' => 'Original Name',
         'description' => 'Original description',
+        'deadline' => now()->addDays(2)->toDateString(),
         'original_filename' => 'original.pdf',
         'file_path' => 'teacher-resources/'.$teacher->id.'/original.pdf',
         'mime_type' => 'application/pdf',
@@ -193,13 +376,14 @@ it('teacher can update own resource', function () {
     expect($resource->name)->toBe('Updated Name');
     expect($resource->category)->toBe(TeacherResource::CATEGORY_COURSE_MATERIALS);
     expect($resource->description)->toBe('Updated description');
+    expect($resource->deadline)->toBeNull();
     expect($resource->original_filename)->toBe('original.pdf');
     expect($resource->file_path)->toBe('teacher-resources/'.$teacher->id.'/original.pdf');
 });
 
 it('teacher cannot update another teachers resource', function () {
-    $teacher = createApprovedTeacher();
-    $otherTeacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
+    $otherTeacher = createResourceTeacher();
     $otherClass = createClassForTeacher($otherTeacher);
 
     $resource = TeacherResource::query()->create([
@@ -229,10 +413,10 @@ it('teacher cannot update another teachers resource', function () {
 });
 
 it('invalid update payload is rejected', function () {
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
 
-    $otherTeacher = createApprovedTeacher();
+    $otherTeacher = createResourceTeacher();
     $otherClass = createClassForTeacher($otherTeacher);
 
     $resource = TeacherResource::query()->create([
@@ -267,7 +451,7 @@ it('invalid update payload is rejected', function () {
 it('teacher can download own resource and increments download count', function () {
     Storage::fake('public');
 
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
 
     $filePath = 'teacher-resources/'.$teacher->id.'/handout.pdf';
@@ -295,8 +479,8 @@ it('teacher can download own resource and increments download count', function (
 it('teacher cannot download or delete another teachers resource', function () {
     Storage::fake('public');
 
-    $teacher = createApprovedTeacher();
-    $otherTeacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
+    $otherTeacher = createResourceTeacher();
     $otherClass = createClassForTeacher($otherTeacher);
 
     $filePath = 'teacher-resources/'.$otherTeacher->id.'/private.pdf';
@@ -330,7 +514,7 @@ it('teacher cannot download or delete another teachers resource', function () {
 it('teacher can delete own resource and file', function () {
     Storage::fake('public');
 
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
 
     $filePath = 'teacher-resources/'.$teacher->id.'/deletable.pdf';
@@ -357,8 +541,9 @@ it('teacher can delete own resource and file', function () {
 });
 
 it('teacher can search and filter resources by category and file type', function () {
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
+    $deadline = now()->addDays(4)->toDateString();
 
     TeacherResource::query()->create([
         'teacher_id' => $teacher->id,
@@ -366,6 +551,7 @@ it('teacher can search and filter resources by category and file type', function
         'category' => TeacherResource::CATEGORY_HOMEWORK,
         'name' => 'Grammar Worksheet Week 2',
         'description' => null,
+        'deadline' => $deadline,
         'original_filename' => 'grammar-week-2.pdf',
         'file_path' => 'teacher-resources/'.$teacher->id.'/grammar-week-2.pdf',
         'mime_type' => 'application/pdf',
@@ -394,11 +580,12 @@ it('teacher can search and filter resources by category and file type', function
 
     $response->assertOk();
     $response->assertSee('Grammar Worksheet Week 2');
+    $response->assertSee('Deadline: '.$deadline);
     $response->assertDontSee('Conversation Prompts');
 });
 
 it('teacher can filter resources by class', function () {
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $classOne = createClassForTeacher($teacher);
     $classTwo = createClassForTeacher($teacher);
 
@@ -438,7 +625,7 @@ it('teacher can filter resources by class', function () {
 });
 
 it('teacher can sort resources by downloads descending', function () {
-    $teacher = createApprovedTeacher();
+    $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
 
     TeacherResource::query()->create([
@@ -473,4 +660,99 @@ it('teacher can sort resources by downloads descending', function () {
 
     $response->assertOk();
     $response->assertSeeInOrder(['High Downloads', 'Low Downloads']);
+});
+
+it('student can see homework resource deadline in learning materials', function () {
+    $teacher = createResourceTeacher();
+    $student = createResourceUser('student');
+    $class = createClassForTeacher($teacher);
+    $deadline = now()->addDays(6)->toDateString();
+
+    enrollResourceStudentInClass($student, $class);
+
+    TeacherResource::query()->create([
+        'teacher_id' => $teacher->id,
+        'class_id' => $class->id,
+        'category' => TeacherResource::CATEGORY_HOMEWORK,
+        'name' => 'Student Homework With Deadline',
+        'description' => 'Visible homework deadline.',
+        'deadline' => $deadline,
+        'original_filename' => 'student-homework.pdf',
+        'file_path' => 'teacher-resources/'.$teacher->id.'/student-homework.pdf',
+        'mime_type' => 'application/pdf',
+        'file_size' => 1024,
+        'download_count' => 0,
+    ]);
+
+    $response = $this->actingAs($student)->get(route('student.materials'));
+
+    $response->assertOk();
+    $response->assertSee('Deadline:', false);
+    $response->assertViewHas('materials', function (array $materials) use ($deadline): bool {
+        $material = collect($materials)->firstWhere('resourceName', 'Student Homework With Deadline');
+
+        return $material !== null
+            && ($material['category'] ?? null) === 'homework'
+            && ($material['deadline'] ?? null) === $deadline;
+    });
+});
+
+it('student does not see a deadline for non-homework resources', function () {
+    $teacher = createResourceTeacher();
+    $student = createResourceUser('student');
+    $class = createClassForTeacher($teacher);
+
+    enrollResourceStudentInClass($student, $class);
+
+    TeacherResource::query()->create([
+        'teacher_id' => $teacher->id,
+        'class_id' => $class->id,
+        'category' => TeacherResource::CATEGORY_COURSE_MATERIALS,
+        'name' => 'Student Course Material Without Deadline Display',
+        'description' => 'Non-homework material.',
+        'deadline' => now()->addDays(6)->toDateString(),
+        'original_filename' => 'course-material.pdf',
+        'file_path' => 'teacher-resources/'.$teacher->id.'/course-material.pdf',
+        'mime_type' => 'application/pdf',
+        'file_size' => 2048,
+        'download_count' => 0,
+    ]);
+
+    $response = $this->actingAs($student)->get(route('student.materials'));
+
+    $response->assertOk();
+    $response->assertViewHas('materials', function (array $materials): bool {
+        $material = collect($materials)->firstWhere('resourceName', 'Student Course Material Without Deadline Display');
+
+        return $material !== null
+            && ($material['category'] ?? null) === 'course'
+            && array_key_exists('deadline', $material)
+            && $material['deadline'] === null;
+    });
+});
+
+it('student does not see resources from classes they are not enrolled in', function () {
+    $teacher = createResourceTeacher();
+    $student = createResourceUser('student');
+    $class = createClassForTeacher($teacher);
+
+    TeacherResource::query()->create([
+        'teacher_id' => $teacher->id,
+        'class_id' => $class->id,
+        'category' => TeacherResource::CATEGORY_HOMEWORK,
+        'name' => 'Resource From Unenrolled Class',
+        'description' => 'Should not be visible.',
+        'deadline' => now()->addDays(7)->toDateString(),
+        'original_filename' => 'private-homework.pdf',
+        'file_path' => 'teacher-resources/'.$teacher->id.'/private-homework.pdf',
+        'mime_type' => 'application/pdf',
+        'file_size' => 1024,
+        'download_count' => 0,
+    ]);
+
+    $response = $this->actingAs($student)->get(route('student.materials'));
+
+    $response->assertOk();
+    $response->assertViewHas('materials', fn (array $materials): bool => collect($materials)
+        ->doesntContain(fn (array $material): bool => ($material['resourceName'] ?? null) === 'Resource From Unenrolled Class'));
 });

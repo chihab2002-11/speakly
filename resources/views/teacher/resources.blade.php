@@ -21,7 +21,7 @@
     
     4. POST /api/teacher/resources
        - Creates new resource
-       - Request: multipart/form-data { file, name, class_id, category_id, description }
+       - Request: multipart/form-data { file, name, class_id, category_id, deadline, description }
        - Response: { data: Resource }
     
     5. DELETE /api/teacher/resources/{id}
@@ -42,6 +42,7 @@
         downloads: number,
         class_id: number,
         category_id: number (1=Homeworks, 2=Course Materials),
+        deadline: string|null,
         description: string|null
     }
     
@@ -61,6 +62,7 @@
         $selectedFileType = $activeFilters['file_type'] ?? '';
         $selectedSort = $activeFilters['sort_by'] ?? 'recent';
         $selectedClassId = $activeFilters['class_id'] ?? '';
+        $homeworkCategory = \App\Models\TeacherResource::CATEGORY_HOMEWORK;
 
         $baseFilterQuery = array_filter([
             'search' => $search,
@@ -372,10 +374,14 @@
                                         {{ $resource['type'] }}
                                     </span>
                                     <span>{{ $resource['size'] }}</span>
-                                    <span>•</span>
+                                    <span>&bull;</span>
                                     <span>{{ $resource['uploaded_at']->diffForHumans() }}</span>
-                                    <span>•</span>
+                                    <span>&bull;</span>
                                     <span>{{ $resource['downloads'] }} downloads</span>
+                                    @if(($resource['category_id'] ?? '') === $homeworkCategory && ! empty($resource['deadline']))
+                                        <span>&bull;</span>
+                                        <span>Deadline: {{ $resource['deadline'] }}</span>
+                                    @endif
                                 </div>
                             </div>
 
@@ -400,6 +406,7 @@
                                     data-resource-description="{{ $resource['description'] ?? '' }}"
                                     data-resource-category-id="{{ $resource['category_id'] ?? '' }}"
                                     data-resource-class-id="{{ $resource['class_id'] ?? '' }}"
+                                    data-resource-deadline="{{ $resource['deadline'] ?? '' }}"
                                     onclick="openEditResourceModal(this)"
                                     class="flex h-9 w-9 items-center justify-center rounded-lg transition-all hover:bg-gray-100 cursor-pointer"
                                     title="Edit"
@@ -525,10 +532,10 @@
                             <svg class="mx-auto h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-muted);">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                             </svg>
-                            <p class="text-sm" style="color: var(--lumina-text-muted);">
+                            <p id="fileInputLabel" class="truncate text-sm" style="color: var(--lumina-text-muted);">
                                 Click to select file
                             </p>
-                            <p class="text-xs mt-1" style="color: var(--lumina-text-muted);">
+                            <p id="fileInputHint" class="text-xs mt-1" style="color: var(--lumina-text-muted);">
                                 PDF, DOC, DOCX, ZIP up to {{ $maxUploadSizeLabel ?? '50 MB' }}
                             </p>
                         </label>
@@ -582,6 +589,7 @@
                         Category
                     </label>
                     <select 
+                        id="uploadResourceCategory"
                         name="category_id"
                         required
                         class="w-full rounded-xl border px-4 py-3 text-sm outline-none cursor-pointer"
@@ -594,6 +602,22 @@
                             </option>
                         @endforeach
                     </select>
+                </div>
+
+                {{-- Homework Deadline --}}
+                <div id="uploadDeadlineGroup" class="mb-4 hidden">
+                    <label class="mb-2 block text-sm font-medium" style="color: var(--lumina-text-primary);">
+                        Homework Deadline
+                    </label>
+                    <input
+                        id="uploadDeadlineInput"
+                        type="date"
+                        name="deadline"
+                        value="{{ old('deadline') }}"
+                        min="{{ now()->toDateString() }}"
+                        class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
+                        style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
+                    >
                 </div>
 
                 {{-- Description --}}
@@ -643,6 +667,7 @@
         data-old-resource-description="{{ old('description', '') }}"
         data-old-resource-category-id="{{ old('category_id') }}"
         data-old-resource-class-id="{{ old('class_id') }}"
+        data-old-resource-deadline="{{ old('deadline') }}"
         data-update-url-template="{{ route('teacher.resources.update', ['resource' => '__RESOURCE__']) }}"
         onclick="if(event.target === this) closeEditResourceModal()"
     >
@@ -734,6 +759,21 @@
                     </select>
                 </div>
 
+                {{-- Homework Deadline --}}
+                <div id="editDeadlineGroup" class="mb-4 hidden">
+                    <label class="mb-2 block text-sm font-medium" style="color: var(--lumina-text-primary);">
+                        Homework Deadline
+                    </label>
+                    <input
+                        id="editResourceDeadline"
+                        type="date"
+                        name="deadline"
+                        min="{{ now()->toDateString() }}"
+                        class="w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2"
+                        style="border-color: var(--lumina-border); background-color: var(--lumina-bg-card);"
+                    >
+                </div>
+
                 {{-- Description --}}
                 <div class="mb-6">
                     <label class="mb-2 block text-sm font-medium" style="color: var(--lumina-text-primary);">
@@ -776,12 +816,23 @@
             const uploadModal = document.getElementById('uploadModal');
             const editModal = document.getElementById('editModal');
             const editForm = document.getElementById('editResourceForm');
+            const fileInput = document.getElementById('fileInput');
+            const fileInputLabel = document.getElementById('fileInputLabel');
+            const fileInputHint = document.getElementById('fileInputHint');
+            const uploadResourceCategoryInput = document.getElementById('uploadResourceCategory');
+            const uploadDeadlineGroup = document.getElementById('uploadDeadlineGroup');
+            const uploadDeadlineInput = document.getElementById('uploadDeadlineInput');
             const editResourceIdInput = document.getElementById('editResourceId');
             const editResourceClassInput = document.getElementById('editResourceClass');
             const editResourceNameInput = document.getElementById('editResourceName');
             const editResourceCategoryInput = document.getElementById('editResourceCategory');
+            const editDeadlineGroup = document.getElementById('editDeadlineGroup');
+            const editResourceDeadlineInput = document.getElementById('editResourceDeadline');
             const editResourceDescriptionInput = document.getElementById('editResourceDescription');
             const updateUrlTemplate = editModal.dataset.updateUrlTemplate ?? '';
+            const homeworkCategory = @json($homeworkCategory);
+            const defaultFileLabel = 'Click to select file';
+            const defaultFileHint = 'PDF, DOC, DOCX, ZIP up to {{ $maxUploadSizeLabel ?? '50 MB' }}';
 
             function syncModalDisplay(modal, shouldShow) {
                 if (!modal) {
@@ -815,6 +866,49 @@
                 observer.observe(modal, { attributes: true });
             }
 
+            function resetSelectedFileLabel() {
+                if (!fileInputLabel || !fileInputHint) {
+                    return;
+                }
+
+                fileInputLabel.textContent = defaultFileLabel;
+                fileInputLabel.style.color = 'var(--lumina-text-muted)';
+                fileInputHint.textContent = defaultFileHint;
+            }
+
+            function syncSelectedFileLabel() {
+                if (!fileInput || !fileInputLabel || !fileInputHint) {
+                    return;
+                }
+
+                const selectedFile = fileInput.files && fileInput.files.length > 0 ? fileInput.files[0] : null;
+
+                if (!selectedFile) {
+                    resetSelectedFileLabel();
+
+                    return;
+                }
+
+                fileInputLabel.textContent = selectedFile.name;
+                fileInputLabel.style.color = 'var(--lumina-text-primary)';
+                fileInputHint.textContent = 'Selected file';
+            }
+
+            function syncDeadlineField(categoryInput, deadlineGroup, deadlineInput, shouldClear) {
+                if (!categoryInput || !deadlineGroup || !deadlineInput) {
+                    return;
+                }
+
+                const isHomework = categoryInput.value === homeworkCategory;
+
+                deadlineGroup.classList.toggle('hidden', !isHomework);
+                deadlineInput.required = isHomework;
+
+                if (!isHomework && shouldClear) {
+                    deadlineInput.value = '';
+                }
+            }
+
             function fillEditForm(resource) {
                 if (!resource || !resource.id) {
                     return;
@@ -825,7 +919,9 @@
                 editResourceClassInput.value = String(resource.class_id ?? '');
                 editResourceNameInput.value = String(resource.name ?? '');
                 editResourceCategoryInput.value = String(resource.category_id ?? '');
+                editResourceDeadlineInput.value = String(resource.deadline ?? '');
                 editResourceDescriptionInput.value = String(resource.description ?? '');
+                syncDeadlineField(editResourceCategoryInput, editDeadlineGroup, editResourceDeadlineInput, false);
             }
 
             window.openEditResourceModal = function (button) {
@@ -834,6 +930,7 @@
                     class_id: button.dataset.resourceClassId,
                     name: button.dataset.resourceName,
                     category_id: button.dataset.resourceCategoryId,
+                    deadline: button.dataset.resourceDeadline,
                     description: button.dataset.resourceDescription,
                 };
 
@@ -849,6 +946,17 @@
             syncModalDisplay(editModal, false);
             observeModal(uploadModal);
             observeModal(editModal);
+            syncSelectedFileLabel();
+            syncDeadlineField(uploadResourceCategoryInput, uploadDeadlineGroup, uploadDeadlineInput, true);
+            syncDeadlineField(editResourceCategoryInput, editDeadlineGroup, editResourceDeadlineInput, true);
+
+            fileInput?.addEventListener('change', syncSelectedFileLabel);
+            uploadResourceCategoryInput?.addEventListener('change', function () {
+                syncDeadlineField(uploadResourceCategoryInput, uploadDeadlineGroup, uploadDeadlineInput, true);
+            });
+            editResourceCategoryInput?.addEventListener('change', function () {
+                syncDeadlineField(editResourceCategoryInput, editDeadlineGroup, editResourceDeadlineInput, true);
+            });
 
             if (editModal.dataset.openOnLoad === '1') {
                 const oldResource = {
@@ -856,6 +964,7 @@
                     class_id: editModal.dataset.oldResourceClassId,
                     name: editModal.dataset.oldResourceName,
                     category_id: editModal.dataset.oldResourceCategoryId,
+                    deadline: editModal.dataset.oldResourceDeadline,
                     description: editModal.dataset.oldResourceDescription,
                 };
 

@@ -47,6 +47,7 @@
         .mat-tag.class { background: #eaf5f0; color: #1a6b4a; }
         .mat-tag.hw { background: #fef3c7; color: #92400e; }
         .mat-tag.course { background: #dbeafe; color: #1e40af; }
+        .mat-deadline { align-self: flex-start; border-radius: 8px; background: #fff7ed; color: #9a3412; font-size: 11px; font-weight: 700; padding: 4px 8px; }
         .mat-detail { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #9ca3af; font-weight: 500; flex-wrap: wrap; }
         .mat-detail .dot { width: 3px; height: 3px; border-radius: 50%; background: #d1d5db; }
         .mat-actions { padding: 10px 16px 14px; display: flex; gap: 8px; }
@@ -284,6 +285,7 @@
                                 <span class="mat-tag class">${escapeHtml(item.className)}</span>
                                 <span class="mat-tag ${item.category === 'homework' ? 'hw' : 'course'}">${item.category === 'homework' ? 'Homework' : 'Course Material'}</span>
                             </div>
+                            ${item.category === 'homework' && item.deadline ? `<div class="mat-deadline">Deadline: ${escapeHtml(item.deadline)}</div>` : ''}
                             <div class="mat-detail">
                                 <span>${timeAgo(item.uploadedAt)}</span>
                                 <span class="dot"></span>

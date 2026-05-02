@@ -25,6 +25,7 @@ class TeacherResource extends Model
         'category',
         'name',
         'description',
+        'deadline',
         'original_filename',
         'file_path',
         'mime_type',
@@ -38,6 +39,7 @@ class TeacherResource extends Model
     protected function casts(): array
     {
         return [
+            'deadline' => 'date',
             'file_size' => 'integer',
             'download_count' => 'integer',
         ];
