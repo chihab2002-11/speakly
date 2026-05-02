@@ -177,3 +177,125 @@ it('allows admins and blocks non admin employees from employee payments', functi
         ->get(route('admin.employee-payments.index'))
         ->assertForbidden();
 });
+
+it('displays employee payment details page for admin with full information', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $teacher = createApprovedUserWithRole('teacher');
+    $teacher->update(['name' => 'John Doe', 'email' => 'john@example.com']);
+
+    EmployeePayment::factory()->create([
+        'employee_id' => $teacher->id,
+        'expected_salary' => 100000,
+        'amount_paid' => 60000,
+        'notes' => 'Partial payment for March',
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('admin.employee-payment.show', $teacher));
+
+    $response->assertOk();
+    $response->assertViewIs('admin.employee-payment-details');
+    $response->assertViewHas('employee', function ($employee) use ($teacher): bool {
+        return $employee->id === $teacher->id && $employee->name === 'John Doe';
+    });
+    $response->assertViewHas('paymentData', function ($data): bool {
+        return $data['expected_salary'] === 100000
+            && $data['amount_paid'] === 60000
+            && $data['remaining'] === 40000
+            && $data['status'] === 'partial'
+            && $data['notes'] === 'Partial payment for March';
+    });
+});
+
+it('displays employee payment details for secretary with pending status', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $secretary = createApprovedUserWithRole('secretary');
+    $secretary->update(['name' => 'Jane Smith']);
+
+    // Secretary without any payment record yet
+    $response = $this->actingAs($admin)->get(route('admin.employee-payment.show', $secretary));
+
+    $response->assertOk();
+    $response->assertViewIs('admin.employee-payment-details');
+    $response->assertViewHas('paymentData', function ($data): bool {
+        return $data['expected_salary'] === 0
+            && $data['amount_paid'] === 0
+            && $data['remaining'] === 0
+            && $data['status'] === 'pending';
+    });
+});
+
+it('generates PDF receipt for employee payment', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $teacher = createApprovedUserWithRole('teacher');
+    $teacher->update(['name' => 'Alice Johnson', 'email' => 'alice@example.com']);
+
+    EmployeePayment::factory()->create([
+        'employee_id' => $teacher->id,
+        'expected_salary' => 75000,
+        'amount_paid' => 75000,
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('admin.employee-payment.receipt-pdf', $teacher));
+
+    $response->assertOk();
+    $response->assertHeader('Content-Type', 'application/pdf');
+    $response->assertHeader('Content-Disposition');
+    $this->assertStringContainsString('PDF', $response->getContent());
+});
+
+it('blocks non-admin users from viewing employee payment details', function () {
+    /** @var TestCase $this */
+    $teacher1 = createApprovedUserWithRole('teacher');
+    $teacher2 = createApprovedUserWithRole('teacher');
+    $secretary = createApprovedUserWithRole('secretary');
+
+    EmployeePayment::factory()->create([
+        'employee_id' => $teacher1->id,
+        'expected_salary' => 50000,
+        'amount_paid' => 30000,
+    ]);
+
+    $this->actingAs($teacher2)->get(route('admin.employee-payment.show', $teacher1))->assertForbidden();
+    $this->actingAs($secretary)->get(route('admin.employee-payment.show', $teacher1))->assertForbidden();
+});
+
+it('blocks non-admin users from downloading employee payment PDF', function () {
+    /** @var TestCase $this */
+    $teacher = createApprovedUserWithRole('teacher');
+    $secretary = createApprovedUserWithRole('secretary');
+
+    EmployeePayment::factory()->create([
+        'employee_id' => $teacher->id,
+        'expected_salary' => 50000,
+        'amount_paid' => 50000,
+    ]);
+
+    $admin = createApprovedUserWithRole('admin');
+
+    $this->actingAs($secretary)->get(route('admin.employee-payment.receipt-pdf', $teacher))->assertForbidden();
+    $this->actingAs($teacher)->get(route('admin.employee-payment.receipt-pdf', $teacher))->assertForbidden();
+    $this->actingAs($admin)->get(route('admin.employee-payment.receipt-pdf', $teacher))->assertOk();
+});
+
+it('only shows details and PDF for approved employees', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $unapprovedTeacher = User::factory()->create(['approved_at' => null]);
+    $unapprovedTeacher->assignRole('teacher');
+
+    $this->actingAs($admin)->get(route('admin.employee-payment.show', $unapprovedTeacher))->assertNotFound();
+    $this->actingAs($admin)->get(route('admin.employee-payment.receipt-pdf', $unapprovedTeacher))->assertNotFound();
+});
+
+it('returns 404 for non-employee users trying to access payment details', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $student = User::factory()->create(['approved_at' => now()]);
+    $student->assignRole('student');
+
+    $this->actingAs($admin)->get(route('admin.employee-payment.show', $student))->assertNotFound();
+    $this->actingAs($admin)->get(route('admin.employee-payment.receipt-pdf', $student))->assertNotFound();
+});

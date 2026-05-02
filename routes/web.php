@@ -680,6 +680,12 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:admin'])
         Route::middleware('permission:employees.manage')->group(function () {
             Route::get('/employees', [AdminEmployeeController::class, 'index'])->name('employees.index');
             Route::get('/employee-payments', [AdminEmployeePaymentController::class, 'index'])->name('employee-payments.index');
+            Route::get('/employee-payments/{employee}', [AdminEmployeePaymentController::class, 'show'])
+                ->whereNumber('employee')
+                ->name('employee-payment.show');
+            Route::get('/employee-payments/{employee}/pdf', [AdminEmployeePaymentController::class, 'receiptPdf'])
+                ->whereNumber('employee')
+                ->name('employee-payment.receipt-pdf');
             Route::patch('/employee-payments/{employee}', [AdminEmployeePaymentController::class, 'update'])
                 ->whereNumber('employee')
                 ->name('employee-payments.update');

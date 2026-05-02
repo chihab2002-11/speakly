@@ -29,7 +29,7 @@ class StoreLanguageProgramRequest extends FormRequest
             'title' => ['required', 'string', 'max:160'],
             'description' => ['required', 'string', 'max:300'],
             'full_description' => ['required', 'string', 'max:5000'],
-            'flag_url' => ['required', 'url', 'max:500'],
+            'flag_url' => ['nullable', 'url', 'max:500'],
             'is_active' => ['nullable', 'boolean'],
         ];
     }

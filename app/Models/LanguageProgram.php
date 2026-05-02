@@ -48,4 +48,28 @@ class LanguageProgram extends Model
     {
         return $this->hasMany(Course::class, 'program_id');
     }
+
+    /**
+     * Get the flag URL or fallback code if no flag is provided.
+     *
+     * @return string The flag URL or a short uppercase code (e.g., 'EN', 'FR', 'SP')
+     */
+    public function getFlagDisplayAttribute(): string
+    {
+        if ($this->flag_url) {
+            return $this->flag_url;
+        }
+
+        // Generate short code from program name
+        $words = explode(' ', $this->name);
+        $code = '';
+
+        foreach ($words as $word) {
+            if ($word) {
+                $code .= strtoupper($word[0]);
+            }
+        }
+
+        return $code ?: strtoupper(substr($this->name, 0, 2));
+    }
 }

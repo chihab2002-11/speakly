@@ -315,7 +315,13 @@
 <div class="slider-card bg-slate-50 p-8 rounded-3xl shadow-sm border border-black/[0.03] flex flex-col min-h-[360px] hover-lift group flex-shrink-0 w-96 cursor-pointer"
      data-lang="{{ $program['code'] }}">
 <div class="mb-10 relative">
+@if ($program['flag_url'])
 <img alt="{{ $program['name'] }} Flag" class="w-16 h-16 rounded-full object-cover border-2 border-primary/10 shadow-lg" src="{{ $program['flag_url'] }}"/>
+@else
+<div class="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/10 shadow-lg flex items-center justify-center">
+<span class="text-sm font-bold text-primary">{{ \App\Support\LanguageProgramHelper::generateFlagCode($program['name']) }}</span>
+</div>
+@endif
 <div class="absolute -top-2 -right-2 text-primary font-black-900 text-2xl">{{ strtoupper($program['code']) }}</div>
 </div>
 <h3 class="text-xl font-bold text-on-surface mb-4">{{ $program['title'] }}</h3>

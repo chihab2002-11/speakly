@@ -158,14 +158,17 @@
                                         <input form="{{ $formId }}" name="notes" type="text" value="{{ $row['notes'] }}" placeholder="Optional note" class="w-48 rounded-lg border px-3 py-2 text-sm" style="border-color: rgba(196, 197, 213, 0.3); color: #444653;">
                                     </td>
                                     <td class="px-4 py-5 text-right">
-                                        <form id="{{ $formId }}" method="POST" action="{{ route('admin.employee-payments.update', $employee) }}" class="inline-flex justify-end">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input type="hidden" name="role" value="{{ $role }}">
-                                            <input type="hidden" name="status" value="{{ $status }}">
-                                            <input type="hidden" name="search" value="{{ $search }}">
-                                            <button type="submit" class="rounded-lg px-3 py-2 text-xs font-bold text-white" style="background: #2D8C5E;">Save</button>
-                                        </form>
+                                        <div class="flex items-center justify-end gap-2">
+                                            <a href="{{ route('admin.employee-payment.show', $employee) }}" class="rounded-lg border px-3 py-2 text-xs font-bold" style="border-color: rgba(196, 197, 213, 0.3); color: #444653;">View</a>
+                                            <form id="{{ $formId }}" method="POST" action="{{ route('admin.employee-payments.update', $employee) }}" class="inline-flex justify-end">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="role" value="{{ $role }}">
+                                                <input type="hidden" name="status" value="{{ $status }}">
+                                                <input type="hidden" name="search" value="{{ $search }}">
+                                                <button type="submit" class="rounded-lg px-3 py-2 text-xs font-bold text-white" style="background: #2D8C5E;">Save</button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

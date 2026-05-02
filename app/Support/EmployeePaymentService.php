@@ -65,7 +65,7 @@ class EmployeePaymentService
     /**
      * @return array<string, mixed>
      */
-    private function employeeRow(User $employee): array
+    public function employeeRow(User $employee): array
     {
         $expectedSalary = (int) ($employee->employeePayment?->expected_salary ?? 0);
         $amountPaid = (int) ($employee->employeePayment?->amount_paid ?? 0);

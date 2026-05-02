@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmployeePayment;
 use App\Models\User;
+use App\Support\EmployeePaymentReceiptPdf;
 use App\Support\EmployeePaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class AdminEmployeePaymentController extends Controller
 {
     public function __construct(
         private EmployeePaymentService $employeePaymentService,
+        private EmployeePaymentReceiptPdf $receiptPdf,
     ) {}
 
     public function index(Request $request): View
@@ -57,6 +61,46 @@ class AdminEmployeePaymentController extends Controller
         return redirect()
             ->route('admin.employee-payments.index', $request->only(['role', 'status', 'search']))
             ->with('success', 'Employee payment details updated successfully.');
+    }
+
+    public function show(Request $request, User $employee): View
+    {
+        $this->ensurePayableEmployee($employee);
+
+        $employee->loadMissing(['employeePayment', 'roles:id,name']);
+
+        $employeePayment = $employee->employeePayment ?? new EmployeePayment;
+        $paymentData = $this->employeePaymentService->employeeRow($employee);
+
+        return view('admin.employee-payment-details', [
+            'employee' => $employee,
+            'employeePayment' => $employeePayment,
+            'paymentData' => $paymentData,
+        ]);
+    }
+
+    public function receiptPdf(Request $request, User $employee): Response
+    {
+        $this->ensurePayableEmployee($employee);
+
+        $employee->loadMissing(['employeePayment', 'roles:id,name']);
+
+        $employeePayment = $employee->employeePayment ?? new EmployeePayment;
+        $paymentData = $this->employeePaymentService->employeeRow($employee);
+
+        $pdf = $this->receiptPdf->render(
+            employee: $employee,
+            employeePayment: $employeePayment,
+            paymentData: $paymentData,
+        );
+
+        $receiptIdentifier = preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) ($employee->email ?? $employee->id));
+        $filename = 'employee-payment-receipt-'.$receiptIdentifier.'.pdf';
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.addslashes($filename).'"',
+        ]);
     }
 
     private function ensurePayableEmployee(User $employee): void

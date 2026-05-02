@@ -199,8 +199,9 @@
                     <textarea name="full_description" rows="4" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;"></textarea>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Flag URL</label>
-                    <input name="flag_url" required placeholder="https://flagcdn.com/w80/gb.png" class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;" />
+                    <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Flag URL <span style="color: #64748B;">(Optional)</span></label>
+                    <input name="flag_url" placeholder="https://flagcdn.com/w80/gb.png" class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;" />
+                    <p class="mt-1 text-xs" style="color: #64748B;">Leave empty to display program code instead (e.g., English → EN)</p>
                 </div>
                 <div class="md:col-span-2 flex items-center gap-2">
                     <input type="checkbox" id="create_is_active" name="is_active" value="1" checked>
@@ -251,8 +252,9 @@
                     <textarea id="edit_full_description" name="full_description" rows="4" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;"></textarea>
                 </div>
                 <div class="md:col-span-2">
-                    <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Flag URL</label>
-                    <input id="edit_flag_url" name="flag_url" required class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;" />
+                    <label class="mb-1 block text-xs font-semibold uppercase" style="color: #3F4941;">Flag URL <span style="color: #64748B;">(Optional)</span></label>
+                    <input id="edit_flag_url" name="flag_url" class="w-full rounded-xl border px-4 py-2.5 text-sm" style="border-color: #E2E8F0;" />
+                    <p class="mt-1 text-xs" style="color: #64748B;">Leave empty to display program code instead (e.g., English → EN)</p>
                 </div>
                 <div class="md:col-span-2 flex items-center gap-2">
                     <input type="checkbox" id="edit_is_active" name="is_active" value="1">
