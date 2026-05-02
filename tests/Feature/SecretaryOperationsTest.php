@@ -234,6 +234,11 @@ it('renders secretary payments page', function () {
     $response->assertSee('data-refresh-after-payment', false);
     $response->assertSee('window.location.reload()', false);
     $response->assertSee('22,000 DA');
+    $response->assertSee('Cash');
+    $response->assertSee('Baridi Mob');
+    $response->assertSee('Card');
+    $response->assertDontSee('Bank Transfer');
+    $response->assertDontSee('Online');
 });
 
 it('applies scholarship discount on secretary payments page', function () {
@@ -298,7 +303,7 @@ it('records a student payment from secretary payments page', function () {
         ->post(route('secretary.payments.store'), [
             'student_id' => $student->id,
             'amount' => 12000,
-            'method' => 'cash',
+            'method' => 'bank_transfer',
             'reference' => 'PAY-TEST-001',
         ]);
 
@@ -306,18 +311,42 @@ it('records a student payment from secretary payments page', function () {
     $response->assertHeader('content-type', 'application/pdf');
     $response->assertHeader('content-disposition', 'inline; filename="payment-receipt-PAY-TEST-001.pdf"');
     expect($response->getContent())->toStartWith('%PDF-1.4');
+    expect($response->getContent())->toContain('/MediaBox [0 0 283.46 425.2]');
     expect($response->getContent())->toContain('PAY-TEST-001');
+    expect($response->getContent())->toContain('Method: Baridi Mob');
     expect($response->getContent())->toContain('12 000 DZD');
 
     $this->assertDatabaseHas('tuition_payments', [
         'student_id' => $student->id,
         'recorded_by' => $secretary->id,
         'amount' => 12000,
-        'method' => 'cash',
+        'method' => 'bank_transfer',
         'reference' => 'PAY-TEST-001',
     ]);
 
     expect(TuitionPayment::query()->count())->toBe(1);
+});
+
+it('does not accept online as a new secretary payment method', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+
+    $student = User::factory()->create([
+        'approved_at' => now(),
+    ]);
+    $student->assignRole('student');
+
+    $this->actingAs($secretary)
+        ->from(route('secretary.payments'))
+        ->post(route('secretary.payments.store'), [
+            'student_id' => $student->id,
+            'amount' => 12000,
+            'method' => 'online',
+        ])
+        ->assertRedirect(route('secretary.payments'))
+        ->assertSessionHasErrors('method');
+
+    expect(TuitionPayment::query()->count())->toBe(0);
 });
 
 it('approval creates locked tuition record and payment entry for selected course', function () {

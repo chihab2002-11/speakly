@@ -19,7 +19,7 @@ class TuitionPaymentFactory extends Factory
             'recorded_by' => null,
             'amount' => fake()->numberBetween(1000, 60000),
             'paid_on' => fake()->dateTimeBetween('-90 days', 'now')->format('Y-m-d'),
-            'method' => fake()->randomElement(['cash', 'bank_transfer', 'card', 'online']),
+            'method' => fake()->randomElement(['cash', 'bank_transfer', 'card']),
             'reference' => strtoupper(fake()->bothify('PAY-######')),
             'notes' => null,
         ];

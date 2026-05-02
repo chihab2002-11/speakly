@@ -607,7 +607,7 @@ class TuitionFinancialService
     private function methodLabel(string $method): string
     {
         return match ($method) {
-            'bank_transfer' => 'Bank Transfer',
+            'bank_transfer' => 'Baridi Mob',
             'card' => 'Card',
             'online' => 'Online',
             default => 'Cash',

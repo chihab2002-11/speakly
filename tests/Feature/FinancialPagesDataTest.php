@@ -162,6 +162,7 @@ test('student can download own payment receipt pdf', function () {
     $response->assertHeader('content-disposition', 'inline; filename="payment-receipt-PAY-PDF-01.pdf"');
 
     expect($response->getContent())->toStartWith('%PDF-1.4');
+    expect($response->getContent())->toContain('/MediaBox [0 0 283.46 425.2]');
     expect($response->getContent())->toContain('PAY-PDF-01');
     expect($response->getContent())->toContain('10 000 DZD');
 });
@@ -286,6 +287,7 @@ test('parent financial page shows children invoices and payment history from dat
     $response->assertOk();
     $response->assertSee('Child One');
     $response->assertSee('PAY-PARENT-01');
+    $response->assertSee('Baridi Mob');
     $response->assertSee('13 000 DZD');
 
     $receiptResponse = $this->actingAs($parent)
