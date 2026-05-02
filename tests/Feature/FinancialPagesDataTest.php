@@ -50,7 +50,7 @@ test('student financial page uses stored tuition course price and payments', fun
     $response->assertSee('PAY-9001');
     $response->assertSee(route('student.financial.payments.pdf', TuitionPayment::query()->where('reference', 'PAY-9001')->value('id')));
     $response->assertSee('Applied Discount');
-    $response->assertSee('Scholarships');
+    $response->assertSee('Scholarship Offers');
 });
 
 test('student financial page applies active scholarship discount', function () {
@@ -98,6 +98,138 @@ test('student financial page applies active scholarship discount', function () {
     $response->assertSee('Remaining: 13 000 DZD');
 });
 
+test('student can activate an eligible scholarship offer for their own account', function () {
+    /** @var TestCase $this */
+    $student = User::factory()->create([
+        'approved_at' => now(),
+        'date_of_birth' => now()->subYears(18)->toDateString(),
+    ]);
+    $student->assignRole('student');
+
+    $courses = collect(range(1, 4))->map(function (int $index) {
+        return Course::factory()->create([
+            'name' => 'Course '.$index,
+            'price' => 5000 * $index,
+        ]);
+    });
+
+    $classes = $courses->map(fn (Course $course) => CourseClass::factory()->create(['course_id' => $course->id]));
+
+    $student->enrolledClasses()->syncWithoutDetaching(
+        $classes->mapWithKeys(fn (CourseClass $class) => [
+            $class->id => ['enrolled_at' => now()->subMonth()],
+        ])->all()
+    );
+
+    $response = $this->actingAs($student)->post(route('student.financial.scholarships.activate'), [
+        'offer_key' => 'multi_course_4_plus',
+    ]);
+
+    $response->assertRedirect(route('student.financial', ['offer' => 'multi_course_4_plus']));
+
+    $this->assertDatabaseHas('scholarship_activations', [
+        'parent_id' => $student->id,
+        'student_id' => $student->id,
+        'offer_key' => 'multi_course_4_plus',
+        'discount_percent' => 10,
+    ]);
+
+    $page = $this->actingAs($student)->get(route('student.financial', ['offer' => 'multi_course_4_plus']));
+
+    $page->assertOk();
+    $page->assertSee('Multi Course Commitment');
+    $page->assertSee('Active discount: 10%');
+    $page->assertSee('Activated for your account');
+    $page->assertSee('Active Discount');
+    $page->assertDontSee('Offer Child');
+});
+
+test('student financial page hides parent only family offers and parent scoped discounts', function () {
+    /** @var TestCase $this */
+    $parent = User::factory()->create(['approved_at' => now()]);
+    $parent->assignRole('parent');
+
+    $student = User::factory()->create([
+        'approved_at' => now(),
+        'date_of_birth' => now()->subYears(18)->toDateString(),
+        'parent_id' => $parent->id,
+    ]);
+    $student->assignRole('student');
+
+    $course = Course::factory()->create(['name' => 'Arabic B1', 'price' => 12000]);
+    StudentTuition::factory()->create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'course_price' => 12000,
+    ]);
+
+    ScholarshipActivation::query()->create([
+        'parent_id' => $parent->id,
+        'student_id' => null,
+        'offer_key' => 'family_3_children',
+        'discount_percent' => 12,
+        'activated_at' => now(),
+    ]);
+
+    $response = $this->actingAs($student)->get(route('student.financial'));
+
+    $response->assertOk();
+    $response->assertSee('Scholarship Offers');
+    $response->assertSee('Academic Excellence Grant');
+    $response->assertSee('Multi Course Commitment');
+    $response->assertDontSee('Family Growth Offer');
+    $response->assertDontSee('Offer Child');
+    $response->assertSee('Active discount: 0%');
+});
+
+test('student financial page does not use another students scholarship activation', function () {
+    /** @var TestCase $this */
+    $parent = User::factory()->create(['approved_at' => now()]);
+    $parent->assignRole('parent');
+
+    $student = User::factory()->create([
+        'approved_at' => now(),
+        'date_of_birth' => now()->subYears(18)->toDateString(),
+        'parent_id' => $parent->id,
+    ]);
+    $student->assignRole('student');
+
+    $otherStudent = User::factory()->create([
+        'approved_at' => now(),
+        'date_of_birth' => now()->subYears(18)->toDateString(),
+        'parent_id' => $parent->id,
+    ]);
+    $otherStudent->assignRole('student');
+
+    $course = Course::factory()->create(['name' => 'Japanese A1', 'price' => 20000]);
+    StudentTuition::factory()->create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'course_price' => 20000,
+    ]);
+    StudentTuition::factory()->create([
+        'student_id' => $otherStudent->id,
+        'course_id' => $course->id,
+        'course_price' => 20000,
+    ]);
+
+    ScholarshipActivation::query()->create([
+        'parent_id' => $parent->id,
+        'student_id' => $otherStudent->id,
+        'offer_key' => 'multi_course_4_plus',
+        'discount_percent' => 10,
+        'activated_at' => now(),
+    ]);
+
+    $response = $this->actingAs($student)->get(route('student.financial'));
+
+    $response->assertOk();
+    $response->assertSee('Active discount: 0%');
+    $response->assertSee('20 000 DZD');
+    $response->assertDontSee('18 000 DZD');
+    $response->assertSee('Not Eligible Yet');
+});
+
 test('underage students cannot access their financial page or receipts', function () {
     /** @var TestCase $this */
     $student = User::factory()->create([
@@ -118,6 +250,35 @@ test('underage students cannot access their financial page or receipts', functio
 
     $this->actingAs($student)
         ->get(route('student.financial.payments.pdf', $payment))
+        ->assertForbidden();
+});
+
+test('guest cannot access the student financial page', function () {
+    /** @var TestCase $this */
+    $this->get(route('student.financial'))
+        ->assertRedirect(route('login'));
+});
+
+test('unapproved students are redirected away from the student financial page', function () {
+    /** @var TestCase $this */
+    $student = User::factory()->create([
+        'approved_at' => null,
+        'date_of_birth' => now()->subYears(18)->toDateString(),
+    ]);
+    $student->assignRole('student');
+
+    $this->actingAs($student)
+        ->get(route('student.financial'))
+        ->assertRedirect(route('pending-approval'));
+});
+
+test('parent users cannot access the student financial page', function () {
+    /** @var TestCase $this */
+    $parent = User::factory()->create(['approved_at' => now()]);
+    $parent->assignRole('parent');
+
+    $this->actingAs($parent)
+        ->get(route('student.financial'))
         ->assertForbidden();
 });
 
@@ -299,4 +460,47 @@ test('parent financial page shows children invoices and payment history from dat
     expect($receiptResponse->getContent())->toStartWith('%PDF-1.4');
     expect($receiptResponse->getContent())->toContain('PAY-PARENT-01');
     expect($receiptResponse->getContent())->toContain('Applied discount: None');
+});
+
+test('parent can still activate a scholarship offer for an eligible child', function () {
+    /** @var TestCase $this */
+    $parent = User::factory()->create(['approved_at' => now()]);
+    $parent->assignRole('parent');
+
+    $student = User::factory()->create([
+        'approved_at' => now(),
+        'date_of_birth' => now()->subYears(16)->toDateString(),
+        'parent_id' => $parent->id,
+        'name' => 'Eligible Child',
+    ]);
+    $student->assignRole('student');
+
+    $courses = collect(range(1, 4))->map(function (int $index) {
+        return Course::factory()->create([
+            'name' => 'Parent Course '.$index,
+            'price' => 4000 * $index,
+        ]);
+    });
+
+    $classes = $courses->map(fn (Course $course) => CourseClass::factory()->create(['course_id' => $course->id]));
+
+    $student->enrolledClasses()->syncWithoutDetaching(
+        $classes->mapWithKeys(fn (CourseClass $class) => [
+            $class->id => ['enrolled_at' => now()->subMonth()],
+        ])->all()
+    );
+
+    $response = $this->actingAs($parent)->post(route('parent.financial.scholarships.activate'), [
+        'offer_key' => 'multi_course_4_plus',
+        'selected_child_id' => $student->id,
+    ]);
+
+    $response->assertRedirect(route('parent.financial', ['offer' => 'multi_course_4_plus']));
+
+    $this->assertDatabaseHas('scholarship_activations', [
+        'parent_id' => $parent->id,
+        'student_id' => $student->id,
+        'offer_key' => 'multi_course_4_plus',
+        'discount_percent' => 10,
+    ]);
 });

@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\ScholarshipActivation;
 use App\Models\TuitionPayment;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
 
@@ -48,10 +49,24 @@ class TuitionFinancialService
     /**
      * @return array<string, mixed>
      */
-    public function buildStudentPageData(User $student): array
-    {
-        $summary = $this->summarizeStudent($student);
+    public function buildStudentPageData(
+        User $student,
+        ?string $selectedOfferKey = null,
+        bool $includeParentScopedDiscounts = false,
+    ): array {
+        $summary = $this->summarizeStudent($student, $includeParentScopedDiscounts);
         $scholarshipOffers = $this->buildStudentScholarshipOffers($student, $summary);
+        $selectedOffer = collect($scholarshipOffers)->first(function (array $offer) use ($selectedOfferKey): bool {
+            if ($selectedOfferKey !== null && $selectedOfferKey !== '') {
+                return $offer['key'] === $selectedOfferKey;
+            }
+
+            return (bool) ($offer['isActive'] ?? false);
+        });
+
+        if (! is_array($selectedOffer)) {
+            $selectedOffer = collect($scholarshipOffers)->first();
+        }
 
         return [
             'academicYear' => $summary['academic_year'],
@@ -67,8 +82,7 @@ class TuitionFinancialService
             'discountAmount' => $summary['discount'],
             'scholarshipDiscount' => $summary['discount_percent'],
             'scholarshipOffers' => $scholarshipOffers,
-            'selectedScholarshipOffer' => collect($scholarshipOffers)->first(fn (array $offer): bool => (bool) ($offer['isActive'] ?? false))
-                ?? collect($scholarshipOffers)->first(),
+            'selectedScholarshipOffer' => $selectedOffer,
             'activeScholarshipOffer' => collect($scholarshipOffers)->first(fn (array $offer): bool => (bool) ($offer['isActive'] ?? false)),
         ];
     }
@@ -288,27 +302,7 @@ class TuitionFinancialService
 
         $academicChildStats = [];
         foreach ($children as $child) {
-            $records = $child->attendanceRecords()
-                ->whereDate('attendance_date', '>=', $recentWindowStart)
-                ->whereNotNull('grade')
-                ->get(['grade']);
-
-            $averageGrade = $records->isNotEmpty()
-                ? (float) round((float) $records->avg('grade'), 1)
-                : 0.0;
-
-            $progressPercent = min(100, (int) round(($averageGrade / self::SCHOLARSHIP_GRADE_TARGET) * 100));
-            $remaining = max(self::SCHOLARSHIP_GRADE_TARGET - $averageGrade, 0);
-
-            $academicChildStats[(string) $child->id] = [
-                'targetLabel' => $child->name,
-                'progressPercent' => $progressPercent,
-                'remainingText' => $remaining <= 0
-                    ? 'Eligible now'
-                    : number_format((float) $remaining, 1).' grade points left to unlock',
-                'isEligible' => $averageGrade >= self::SCHOLARSHIP_GRADE_TARGET,
-                'studentId' => $child->id,
-            ];
+            $academicChildStats[(string) $child->id] = $this->buildAcademicScholarshipStat($child, $recentWindowStart);
         }
 
         $bestAcademic = collect($academicChildStats)
@@ -331,20 +325,7 @@ class TuitionFinancialService
         $multiCourseChildStats = [];
         foreach ($children as $child) {
             $summary = $summariesByStudent[$child->id] ?? null;
-            $courseCount = (int) ($summary['enrolled_classes_count'] ?? 0);
-
-            $progressPercent = min(100, (int) round(($courseCount / self::SCHOLARSHIP_MULTI_COURSE_TARGET) * 100));
-            $remaining = max(self::SCHOLARSHIP_MULTI_COURSE_TARGET - $courseCount, 0);
-
-            $multiCourseChildStats[(string) $child->id] = [
-                'targetLabel' => $child->name,
-                'progressPercent' => $progressPercent,
-                'remainingText' => $remaining === 0
-                    ? 'Eligible now'
-                    : $remaining.' more course(s) needed',
-                'isEligible' => $remaining === 0,
-                'studentId' => $child->id,
-            ];
+            $multiCourseChildStats[(string) $child->id] = $this->buildMultiCourseScholarshipStat($child, is_array($summary) ? $summary : []);
         }
 
         $bestMultiCourse = collect($multiCourseChildStats)
@@ -392,22 +373,9 @@ class TuitionFinancialService
     private function buildStudentScholarshipOffers(User $student, array $summary): array
     {
         $recentWindowStart = now()->subMonths(self::SCHOLARSHIP_MONTHS_WINDOW);
-        $records = $student->attendanceRecords()
-            ->whereDate('attendance_date', '>=', $recentWindowStart)
-            ->whereNotNull('grade')
-            ->get(['grade']);
-
-        $averageGrade = $records->isNotEmpty()
-            ? (float) round((float) $records->avg('grade'), 1)
-            : 0.0;
-
-        $academicProgressPercent = min(100, (int) round(($averageGrade / self::SCHOLARSHIP_GRADE_TARGET) * 100));
-        $academicRemaining = max(self::SCHOLARSHIP_GRADE_TARGET - $averageGrade, 0);
-
-        $courseCount = (int) ($summary['enrolled_classes_count'] ?? 0);
-        $multiCourseProgressPercent = min(100, (int) round(($courseCount / self::SCHOLARSHIP_MULTI_COURSE_TARGET) * 100));
-        $multiCourseRemaining = max(self::SCHOLARSHIP_MULTI_COURSE_TARGET - $courseCount, 0);
-        $activeOfferKeys = $this->activeScholarshipActivationsForStudent($student)
+        $academicStat = $this->buildAcademicScholarshipStat($student, $recentWindowStart);
+        $multiCourseStat = $this->buildMultiCourseScholarshipStat($student, $summary);
+        $activeOfferKeys = $this->studentScholarshipActivations($student)
             ->pluck('offer_key')
             ->map(fn (mixed $key): string => (string) $key)
             ->all();
@@ -416,27 +384,23 @@ class TuitionFinancialService
             [
                 'key' => 'academic_progress_2m',
                 'title' => 'Academic Excellence Grant',
-                'description' => 'Average grade over the last '.self::SCHOLARSHIP_MONTHS_WINDOW.' months must reach '.self::SCHOLARSHIP_GRADE_TARGET.'/100.',
+                'description' => 'Keep your average grade over the last '.self::SCHOLARSHIP_MONTHS_WINDOW.' months at '.self::SCHOLARSHIP_GRADE_TARGET.'/100 or higher to unlock this discount.',
                 'discountPercent' => 15,
-                'targetLabel' => $student->name,
-                'progressPercent' => $academicProgressPercent,
-                'remainingText' => $academicRemaining <= 0
-                    ? 'Eligible now'
-                    : number_format((float) $academicRemaining, 1).' grade points left to unlock',
-                'isEligible' => $averageGrade >= self::SCHOLARSHIP_GRADE_TARGET,
+                'targetLabel' => 'Your academic progress',
+                'progressPercent' => $academicStat['progressPercent'],
+                'remainingText' => $academicStat['remainingText'],
+                'isEligible' => $academicStat['isEligible'],
                 'isActive' => in_array('academic_progress_2m', $activeOfferKeys, true),
             ],
             [
                 'key' => 'multi_course_4_plus',
                 'title' => 'Multi Course Commitment',
-                'description' => 'Enroll in at least '.self::SCHOLARSHIP_MULTI_COURSE_TARGET.' courses to unlock this discount.',
+                'description' => 'Stay enrolled in at least '.self::SCHOLARSHIP_MULTI_COURSE_TARGET.' courses to unlock this discount for your enrollment.',
                 'discountPercent' => 10,
-                'targetLabel' => $student->name,
-                'progressPercent' => $multiCourseProgressPercent,
-                'remainingText' => $multiCourseRemaining === 0
-                    ? 'Eligible now'
-                    : $multiCourseRemaining.' more course(s) needed',
-                'isEligible' => $multiCourseRemaining === 0,
+                'targetLabel' => 'Your enrollment',
+                'progressPercent' => $multiCourseStat['progressPercent'],
+                'remainingText' => $multiCourseStat['remainingText'],
+                'isEligible' => $multiCourseStat['isEligible'],
                 'isActive' => in_array('multi_course_4_plus', $activeOfferKeys, true),
             ],
         ];
@@ -445,7 +409,7 @@ class TuitionFinancialService
     /**
      * @return array<string, mixed>
      */
-    private function summarizeStudent(User $student): array
+    private function summarizeStudent(User $student, bool $includeParentScopedDiscounts = true): array
     {
         $student->loadMissing($this->studentFinancialRelations());
 
@@ -504,7 +468,7 @@ class TuitionFinancialService
         if ($grossDue === 0 && $studentTuition !== null) {
             $grossDue = max(0, (int) $studentTuition->course_price);
         }
-        $discountPercent = $this->activeDiscountPercentForStudent($student);
+        $discountPercent = $this->activeDiscountPercentForStudent($student, $includeParentScopedDiscounts);
         $discount = (int) round($grossDue * ($discountPercent / 100));
         $netDue = max($grossDue - $discount, 0);
         $balanceBeforeDiscount = max($grossDue - $amountPaid, 0);
@@ -565,17 +529,19 @@ class TuitionFinancialService
         ];
     }
 
-    private function activeDiscountPercentForStudent(User $student): int
+    private function activeDiscountPercentForStudent(User $student, bool $includeParentScopedDiscounts = true): int
     {
-        return min(100, (int) $this->activeScholarshipActivationsForStudent($student)
+        return min(100, (int) $this->studentScholarshipActivations($student, $includeParentScopedDiscounts)
             ->sum('discount_percent'));
     }
 
     /**
      * @return Collection<int, ScholarshipActivation>
      */
-    private function activeScholarshipActivationsForStudent(User $student): Collection
-    {
+    private function studentScholarshipActivations(
+        User $student,
+        bool $includeParentScopedDiscounts = false,
+    ): Collection {
         if (! $this->hasScholarshipActivationsTable()) {
             return collect();
         }
@@ -583,17 +549,65 @@ class TuitionFinancialService
         return ScholarshipActivation::query()
             ->where(function ($query) use ($student): void {
                 $query->where('student_id', $student->id);
-
-                if ($student->parent_id !== null) {
-                    $query->orWhere(function ($familyQuery) use ($student): void {
-                        $familyQuery
-                            ->where('parent_id', $student->parent_id)
-                            ->where('offer_key', 'family_3_children');
-                    });
-                }
+            })
+            ->when($includeParentScopedDiscounts && $student->parent_id !== null, function ($query) use ($student): void {
+                $query->orWhere(function ($familyQuery) use ($student): void {
+                    $familyQuery
+                        ->where('parent_id', $student->parent_id)
+                        ->where('offer_key', 'family_3_children');
+                });
             })
             ->orderByDesc('activated_at')
             ->get();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildAcademicScholarshipStat(User $student, CarbonInterface $recentWindowStart): array
+    {
+        $records = $student->attendanceRecords()
+            ->whereDate('attendance_date', '>=', $recentWindowStart)
+            ->whereNotNull('grade')
+            ->get(['grade']);
+
+        $averageGrade = $records->isNotEmpty()
+            ? (float) round((float) $records->avg('grade'), 1)
+            : 0.0;
+
+        $progressPercent = min(100, (int) round(($averageGrade / self::SCHOLARSHIP_GRADE_TARGET) * 100));
+        $remaining = max(self::SCHOLARSHIP_GRADE_TARGET - $averageGrade, 0);
+
+        return [
+            'targetLabel' => $student->name,
+            'progressPercent' => $progressPercent,
+            'remainingText' => $remaining <= 0
+                ? 'Eligible now'
+                : number_format((float) $remaining, 1).' grade points left to unlock',
+            'isEligible' => $averageGrade >= self::SCHOLARSHIP_GRADE_TARGET,
+            'studentId' => $student->id,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $summary
+     * @return array<string, mixed>
+     */
+    private function buildMultiCourseScholarshipStat(User $student, array $summary): array
+    {
+        $courseCount = (int) ($summary['enrolled_classes_count'] ?? 0);
+        $progressPercent = min(100, (int) round(($courseCount / self::SCHOLARSHIP_MULTI_COURSE_TARGET) * 100));
+        $remaining = max(self::SCHOLARSHIP_MULTI_COURSE_TARGET - $courseCount, 0);
+
+        return [
+            'targetLabel' => $student->name,
+            'progressPercent' => $progressPercent,
+            'remainingText' => $remaining === 0
+                ? 'Eligible now'
+                : $remaining.' more course(s) needed',
+            'isEligible' => $remaining === 0,
+            'studentId' => $student->id,
+        ];
     }
 
     private function academicYearLabel(): string

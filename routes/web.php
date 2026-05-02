@@ -227,6 +227,8 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
 
         // Financial Information page
         Route::get('/financial', [StudentFinancialController::class, 'index'])->name('financial');
+        Route::post('/financial/scholarships/activate', [StudentFinancialController::class, 'activateScholarship'])
+            ->name('financial.scholarships.activate');
         Route::get('/financial/payments/{payment}/pdf', [StudentFinancialController::class, 'receiptPdf'])
             ->whereNumber('payment')
             ->name('financial.payments.pdf');

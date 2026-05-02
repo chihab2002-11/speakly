@@ -1,4 +1,22 @@
 <x-layouts.student :title="__('Financial Information')" :currentRoute="'financial'">
+    @php
+        $offers = collect($scholarshipOffers ?? [])->values();
+        $selectedOffer = is_array($selectedScholarshipOffer ?? null) ? $selectedScholarshipOffer : $offers->first();
+        $initialOfferKey = $selectedOffer['key'] ?? ($offers->first()['key'] ?? null);
+    @endphp
+
+    @if(session('success'))
+        <div class="mb-4 rounded-xl border px-4 py-3 text-sm font-semibold" style="background-color: #D1FAE5; border-color: #A7F3D0; color: #065F46;">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="mb-4 rounded-xl border px-4 py-3 text-sm font-semibold" style="background-color: #FEF2F2; border-color: #FECACA; color: #991B1B;">
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- Header Section --}}
     <div class="mb-8 flex flex-col gap-6">
         {{-- Left: Title & Badge --}}
@@ -254,39 +272,57 @@
 
             <div class="flex flex-col gap-4">
                 <h2 class="text-2xl font-bold" style="color: #181D19; letter-spacing: -0.6px;">
-                    Scholarships
+                    Scholarship Offers
                 </h2>
 
-                @php
-                    $studentOffer = is_array($selectedScholarshipOffer ?? null)
-                        ? $selectedScholarshipOffer
-                        : collect($scholarshipOffers ?? [])->first();
-                @endphp
-
-                <div class="relative overflow-hidden rounded-xl p-8" style="background: linear-gradient(135deg, #065F46 0%, #022C22 100%); box-shadow: 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1);">
+                <div id="studentScholarshipCard" class="relative overflow-hidden rounded-xl p-8" style="background: linear-gradient(135deg, #065F46 0%, #022C22 100%); box-shadow: 0px 20px 25px -5px rgba(0, 0, 0, 0.1), 0px 8px 10px -6px rgba(0, 0, 0, 0.1);">
                     <div class="pointer-events-none absolute -right-16 -top-16 h-32 w-32 rounded-full blur-[20px]" style="background: rgba(255, 255, 255, 0.05);"></div>
 
-                    <div class="relative flex flex-col gap-4">
-                        <div class="flex h-12 w-12 items-center justify-center rounded-lg" style="background: rgba(255, 255, 255, 0.1);">
-                            <svg class="h-5 w-5" fill="currentColor" style="color: #6EE7B7;" viewBox="0 0 24 24">
-                                <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
-                            </svg>
+                    <div id="studentScholarshipCardContent" class="relative flex flex-col gap-4 transition-all duration-200">
+                        <div class="flex items-center justify-between">
+                            <button id="studentScholarshipPrevBtn" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border text-white/80 transition-all hover:scale-105 hover:text-white" style="border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.08);">&larr;</button>
+                            <div class="flex h-12 w-12 items-center justify-center rounded-lg" style="background: rgba(255, 255, 255, 0.1);">
+                                <svg class="h-5 w-5" fill="currentColor" style="color: #6EE7B7;" viewBox="0 0 24 24">
+                                    <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+                                </svg>
+                            </div>
+                            <button id="studentScholarshipNextBtn" type="button" class="inline-flex h-9 w-9 items-center justify-center rounded-full border text-white/80 transition-all hover:scale-105 hover:text-white" style="border-color: rgba(255,255,255,0.35); background: rgba(255,255,255,0.08);">&rarr;</button>
                         </div>
 
-                        <h3 class="text-3xl font-bold leading-tight text-white">{{ $studentOffer['title'] ?? 'Scholarship Offer' }}</h3>
-                        <p class="text-sm font-semibold uppercase tracking-wide" style="color: rgba(209, 250, 229, 0.95);">{{ $studentOffer['targetLabel'] ?? ($user->name ?? 'Student') }}</p>
-                        <p class="text-base leading-relaxed" style="color: rgba(209, 250, 229, 0.8);">{{ $studentOffer['description'] ?? 'Scholarship details unavailable.' }}</p>
-                        <div class="rounded-lg px-3 py-2 text-sm" style="background: rgba(255,255,255,0.1); color: #D1FAE5;">
-                            Progress: {{ (int) ($studentOffer['progressPercent'] ?? 0) }}%<br>
-                            {{ $studentOffer['remainingText'] ?? '' }}
+                        <h3 id="studentScholarshipTitle" class="text-3xl font-bold leading-tight text-white">{{ $selectedOffer['title'] ?? 'Scholarship Offer' }}</h3>
+                        <p id="studentScholarshipTarget" class="text-sm font-semibold uppercase tracking-wide" style="color: rgba(209, 250, 229, 0.95);">{{ $selectedOffer['targetLabel'] ?? 'Your enrollment' }}</p>
+                        <p id="studentScholarshipDescription" class="text-base leading-relaxed" style="color: rgba(209, 250, 229, 0.8);">{{ $selectedOffer['description'] ?? 'Scholarship details unavailable.' }}</p>
+                        <div id="studentScholarshipProgress" class="rounded-lg px-3 py-2 text-sm" style="background: rgba(255,255,255,0.1); color: #D1FAE5;">
+                            Progress: {{ (int) ($selectedOffer['progressPercent'] ?? 0) }}%<br>
+                            {{ $selectedOffer['remainingText'] ?? '' }}
                         </div>
 
                         <div class="mt-2 flex items-end justify-between">
-                            <span class="text-5xl font-black text-white">{{ (int) ($studentOffer['discountPercent'] ?? 0) }}%</span>
-                            <span class="text-sm font-bold uppercase tracking-wider" style="color: #6EE7B7; letter-spacing: 1.2px;">
-                                {{ ($studentOffer['isActive'] ?? false) ? 'Activated' : (($studentOffer['isEligible'] ?? false) ? 'Available' : 'Not Eligible') }}
+                            <span id="studentScholarshipPercent" class="text-5xl font-black text-white">{{ (int) ($selectedOffer['discountPercent'] ?? 0) }}%</span>
+                            <span id="studentScholarshipState" class="text-sm font-bold uppercase tracking-wider" style="color: #6EE7B7; letter-spacing: 1.2px;">
+                                @if($selectedOffer['isActive'] ?? false)
+                                    Activated for your account
+                                @elseif($selectedOffer['isEligible'] ?? false)
+                                    Available for your enrollment
+                                @else
+                                    Keep progressing
+                                @endif
                             </span>
                         </div>
+
+                        <form method="POST" action="{{ route('student.financial.scholarships.activate') }}" class="mt-2">
+                            @csrf
+                            <input id="studentScholarshipOfferKeyInput" type="hidden" name="offer_key" value="{{ $selectedOffer['key'] ?? '' }}">
+                            <button id="studentScholarshipActivateBtn" type="submit" class="w-full rounded-lg px-4 py-2 text-sm font-bold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50" style="background-color: #10B981;">
+                                @if($selectedOffer['isActive'] ?? false)
+                                    Active Discount
+                                @elseif($selectedOffer['isEligible'] ?? false)
+                                    Activate Discount
+                                @else
+                                    Not Eligible Yet
+                                @endif
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -384,4 +420,77 @@
             </span>
         </div>
     </div>
+
+    <script id="studentScholarshipOffers" type="application/json">@json($offers->values())</script>
+    <script id="studentScholarshipInitialOfferKey" type="application/json">@json($initialOfferKey)</script>
+    <script>
+        (function () {
+            const offers = JSON.parse(document.getElementById('studentScholarshipOffers')?.textContent || '[]');
+            const initialOfferKey = JSON.parse(document.getElementById('studentScholarshipInitialOfferKey')?.textContent || 'null');
+            const prevBtn = document.getElementById('studentScholarshipPrevBtn');
+            const nextBtn = document.getElementById('studentScholarshipNextBtn');
+            const content = document.getElementById('studentScholarshipCardContent');
+            const titleEl = document.getElementById('studentScholarshipTitle');
+            const targetEl = document.getElementById('studentScholarshipTarget');
+            const descriptionEl = document.getElementById('studentScholarshipDescription');
+            const progressEl = document.getElementById('studentScholarshipProgress');
+            const percentEl = document.getElementById('studentScholarshipPercent');
+            const stateEl = document.getElementById('studentScholarshipState');
+            const activateBtn = document.getElementById('studentScholarshipActivateBtn');
+            const offerKeyInput = document.getElementById('studentScholarshipOfferKeyInput');
+
+            if (! offers.length || ! titleEl) {
+                return;
+            }
+
+            let index = Math.max(0, offers.findIndex((offer) => offer.key === initialOfferKey));
+
+            const render = () => {
+                const offer = offers[index] || offers[0];
+                const isActive = Boolean(offer.isActive);
+                const isEligible = Boolean(offer.isEligible);
+                const canActivate = isEligible && ! isActive;
+
+                titleEl.textContent = offer.title || 'Scholarship Offer';
+                targetEl.textContent = offer.targetLabel || 'Your enrollment';
+                descriptionEl.textContent = offer.description || 'Scholarship details unavailable.';
+                progressEl.innerHTML = 'Progress: ' + Number(offer.progressPercent || 0) + '%<br>' + (offer.remainingText || '');
+                percentEl.textContent = Number(offer.discountPercent || 0) + '%';
+                stateEl.textContent = isActive
+                    ? 'Activated for your account'
+                    : (isEligible ? 'Available for your enrollment' : 'Keep progressing');
+
+                if (offerKeyInput) {
+                    offerKeyInput.value = offer.key || '';
+                }
+
+                if (activateBtn) {
+                    activateBtn.disabled = ! canActivate;
+                    activateBtn.textContent = isActive
+                        ? 'Active Discount'
+                        : (canActivate ? 'Activate Discount' : 'Not Eligible Yet');
+                }
+            };
+
+            const animateTo = (nextIndex) => {
+                if (! content) {
+                    index = (nextIndex + offers.length) % offers.length;
+                    render();
+                    return;
+                }
+
+                content.classList.add('opacity-0', 'translate-y-1');
+                window.setTimeout(() => {
+                    index = (nextIndex + offers.length) % offers.length;
+                    render();
+                    content.classList.remove('opacity-0', 'translate-y-1');
+                }, 170);
+            };
+
+            prevBtn?.addEventListener('click', () => animateTo(index - 1));
+            nextBtn?.addEventListener('click', () => animateTo(index + 1));
+
+            render();
+        })();
+    </script>
 </x-layouts.student>

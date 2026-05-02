@@ -138,7 +138,7 @@ class ParentFinancialController extends Controller
         $pdf = $this->paymentReceiptPdf->render(
             student: $student,
             payment: $payment,
-            financialSummary: $this->tuitionFinancialService->buildStudentPageData($student),
+            financialSummary: $this->tuitionFinancialService->buildStudentPageData($student, null, true),
         );
 
         $receiptIdentifier = preg_replace('/[^A-Za-z0-9_-]+/', '-', (string) ($payment->reference ?: $payment->id));
