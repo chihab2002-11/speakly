@@ -247,6 +247,10 @@ VITE_REVERB_SCHEME="${REVERB_SCHEME}"
 
 Generate real app credentials for each environment and do not commit secrets. Production deployments, including Railway, need a separate WebSocket/Reverb process or service configuration alongside the Laravel web process.
 
+## Session Expiration
+
+When a browser session expires or a CSRF token is no longer valid, web users are redirected to the login/register page with the message: "Your session has expired. Please log in again." JSON/API requests receive a JSON `419` response with the same message. CSRF protection remains enabled.
+
 ## Environment Variables
 
 Important `.env` values:
