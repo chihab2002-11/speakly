@@ -229,6 +229,7 @@ class PresentationDemoSeeder extends Seeder
             'french' => ['French B1 Intensive', 'FR-B1', 26000, 'Intermediate French with DELF-style speaking and writing.', $programs['french']],
             'spanish' => ['Spanish A1 Starter', 'ES-A1', 22000, 'A friendly entry point for first-time Spanish learners.', $programs['spanish']],
             'german' => ['German B1 Professional', 'DE-B1', 28000, 'Professional German for workplace and study contexts.', $programs['german']],
+            'empty_workshop' => ['English Trial Workshop', 'ENG-TRIAL', 8000, 'Small demo group intentionally left empty for presentation search and modal states.', $programs['english']],
         ];
 
         return collect($courses)
@@ -270,6 +271,7 @@ class PresentationDemoSeeder extends Seeder
             'french' => CourseClass::query()->updateOrCreate(['course_id' => $courses['french']->id], ['teacher_id' => $teachers['karim']->id, 'capacity' => 24]),
             'spanish' => CourseClass::query()->updateOrCreate(['course_id' => $courses['spanish']->id], ['teacher_id' => $teachers['karim']->id, 'capacity' => 18]),
             'german' => CourseClass::query()->updateOrCreate(['course_id' => $courses['german']->id], ['teacher_id' => $teachers['nadia']->id, 'capacity' => 18]),
+            'empty_workshop' => CourseClass::query()->updateOrCreate(['course_id' => $courses['empty_workshop']->id], ['teacher_id' => $teachers['sofia']->id, 'capacity' => 10]),
         ];
 
         $slots = [
@@ -306,6 +308,8 @@ class PresentationDemoSeeder extends Seeder
      */
     private function seedEnrollments(array $groups, array $students): void
     {
+        $groups['empty_workshop']->students()->detach();
+
         $enrollments = [
             'ielts' => ['alex', 'lina', 'omar', 'sara', 'nour'],
             'english' => ['alex', 'lina', 'yacine'],

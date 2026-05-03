@@ -56,5 +56,6 @@ test('admin sees combined admin and secretary sidebar with mode marker on secret
     $response->assertSee('Manage Schedule');
     $response->assertSee('Manage Courses');
     $response->assertSee('Secretary Mode');
+    $response->assertSee('Students List');
     $response->assertSee(route('secretary.groups'), false);
 });

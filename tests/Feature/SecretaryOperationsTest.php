@@ -502,8 +502,49 @@ it('renders secretary groups page with group data', function () {
     $response->assertSee('Manage Groups');
     $response->assertSee('Create Group');
     $response->assertSee('Students in Group');
+    $response->assertSee('Students List');
+    $response->assertSee('secretaryGroupStudentsData', false);
+    $response->assertSee('No students enrolled in this group yet.');
     $response->assertDontSee('Remove Student from Group');
     $response->assertDontSee('Enroll Student');
+});
+
+it('renders enrolled student details for the group students modal', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $parent = createApprovedUserWithRole('parent');
+    $course = Course::factory()->create([
+        'name' => 'Presentation English',
+        'price' => 10000,
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'capacity' => 12,
+    ]);
+    $student = User::factory()->create([
+        'name' => 'Modal Student',
+        'email' => 'modal.student@example.com',
+        'phone' => '0555 123 456',
+        'parent_id' => $parent->id,
+        'approved_at' => now(),
+    ]);
+    $student->assignRole('student');
+    $group->students()->attach($student->id, ['enrolled_at' => '2026-01-15 09:00:00']);
+    TuitionPayment::factory()->create([
+        'student_id' => $student->id,
+        'parent_id' => $parent->id,
+        'amount' => 4000,
+    ]);
+
+    $response = $this->actingAs($secretary)->get(route('secretary.groups'));
+
+    $response->assertOk();
+    $response->assertSee('Modal Student');
+    $response->assertSee('modal.student@example.com');
+    $response->assertSee($parent->name);
+    $response->assertSee('0555 123 456');
+    $response->assertSee('Jan 15, 2026');
+    $response->assertSee('Partial');
 });
 
 it('displays group capacity as enrolled over capacity', function () {
@@ -605,6 +646,75 @@ it('keeps create group program selection independent from enroll student selecti
     $response->assertSee('secretaryGroupClassesData', false);
     $response->assertDontSee('Course Search');
     $response->assertDontSee('Teacher Search');
+});
+
+it('filters groups by enrolled student name', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $matchedCourse = Course::factory()->create(['name' => 'Matched Course']);
+    $unrelatedCourse = Course::factory()->create(['name' => 'Unrelated Course']);
+    $matchedGroup = CourseClass::factory()->create(['course_id' => $matchedCourse->id]);
+    $unrelatedGroup = CourseClass::factory()->create(['course_id' => $unrelatedCourse->id]);
+    $student = createApprovedUserWithRole('student');
+    $student->forceFill([
+        'name' => 'Needle Search Student',
+        'email' => 'needle.student@example.com',
+    ])->save();
+    $otherStudent = createApprovedUserWithRole('student');
+    $matchedGroup->students()->attach($student->id, ['enrolled_at' => now()]);
+    $unrelatedGroup->students()->attach($otherStudent->id, ['enrolled_at' => now()]);
+
+    $response = $this->actingAs($secretary)
+        ->get(route('secretary.groups', ['student_search' => 'Needle Search']));
+
+    $response->assertOk();
+    $response->assertSee('Matched Course');
+    $response->assertSee('Needle Search Student');
+    $response->assertSee('Student search results for "Needle Search"', false);
+    $response->assertViewHas('groups', fn ($groups): bool => $groups->getCollection()->pluck('id')->all() === [$matchedGroup->id]);
+});
+
+it('filters groups by enrolled student email and keeps course filter behavior', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $matchedCourse = Course::factory()->create(['name' => 'Email Matched Course']);
+    $otherCourse = Course::factory()->create(['name' => 'Filtered Out Course']);
+    $matchedGroup = CourseClass::factory()->create(['course_id' => $matchedCourse->id]);
+    $otherGroup = CourseClass::factory()->create(['course_id' => $otherCourse->id]);
+    $student = createApprovedUserWithRole('student');
+    $student->forceFill([
+        'name' => 'Email Search Student',
+        'email' => 'specific.student@example.com',
+    ])->save();
+    $matchedGroup->students()->attach($student->id, ['enrolled_at' => now()]);
+    $otherGroup->students()->attach($student->id, ['enrolled_at' => now()]);
+
+    $response = $this->actingAs($secretary)
+        ->get(route('secretary.groups', [
+            'student_search' => 'specific.student@example.com',
+            'course_id' => $matchedCourse->id,
+        ]));
+
+    $response->assertOk();
+    $response->assertSee('Email Matched Course');
+    $response->assertSee('specific.student@example.com');
+    $response->assertViewHas('groups', fn ($groups): bool => $groups->getCollection()->pluck('id')->all() === [$matchedGroup->id]);
+});
+
+it('shows an empty state when student search has no matching enrolled groups', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    CourseClass::factory()->create([
+        'course_id' => Course::factory()->create(['name' => 'Existing Course'])->id,
+    ]);
+
+    $response = $this->actingAs($secretary)
+        ->get(route('secretary.groups', ['student_search' => 'missing.student@example.com']));
+
+    $response->assertOk();
+    $response->assertSee('No matching student groups found');
+    $response->assertSee('No enrolled student name or email matched this search.');
+    $response->assertViewHas('groups', fn ($groups): bool => $groups->isEmpty());
 });
 
 it('rejects enrollment when course does not belong to program', function () {

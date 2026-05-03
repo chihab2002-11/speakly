@@ -204,14 +204,24 @@ class SecretaryOperationsController extends Controller
         $day = strtolower((string) $request->query('day', ''));
         $teacherId = (string) $request->query('teacher_id', '');
         $courseId = (string) $request->query('course_id', '');
+        $studentSearch = trim((string) $request->query('student_search', ''));
 
         $validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         $day = in_array($day, $validDays, true) ? $day : '';
 
         $groupsQuery = CourseClass::query()
             ->with([
-                'course:id,name,code,program_id',
+                'course:id,name,code,program_id,price',
+                'course.program:id,name,code',
                 'teacher:id,name',
+                'students' => fn ($query) => $query
+                    ->select('users.id', 'users.name', 'users.email', 'users.phone', 'users.parent_id')
+                    ->with([
+                        'parent:id,name',
+                        'studentTuition:id,student_id,course_price',
+                        'tuitionPaymentsAsStudent:id,student_id,amount,paid_on',
+                    ])
+                    ->orderBy('name'),
                 'schedules:id,class_id,day_of_week,start_time,end_time,room_id',
                 'schedules.room:id,name',
             ])
@@ -235,6 +245,15 @@ class SecretaryOperationsController extends Controller
             })
             ->when($courseId !== '' && ctype_digit($courseId), function ($query) use ($courseId): void {
                 $query->where('course_id', (int) $courseId);
+            })
+            ->when($studentSearch !== '', function ($query) use ($studentSearch): void {
+                $query->whereHas('students', function ($studentQuery) use ($studentSearch): void {
+                    $studentQuery->where(function ($innerQuery) use ($studentSearch): void {
+                        $innerQuery
+                            ->where('name', 'like', '%'.$studentSearch.'%')
+                            ->orWhere('email', 'like', '%'.$studentSearch.'%');
+                    });
+                });
             })
             ->when($day !== '', function ($query) use ($day): void {
                 $query->whereHas('schedules', function ($scheduleQuery) use ($day): void {
@@ -293,11 +312,13 @@ class SecretaryOperationsController extends Controller
             'search' => $search,
             'teacherId' => $teacherId,
             'courseId' => $courseId,
+            'studentSearch' => $studentSearch,
             'day' => $day,
             'groupListFilters' => [
                 'search' => $search,
                 'teacher_id' => $teacherId,
                 'course_id' => $courseId,
+                'student_search' => $studentSearch,
                 'day' => $day,
             ],
             'statsTotalGroups' => $allGroupsCount,

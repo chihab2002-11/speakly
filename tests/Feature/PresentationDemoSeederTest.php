@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Course;
+use App\Models\CourseClass;
 use App\Models\EmployeePayment;
 use App\Models\ScholarshipActivation;
 use App\Models\TeacherResource;
@@ -83,6 +85,8 @@ it('seeds presentation employee payments and contextual notification flows', fun
     expect($sara->notifications()->where('type', StudentGroupEnrollmentChangedNotification::class)->where('data->action', 'removed')->where('data->actor_role', 'admin')->exists())->toBeTrue();
     expect($maya->notifications()->where('type', StudentGroupEnrollmentChangedNotification::class)->where('data->child_name', 'Lina Benali')->exists())->toBeTrue();
     expect($amine->notifications()->where('type', StudentGroupEnrollmentChangedNotification::class)->where('data->child_name', 'Sara Haddad')->exists())->toBeTrue();
+    $emptyWorkshopCourse = Course::query()->where('code', 'ENG-TRIAL')->firstOrFail();
+    expect(CourseClass::query()->where('course_id', $emptyWorkshopCourse->id)->firstOrFail()->students()->count())->toBe(0);
 
     foreach ([$alex, $lina, $yacine] as $student) {
         expect($student->notifications()->where('type', ClassResourceUploadedNotification::class)->where('data->type', 'homework_uploaded')->exists())->toBeTrue();

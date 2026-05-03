@@ -53,6 +53,37 @@
             'students_count' => $group->students_count,
             'capacity' => $group->capacity,
         ])->values()->all();
+
+        $studentSearchTerm = mb_strtolower($studentSearch ?? '');
+        $secretaryGroupStudentsData = $groups->getCollection()->mapWithKeys(function ($group): array {
+            $coursePrice = max(0, (int) ($group->course?->price ?? 0));
+
+            $students = $group->students->map(function ($student) use ($coursePrice): array {
+                $totalPaid = (int) $student->tuitionPaymentsAsStudent->sum('amount');
+                $tuitionAmount = max(0, (int) ($student->studentTuition?->course_price ?? $coursePrice));
+                $paymentStatus = $tuitionAmount <= 0
+                    ? 'Not priced'
+                    : ($totalPaid >= $tuitionAmount
+                        ? 'Paid'
+                        : ($totalPaid > 0 ? 'Partial' : 'Pending'));
+
+                return [
+                    'id' => $student->id,
+                    'name' => $student->name,
+                    'email' => $student->email,
+                    'phone' => $student->phone,
+                    'parent_name' => $student->parent?->name,
+                    'enrolled_at' => $student->pivot?->enrolled_at
+                        ? \Carbon\Carbon::parse($student->pivot->enrolled_at)->format('M d, Y')
+                        : ($student->pivot?->created_at ? \Carbon\Carbon::parse($student->pivot->created_at)->format('M d, Y') : null),
+                    'payment_status' => $paymentStatus,
+                    'total_paid' => $totalPaid,
+                    'tuition_amount' => $tuitionAmount,
+                ];
+            })->values()->all();
+
+            return [(string) $group->id => $students];
+        })->all();
     @endphp
 
     <div class="mb-6 grid gap-4 lg:grid-cols-2">
@@ -224,7 +255,7 @@
     </section>
 
     <div class="mb-4 rounded-2xl border p-4" style="background: white; border-color: var(--lumina-border-light);">
-        <form method="GET" action="{{ route('secretary.groups') }}" class="grid gap-3 md:grid-cols-5">
+        <form method="GET" action="{{ route('secretary.groups') }}" class="grid gap-3 md:grid-cols-6">
             <div>
                 <label for="search" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Search</label>
                 <input
@@ -233,6 +264,19 @@
                     value="{{ $search }}"
                     type="text"
                     placeholder="Course, code, teacher, ID"
+                    class="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                    style="border-color: var(--lumina-border); background: #F8FAFC;"
+                >
+            </div>
+
+            <div>
+                <label for="student_search" class="mb-1 block text-xs font-semibold" style="color: var(--lumina-text-secondary);">Student Search</label>
+                <input
+                    id="student_search"
+                    name="student_search"
+                    value="{{ $studentSearch }}"
+                    type="text"
+                    placeholder="Student name or email"
                     class="w-full rounded-lg border px-3 py-2 text-sm outline-none"
                     style="border-color: var(--lumina-border); background: #F8FAFC;"
                 >
@@ -306,10 +350,44 @@
 
     @if($groups->isEmpty())
         <section class="rounded-3xl border p-12 text-center" style="background: white; border-color: var(--lumina-border-light);">
-            <p class="text-lg font-semibold" style="color: var(--lumina-text-primary);">No groups match this filter</p>
-            <p class="mt-2 text-sm" style="color: var(--lumina-text-muted);">Try relaxing one or more filters.</p>
+            <p class="text-lg font-semibold" style="color: var(--lumina-text-primary);">
+                {{ $studentSearch !== '' ? 'No matching student groups found' : 'No groups match this filter' }}
+            </p>
+            <p class="mt-2 text-sm" style="color: var(--lumina-text-muted);">
+                {{ $studentSearch !== '' ? 'No enrolled student name or email matched this search.' : 'Try relaxing one or more filters.' }}
+            </p>
         </section>
     @else
+        @if($studentSearch !== '')
+            <section class="mb-4 rounded-2xl border p-4" style="background: #F8FAFC; border-color: var(--lumina-border-light);">
+                <p class="text-sm font-bold" style="color: var(--lumina-text-primary);">Student search results for "{{ $studentSearch }}"</p>
+                <div class="mt-3 grid gap-2 md:grid-cols-2">
+                    @foreach($groups as $group)
+                        @php
+                            $matchedStudents = $group->students->filter(function ($student) use ($studentSearchTerm): bool {
+                                return str_contains(mb_strtolower((string) $student->name), $studentSearchTerm)
+                                    || str_contains(mb_strtolower((string) $student->email), $studentSearchTerm);
+                            });
+                        @endphp
+
+                        @foreach($matchedStudents as $matchedStudent)
+                            <article class="rounded-xl border p-3" style="background: white; border-color: var(--lumina-border);">
+                                <p class="text-sm font-semibold" style="color: var(--lumina-text-primary);">{{ $matchedStudent->name }}</p>
+                                <p class="text-xs" style="color: var(--lumina-text-muted);">{{ $matchedStudent->email }}</p>
+                                <p class="mt-2 text-xs" style="color: var(--lumina-text-secondary);">
+                                    Group #{{ $group->id }} - {{ $group->course?->name ?? 'Course' }}
+                                    @if($group->course?->program)
+                                        / {{ $group->course->program->name }}
+                                    @endif
+                                </p>
+                                <p class="mt-1 text-xs" style="color: var(--lumina-text-muted);">Teacher: {{ $group->teacher?->name ?? 'Unassigned' }}</p>
+                            </article>
+                        @endforeach
+                    @endforeach
+                </div>
+            </section>
+        @endif
+
         <div class="grid gap-4 xl:grid-cols-2">
             @foreach($groups as $group)
                 <article class="rounded-2xl border p-5" style="background: white; border-color: var(--lumina-border-light);">
@@ -321,6 +399,11 @@
                             <p class="text-xs" style="color: var(--lumina-text-muted);">
                                 {{ $group->course?->code ?? 'N/A' }} - Group #{{ $group->id }}
                             </p>
+                            @if($group->course?->program)
+                                <p class="mt-1 text-xs font-semibold" style="color: var(--lumina-text-secondary);">
+                                    Program: {{ $group->course->program->name }}
+                                </p>
+                            @endif
                         </div>
                         <span class="rounded-full px-2.5 py-1 text-xs font-semibold" style="background: #ECFDF5; color: #065F46;">
                             Enrolled: {{ $group->students_count }} / {{ $group->capacity }}
@@ -328,6 +411,17 @@
                     </div>
 
                     <div class="mt-4 flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onclick="openStudentsListModal({{ $group->id }}, this)"
+                            data-group-title="{{ $group->course?->name ?? 'Course' }} - Group #{{ $group->id }}"
+                            data-group-context="{{ $group->course?->program?->name ? $group->course?->program?->name.' / ' : '' }}Teacher: {{ $group->teacher?->name ?? 'Unassigned' }}"
+                            class="rounded-lg border px-3 py-1.5 text-xs font-semibold"
+                            style="border-color: #BFDBFE; color: #1D4ED8;"
+                        >
+                            Students List
+                        </button>
+
                         <button
                             type="button"
                             onclick="openEditGroupModal(this)"
@@ -392,6 +486,45 @@
         </div>
     @endif
 
+    <div id="studentsListModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4" onclick="if(event.target===this){closeStudentsListModal()}">
+        <div class="flex max-h-[90vh] w-full max-w-4xl flex-col rounded-2xl" style="background-color: #FFFFFF;" onclick="event.stopPropagation()">
+            <div class="border-b p-5" style="border-color: var(--lumina-border-light);">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <h3 id="studentsListTitle" class="text-xl font-bold" style="color: var(--lumina-text-primary);">Students List</h3>
+                        <p id="studentsListContext" class="mt-1 text-sm" style="color: var(--lumina-text-muted);"></p>
+                    </div>
+                    <button type="button" onclick="closeStudentsListModal()" class="rounded-lg p-2 hover:bg-gray-100" aria-label="Close students list">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: var(--lumina-text-muted);"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <div class="mt-4">
+                    <label for="studentsListSearch" class="sr-only">Filter students in this group</label>
+                    <input
+                        id="studentsListSearch"
+                        type="text"
+                        placeholder="Filter this list by name, email, parent, or phone"
+                        class="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+                        style="border-color: var(--lumina-border); background: #F8FAFC;"
+                    >
+                </div>
+            </div>
+
+            <div class="min-h-0 flex-1 overflow-y-auto p-5">
+                <div id="studentsListEmpty" class="hidden rounded-xl border p-6 text-center text-sm" style="border-color: var(--lumina-border); color: var(--lumina-text-muted);">
+                    No students enrolled in this group yet.
+                </div>
+
+                <div id="studentsListNoMatches" class="hidden rounded-xl border p-6 text-center text-sm" style="border-color: var(--lumina-border); color: var(--lumina-text-muted);">
+                    No students match this modal filter.
+                </div>
+
+                <div id="studentsListRows" class="grid gap-3"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="editGroupModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4" onclick="if(event.target===this){closeEditGroupModal()}">
         <div class="w-full max-w-xl rounded-2xl p-6" style="background-color: #FFFFFF;" onclick="event.stopPropagation()">
             <div class="mb-5 flex items-center justify-between">
@@ -444,6 +577,10 @@
 
     <script id="secretaryGroupClassesData" type="application/json">
         @json($secretaryGroupClassesData)
+    </script>
+
+    <script id="secretaryGroupStudentsData" type="application/json">
+        @json($secretaryGroupStudentsData)
     </script>
 
     <script>
@@ -794,9 +931,104 @@
             actionInput.value = 'add';
         }
 
+        let activeStudentsList = [];
+
+        function openStudentsListModal(groupId, button) {
+            const modal = document.getElementById('studentsListModal');
+            const title = document.getElementById('studentsListTitle');
+            const context = document.getElementById('studentsListContext');
+            const searchInput = document.getElementById('studentsListSearch');
+            const allGroupStudents = secretaryGroupJson('secretaryGroupStudentsData');
+
+            if (!modal || !title || !context || !searchInput) {
+                return;
+            }
+
+            activeStudentsList = Array.isArray(allGroupStudents[String(groupId)])
+                ? allGroupStudents[String(groupId)]
+                : [];
+
+            title.textContent = button?.dataset?.groupTitle || `Group #${groupId}`;
+            context.textContent = button?.dataset?.groupContext || '';
+            searchInput.value = '';
+            renderStudentsList('');
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            searchInput.focus();
+        }
+
+        function closeStudentsListModal() {
+            const modal = document.getElementById('studentsListModal');
+
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            activeStudentsList = [];
+        }
+
+        function renderStudentsList(filterValue) {
+            const rows = document.getElementById('studentsListRows');
+            const empty = document.getElementById('studentsListEmpty');
+            const noMatches = document.getElementById('studentsListNoMatches');
+            const normalizedFilter = (filterValue || '').trim().toLowerCase();
+
+            if (!rows || !empty || !noMatches) {
+                return;
+            }
+
+            rows.innerHTML = '';
+            empty.classList.toggle('hidden', activeStudentsList.length > 0);
+
+            if (activeStudentsList.length === 0) {
+                noMatches.classList.add('hidden');
+                return;
+            }
+
+            const visibleStudents = activeStudentsList.filter((student) => {
+                if (normalizedFilter === '') {
+                    return true;
+                }
+
+                return [
+                    student.name,
+                    student.email,
+                    student.parent_name,
+                    student.phone,
+                    student.payment_status,
+                ].some((value) => String(value || '').toLowerCase().includes(normalizedFilter));
+            });
+
+            noMatches.classList.toggle('hidden', visibleStudents.length > 0);
+
+            visibleStudents.forEach((student) => {
+                const row = document.createElement('article');
+                row.className = 'rounded-xl border p-4';
+                row.style.borderColor = 'var(--lumina-border)';
+                row.innerHTML = `
+                    <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div>
+                            <p class="text-sm font-bold" style="color: var(--lumina-text-primary);">${escapeHtml(student.name)}</p>
+                            <p class="mt-1 text-xs" style="color: var(--lumina-text-muted);">${escapeHtml(student.email)}</p>
+                            <p class="mt-1 text-xs" style="color: var(--lumina-text-muted);">Parent: ${escapeHtml(student.parent_name || 'Not linked')}</p>
+                            <p class="mt-1 text-xs" style="color: var(--lumina-text-muted);">Phone: ${escapeHtml(student.phone || 'Not provided')}</p>
+                        </div>
+                        <div class="grid gap-2 text-left md:min-w-44">
+                            <span class="rounded-lg px-2.5 py-1 text-xs font-semibold" style="background: #F1F5F9; color: #0F172A;">Enrolled: ${escapeHtml(student.enrolled_at || 'Not recorded')}</span>
+                            <span class="rounded-lg px-2.5 py-1 text-xs font-semibold" style="background: ${student.payment_status === 'Paid' ? '#DCFCE7' : (student.payment_status === 'Partial' ? '#FEF3C7' : '#FEE2E2')}; color: ${student.payment_status === 'Paid' ? '#166534' : (student.payment_status === 'Partial' ? '#92400E' : '#991B1B')};">Payment: ${escapeHtml(student.payment_status)}</span>
+                        </div>
+                    </div>
+                `;
+                rows.appendChild(row);
+            });
+        }
+
         function escapeHtml(text) {
             const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, (m) => map[m]);
+            return String(text ?? '').replace(/[&<>"']/g, (m) => map[m]);
         }
 
         document.addEventListener('DOMContentLoaded', function () {
@@ -901,6 +1133,22 @@
                     }
                 });
             }
+
+            const studentsListSearch = document.getElementById('studentsListSearch');
+
+            if (studentsListSearch) {
+                studentsListSearch.addEventListener('input', function () {
+                    renderStudentsList(this.value);
+                });
+            }
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key !== 'Escape') {
+                    return;
+                }
+
+                closeStudentsListModal();
+            });
         });
 
         function openEditGroupModal(button) {
