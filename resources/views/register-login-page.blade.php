@@ -185,6 +185,12 @@
                     <!-- Welcome Text -->
                     <h2 class="text-3xl font-young-serif text-on-surface mb-2">Welcome Back</h2>
                     <p class="text-on-surface-variant mb-8">Please enter your details to access your portal.</p>
+
+                    @if (session('status'))
+                        <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-800">
+                            {{ session('status') }}
+                        </div>
+                    @endif
                     
                     <!-- Social Login Buttons -->
                     <div class="flex gap-4 mb-6">
