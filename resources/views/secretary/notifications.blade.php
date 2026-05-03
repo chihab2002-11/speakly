@@ -23,7 +23,7 @@
         @endif
     </div>
 
-    <div class="overflow-hidden rounded-3xl border" style="background-color: #FFFFFF; border-color: var(--lumina-border-light);">
+    <div class="overflow-hidden rounded-3xl border" style="background-color: #FFFFFF; border-color: var(--lumina-border-light);" data-live-notification-list data-live-notification-read-route-template="{{ route('secretary.notifications.read', ['id' => '__ID__']) }}">
         @forelse($notifications as $notification)
             @php
                 $data = (array) $notification->data;
@@ -34,6 +34,7 @@
             <div
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
                 style="border-color: var(--lumina-border);"
+                data-live-notification-item
             >
                 <div
                     class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {{ $notification->read_at ? 'bg-slate-100' : 'bg-emerald-100' }}"
@@ -92,7 +93,7 @@
                 </div>
             </div>
         @empty
-            <div class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="flex flex-col items-center justify-center py-16 text-center" data-live-notification-empty>
                 <div class="mb-4 flex h-20 w-20 items-center justify-center rounded-full" style="background-color: var(--lumina-bg-card);">
                     <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: var(--lumina-text-muted);">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>

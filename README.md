@@ -126,6 +126,7 @@ The application supports:
 | --- | --- |
 | `laravel/framework` | Main Laravel application framework. |
 | `laravel/fortify` | Authentication backend features. |
+| `laravel/reverb` | First-party WebSocket server for live notifications. |
 | `laravel/sanctum` | API token authentication for API routes. |
 | `spatie/laravel-permission` | Role and permission management. |
 | `livewire/livewire` | Livewire support used by the starter kit/settings UI. |
@@ -147,6 +148,8 @@ The application supports:
 | `tailwindcss` | Utility-first CSS framework. |
 | `@tailwindcss/vite` | Tailwind CSS Vite integration. |
 | `axios` | HTTP client library available to frontend scripts. |
+| `laravel-echo` | Frontend listener for Laravel broadcast notifications. |
+| `pusher-js` | Pusher protocol client used by Laravel Echo with Reverb. |
 | `concurrently` | Runs local development processes together through Composer scripts. |
 | `autoprefixer` | CSS post-processing support. |
 
@@ -210,6 +213,39 @@ php artisan serve
 ```
 
 The `.env.example` uses `APP_URL=http://final-project.test`, which is suitable for a local Laravel Herd-style domain if configured. `php artisan serve` also works for standard local development.
+
+## Live Notifications
+
+The application stores notifications in the database as before and also broadcasts them live through Laravel Reverb and Laravel Echo. If Reverb is not running, users can still refresh the page and see database notifications normally.
+
+For local real-time testing, run these processes in separate terminals:
+
+```powershell
+php artisan serve
+php artisan reverb:start
+npm run dev
+php artisan queue:work
+```
+
+`php artisan queue:work` is needed when queued jobs are used. The default `.env.example` uses `QUEUE_CONNECTION=database` and `BROADCAST_CONNECTION=reverb`.
+
+Required Reverb environment variables:
+
+```dotenv
+BROADCAST_CONNECTION=reverb
+REVERB_APP_ID=
+REVERB_APP_KEY=
+REVERB_APP_SECRET=
+REVERB_HOST=127.0.0.1
+REVERB_PORT=8080
+REVERB_SCHEME=http
+VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
+VITE_REVERB_HOST="${REVERB_HOST}"
+VITE_REVERB_PORT="${REVERB_PORT}"
+VITE_REVERB_SCHEME="${REVERB_SCHEME}"
+```
+
+Generate real app credentials for each environment and do not commit secrets. Production deployments, including Railway, need a separate WebSocket/Reverb process or service configuration alongside the Laravel web process.
 
 ## Environment Variables
 

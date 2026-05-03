@@ -1,5 +1,6 @@
 <h1>My Notifications</h1>
 
+<div data-live-notification-list data-live-notification-read-route-template="{{ route('notifications.read', ['id' => '__ID__']) }}">
 @forelse($notifications as $n)
     @php
         $data = (array) $n->data;
@@ -7,7 +8,7 @@
         $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? '';
         $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
     @endphp
-    <div style="border:1px solid #ddd;padding:10px;margin:10px 0;{{ $n->read_at ? 'opacity:.7;' : '' }}">
+    <div style="border:1px solid #ddd;padding:10px;margin:10px 0;{{ $n->read_at ? 'opacity:.7;' : '' }}" data-live-notification-item>
         <strong>{{ $notificationTitle }}</strong>
         <p>{{ $notificationMessage }}</p>
 
@@ -25,5 +26,6 @@
         @endif
     </div>
 @empty
-    <p>No notifications yet.</p>
+    <p data-live-notification-empty>No notifications yet.</p>
 @endforelse
+</div>

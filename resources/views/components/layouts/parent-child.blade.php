@@ -52,10 +52,16 @@
                 <h1 class="text-xl font-black" style="color: #065F46;">{{ $pageTitle ?? 'Child Portal' }}</h1>
                 <div class="flex items-center gap-3">
                     @if(!empty($portalSelectedChild['id']))
-                        <a href="{{ route('parent.child.notifications', ['child' => $portalSelectedChild['id']]) }}" class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100" aria-label="Child notifications">
+                        @php
+                            $portalUnreadNotificationsCount = auth()->user()?->unreadNotifications()->count() ?? 0;
+                        @endphp
+                        <a href="{{ route('parent.child.notifications', ['child' => $portalSelectedChild['id']]) }}" class="relative flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100" aria-label="Child notifications" data-live-notification-bell>
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #64748B;">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                             </svg>
+                            <span data-live-notification-count class="{{ $portalUnreadNotificationsCount > 0 ? '' : 'hidden' }} absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                {{ $portalUnreadNotificationsCount > 9 ? '9+' : $portalUnreadNotificationsCount }}
+                            </span>
                         </a>
                         <a href="{{ route('parent.child.settings', ['child' => $portalSelectedChild['id']]) }}" class="flex h-9 w-9 items-center justify-center rounded-full transition-colors hover:bg-gray-100" aria-label="Child settings">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="color: #64748B;">
@@ -77,6 +83,8 @@
     </div>
 
     <div id="child-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/50 lg:hidden" onclick="toggleChildPortalSidebar()"></div>
+
+    <x-live-notifications />
 
     <script>
         function toggleChildPortalSidebar() {

@@ -26,6 +26,8 @@
     <div 
         class="overflow-hidden rounded-3xl border"
         style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.15);"
+        data-live-notification-list
+        data-live-notification-read-route-template="{{ route('parent.notifications.read', ['id' => '__ID__']) }}"
     >
         @forelse($notifications as $notification)
             @php
@@ -38,6 +40,7 @@
             <div 
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
                 style="border-color: #E2E8F0;"
+                data-live-notification-item
             >
                 {{-- Notification Icon --}}
                 <div 
@@ -110,7 +113,7 @@
             </div>
         @empty
             {{-- Empty State --}}
-            <div class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="flex flex-col items-center justify-center py-16 text-center" data-live-notification-empty>
                 <div 
                     class="mb-4 flex h-20 w-20 items-center justify-center rounded-full"
                     style="background-color: #F0F5EE;"

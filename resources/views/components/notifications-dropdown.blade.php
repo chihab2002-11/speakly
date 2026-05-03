@@ -15,9 +15,10 @@
     </div>
 
     @if (collect($notifications)->isEmpty())
-        <flux:text class="text-zinc-500">{{ __('No notifications yet.') }}</flux:text>
+        <flux:text class="text-zinc-500" data-live-notification-empty>{{ __('No notifications yet.') }}</flux:text>
+        <div class="mt-3 space-y-3" data-live-notification-list></div>
     @else
-        <div class="space-y-3">
+        <div class="space-y-3" data-live-notification-list>
             @foreach ($notifications as $notification)
                 @php
                     $data = (array) $notification->data;
@@ -25,7 +26,7 @@
                     $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? '';
                     $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
                 @endphp
-                <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
+                <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700" data-live-notification-item>
                     <p class="text-sm font-semibold text-zinc-900 dark:text-white">
                         {{ $notificationTitle }}
                     </p>

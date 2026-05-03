@@ -87,6 +87,8 @@
     {{-- Mobile Sidebar Overlay --}}
     <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/50 lg:hidden" onclick="toggleSidebar()"></div>
 
+    <x-live-notifications />
+
     {{-- Child Selector Dropdown --}}
     <script>
         function toggleSidebar() {

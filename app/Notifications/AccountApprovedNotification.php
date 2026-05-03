@@ -7,11 +7,12 @@ use Illuminate\Notifications\Notification;
 
 class AccountApprovedNotification extends Notification
 {
+    use BroadcastsDatabaseNotifications;
     use Queueable;
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     public function toArray(object $notifiable): array

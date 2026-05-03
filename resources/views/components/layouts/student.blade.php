@@ -155,6 +155,8 @@
     {{-- Mobile Sidebar Overlay --}}
     <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/50 backdrop-blur-sm lg:hidden transition-opacity duration-300" onclick="toggleSidebar()"></div>
 
+    <x-live-notifications />
+
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('student-sidebar');

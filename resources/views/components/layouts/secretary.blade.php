@@ -91,6 +91,8 @@
     <div id="admin-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/40 lg:hidden" onclick="toggleAdminSidebar()"></div>
     <div id="secretary-sidebar-overlay" class="fixed inset-0 z-40 hidden bg-black/50 backdrop-blur-sm lg:hidden transition-opacity duration-300" onclick="toggleSecretarySidebar()"></div>
 
+    <x-live-notifications />
+
     <script>
         function toggleAdminSidebar() {
             const sidebar = document.getElementById('admin-sidebar');

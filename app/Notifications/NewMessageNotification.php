@@ -10,13 +10,14 @@ use Illuminate\Notifications\Notification;
 
 class NewMessageNotification extends Notification
 {
+    use BroadcastsDatabaseNotifications;
     use Queueable;
 
     public function __construct(public Message $message) {}
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     public function toDatabase(object $notifiable): DatabaseMessage

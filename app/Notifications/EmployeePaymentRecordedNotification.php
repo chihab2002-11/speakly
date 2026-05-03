@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notification;
 
 class EmployeePaymentRecordedNotification extends Notification
 {
+    use BroadcastsDatabaseNotifications;
     use Queueable;
 
     public function __construct(
@@ -25,7 +26,7 @@ class EmployeePaymentRecordedNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     public function toDatabase(object $notifiable): DatabaseMessage

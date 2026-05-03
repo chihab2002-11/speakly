@@ -35,6 +35,8 @@
     <div 
         class="overflow-hidden rounded-3xl border"
         style="background-color: #FFFFFF; border-color: var(--lumina-border-light);"
+        data-live-notification-list
+        data-live-notification-read-route-template="{{ route($notificationsReadRouteName, array_merge($notificationsReadRouteParams, ['id' => '__ID__'])) }}"
     >
         @forelse($notifications as $notification)
             @php
@@ -50,6 +52,7 @@
             <div 
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
                 style="border-color: var(--lumina-border);"
+                data-live-notification-item
             >
                 {{-- Notification Icon --}}
                 <div 
@@ -126,7 +129,7 @@
             </div>
         @empty
             {{-- Empty State --}}
-            <div class="flex flex-col items-center justify-center py-16 text-center">
+            <div class="flex flex-col items-center justify-center py-16 text-center" data-live-notification-empty>
                 <div 
                     class="mb-4 flex h-20 w-20 items-center justify-center rounded-full"
                     style="background-color: var(--lumina-bg-card);"

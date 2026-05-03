@@ -8,6 +8,7 @@ use Illuminate\Notifications\Notification;
 
 class SecretaryAnnouncementNotification extends Notification
 {
+    use BroadcastsDatabaseNotifications;
     use Queueable;
 
     public function __construct(
@@ -23,7 +24,7 @@ class SecretaryAnnouncementNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'broadcast'];
     }
 
     public function toDatabase(object $notifiable): DatabaseMessage
