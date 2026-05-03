@@ -14,12 +14,6 @@
             'icon' => 'grid',
         ],
         [
-            'name' => 'My Payments',
-            'route' => 'teacher.my-payments',
-            'routeParams' => [],
-            'icon' => 'wallet',
-        ],
-        [
             'name' => 'Manage Attendance',
             'route' => 'teacher.attendance',
             'routeParams' => [],
@@ -36,6 +30,12 @@
             'route' => 'role.messages.index',
             'routeParams' => ['role' => 'teacher'],
             'icon' => 'chat',
+        ],
+        [
+            'name' => 'My Payments',
+            'route' => 'teacher.my-payments',
+            'routeParams' => [],
+            'icon' => 'wallet',
         ],
     ];
 @endphp

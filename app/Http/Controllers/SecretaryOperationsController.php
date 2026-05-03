@@ -106,6 +106,15 @@ class SecretaryOperationsController extends Controller
                 ->values();
         }
 
+        $payments = $payments
+            ->sortBy(function (array $payment): string {
+                $statusRank = ($payment['status'] ?? 'pending') === 'paid' ? '0' : '1';
+                $studentName = strtolower((string) ($payment['student']?->name ?? ''));
+
+                return $statusRank.'|'.$studentName;
+            })
+            ->values();
+
         return view('secretary.payments', [
             'payments' => $payments,
             'totalStudents' => $payments->count(),

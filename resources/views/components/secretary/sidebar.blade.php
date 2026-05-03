@@ -16,6 +16,8 @@
             'activeMatch' => fn () => request()->routeIs('role.dashboard') && request()->route('role') === $sharedRole,
         ],
     ];
+    $paymentNavItems = [];
+    $studentPaymentNavItem = null;
 
     if ($user?->can('registrations.manage')) {
         $navItems[] = [
@@ -28,7 +30,7 @@
     }
 
     if ($user?->can('payments.manage')) {
-        $navItems[] = [
+        $studentPaymentNavItem = [
             'name' => 'Student Payments',
             'route' => 'secretary.payments',
             'routeParams' => [],
@@ -38,7 +40,7 @@
     }
 
     if ($user?->hasRole('secretary')) {
-        $navItems[] = [
+        $paymentNavItems[] = [
             'name' => 'My Payments',
             'route' => 'secretary.my-payments',
             'routeParams' => [],
@@ -55,6 +57,15 @@
             'icon' => 'layers',
             'activeMatch' => fn () => request()->routeIs('secretary.groups') || request()->routeIs('secretary.timetable.index'),
         ];
+
+        if ($studentPaymentNavItem !== null) {
+            $navItems[] = $studentPaymentNavItem;
+            $studentPaymentNavItem = null;
+        }
+    }
+
+    if ($studentPaymentNavItem !== null) {
+        $navItems[] = $studentPaymentNavItem;
     }
 
     if ($user?->can('accounts.manage')) {
@@ -84,6 +95,8 @@
         'icon' => 'chat',
         'activeMatch' => fn () => request()->routeIs('role.messages.*') && request()->route('role') === $sharedRole,
     ];
+
+    $navItems = array_merge($navItems, $paymentNavItems);
 @endphp
 
 <aside

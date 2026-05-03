@@ -254,6 +254,49 @@ it('renders secretary payments page', function () {
     $response->assertDontSee('Online');
 });
 
+it('orders paid student payments before pending student payments', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $course = Course::factory()->create(['name' => 'French A1', 'price' => 10000]);
+
+    $pendingStudent = User::factory()->create([
+        'name' => 'Pending Student',
+        'approved_at' => now(),
+    ]);
+    $pendingStudent->assignRole('student');
+    StudentTuition::factory()->create([
+        'student_id' => $pendingStudent->id,
+        'course_id' => $course->id,
+        'course_price' => 10000,
+    ]);
+
+    $paidStudent = User::factory()->create([
+        'name' => 'Paid Student',
+        'approved_at' => now(),
+    ]);
+    $paidStudent->assignRole('student');
+    StudentTuition::factory()->create([
+        'student_id' => $paidStudent->id,
+        'course_id' => $course->id,
+        'course_price' => 10000,
+    ]);
+    TuitionPayment::factory()->create([
+        'student_id' => $paidStudent->id,
+        'amount' => 10000,
+    ]);
+
+    $response = $this->actingAs($secretary)->get(route('secretary.payments'));
+
+    $response->assertOk();
+    $response->assertSee('Paid / Pending');
+    $response->assertSee('1 / 1');
+    $response->assertSeeInOrder(['Paid Student', 'Pending Student']);
+    $response->assertViewHas('payments', function ($payments): bool {
+        return $payments->pluck('student.name')->all() === ['Paid Student', 'Pending Student']
+            && $payments->pluck('status')->all() === ['paid', 'pending'];
+    });
+});
+
 it('applies scholarship discount on secretary payments page', function () {
     /** @var TestCase $this */
     $secretary = createApprovedSecretaryForOperations();
@@ -1482,7 +1525,7 @@ it('notifies the assigned teacher when secretary creates a group with a teacher'
     expect($notification->data['actor_name'])->toBe($secretary->name);
     expect($notification->data['actor_role'])->toBe('secretary');
     expect($notification->data['related_model'])->toBe(CourseClass::class);
-    expect($notification->data['url'])->toBe(route('timetable.teacher'));
+    expect($notification->data['url'])->toBe(route('role.dashboard', ['role' => 'teacher']));
     expect($otherTeacher->fresh()->notifications()->count())->toBe(0);
 });
 

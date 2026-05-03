@@ -160,6 +160,70 @@ it('updates employee salary payment details from the admin page', function () {
     ]);
 });
 
+it('adds new employee payment amounts to the existing paid total', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $teacher = createApprovedUserWithRole('teacher');
+
+    EmployeePayment::factory()->create([
+        'employee_id' => $teacher->id,
+        'expected_salary' => 50000,
+        'amount_paid' => 10000,
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('admin.employee-payments.update', $teacher), [
+            'expected_salary' => 50000,
+            'amount_paid' => 15000,
+            'notes' => 'Second salary installment',
+        ])
+        ->assertRedirect(route('admin.employee-payments.index'));
+
+    $this->assertDatabaseHas('employee_payments', [
+        'employee_id' => $teacher->id,
+        'expected_salary' => 50000,
+        'amount_paid' => 25000,
+        'notes' => 'Second salary installment',
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('admin.employee-payment.show', $teacher));
+
+    $response->assertOk();
+    $response->assertViewHas('paymentData', function ($data): bool {
+        return $data['expected_salary'] === 50000
+            && $data['amount_paid'] === 25000
+            && $data['remaining'] === 25000
+            && $data['status'] === 'partial';
+    });
+});
+
+it('generates employee payment receipt with latest cumulative totals', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedUserWithRole('admin');
+    $teacher = createApprovedUserWithRole('teacher');
+
+    EmployeePayment::factory()->create([
+        'employee_id' => $teacher->id,
+        'expected_salary' => 50000,
+        'amount_paid' => 10000,
+    ]);
+
+    $this->actingAs($admin)
+        ->patch(route('admin.employee-payments.update', $teacher), [
+            'expected_salary' => 50000,
+            'amount_paid' => 15000,
+            'notes' => 'Second salary installment',
+        ])
+        ->assertRedirect(route('admin.employee-payments.index'));
+
+    $response = $this->actingAs($admin)->get(route('admin.employee-payment.receipt-pdf', $teacher));
+
+    $response->assertOk();
+    $this->assertStringContainsString('Expected: 50 000 DZD', $response->getContent());
+    $this->assertStringContainsString('Paid: 25 000 DZD', $response->getContent());
+    $this->assertStringContainsString('Remaining: 25 000 DZD', $response->getContent());
+});
+
 it('notifies a teacher when admin records a partial employee payment', function () {
     /** @var TestCase $this */
     $admin = createApprovedUserWithRole('admin');
@@ -227,7 +291,7 @@ it('does not duplicate employee payment notifications when paid amount is unchan
     $this->actingAs($admin)
         ->patch(route('admin.employee-payments.update', $teacher), [
             'expected_salary' => 6000,
-            'amount_paid' => 1000,
+            'amount_paid' => 0,
             'notes' => 'Salary changed only',
         ])
         ->assertRedirect(route('admin.employee-payments.index'));
@@ -237,7 +301,7 @@ it('does not duplicate employee payment notifications when paid amount is unchan
     $this->actingAs($admin)
         ->patch(route('admin.employee-payments.update', $teacher), [
             'expected_salary' => 6000,
-            'amount_paid' => 2000,
+            'amount_paid' => 1000,
             'notes' => 'Paid amount changed',
         ])
         ->assertRedirect(route('admin.employee-payments.index'));

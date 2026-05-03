@@ -60,8 +60,8 @@
             <p class="mt-1 text-2xl font-bold" style="color: #B45309;">{{ number_format($totalOutstanding) }} DA</p>
         </div>
         <div class="rounded-2xl border p-5" style="background: white; border-color: var(--lumina-border-light);">
-            <p class="text-sm" style="color: var(--lumina-text-muted);">Pending / Paid</p>
-            <p class="mt-1 text-lg font-bold" style="color: var(--lumina-text-primary);">{{ $pendingCount }} / {{ $paidCount }}</p>
+            <p class="text-sm" style="color: var(--lumina-text-muted);">Paid / Pending</p>
+            <p class="mt-1 text-lg font-bold" style="color: var(--lumina-text-primary);">{{ $paidCount }} / {{ $pendingCount }}</p>
         </div>
     </div>
 
@@ -89,8 +89,8 @@
                     style="border-color: var(--lumina-border); background: #F8FAFC;"
                 >
                     <option value="" @selected($status === '')>All</option>
-                    <option value="pending" @selected($status === 'pending')>Pending</option>
                     <option value="paid" @selected($status === 'paid')>Paid</option>
+                    <option value="pending" @selected($status === 'pending')>Pending</option>
                 </select>
             </div>
 

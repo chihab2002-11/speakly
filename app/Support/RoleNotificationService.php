@@ -25,13 +25,16 @@ class RoleNotificationService
     public function notifyEmployeePaymentChanged(User $employee, ?int $previousAmountPaid, array $paymentData): void
     {
         $amountPaid = (int) ($paymentData['amount_paid'] ?? 0);
+        $newlyPaidAmount = $previousAmountPaid === null
+            ? $amountPaid
+            : max($amountPaid - $previousAmountPaid, 0);
 
-        if ($previousAmountPaid !== null && $previousAmountPaid === $amountPaid) {
+        if ($newlyPaidAmount <= 0) {
             return;
         }
 
         $employee->notify(new EmployeePaymentRecordedNotification(
-            paidAmount: $amountPaid,
+            paidAmount: $newlyPaidAmount,
             remainingAmount: (int) ($paymentData['remaining'] ?? 0),
             fullSalary: (int) ($paymentData['expected_salary'] ?? 0),
             status: (string) ($paymentData['status'] ?? 'pending'),
@@ -64,7 +67,7 @@ class RoleNotificationService
                     programName: $group->course?->program?->name,
                     issuerId: (int) $issuer->id,
                     issuerName: (string) $issuer->name,
-                    url: Route::has('timetable.teacher') ? route('timetable.teacher') : null,
+                    url: Route::has('role.dashboard') ? route('role.dashboard', ['role' => 'teacher']) : null,
                     action: 'removed',
                     actorRole: $actorRole,
                 ));
@@ -88,7 +91,7 @@ class RoleNotificationService
             programName: $group->course?->program?->name,
             issuerId: (int) $issuer->id,
             issuerName: (string) $issuer->name,
-            url: Route::has('timetable.teacher') ? route('timetable.teacher') : null,
+            url: Route::has('role.dashboard') ? route('role.dashboard', ['role' => 'teacher']) : null,
             actorRole: $actorRole,
         ));
     }

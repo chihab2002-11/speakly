@@ -725,17 +725,17 @@
             const documentConfig = {
                 student: {
                     label: 'UPLOAD BIRTH CERTIFICATE',
-                    hint: 'Upload the student birth certificate as PDF, JPG, or PNG.',
+                    hint: 'Upload the student birth certificate as PDF, JPG, or PNG up to 25 MB.',
                     accept: '.pdf,.jpg,.jpeg,.png',
                 },
                 teacher: {
                     label: 'UPLOAD C.V',
-                    hint: 'Upload the teacher C.V as PDF or Word document.',
+                    hint: 'Upload the teacher C.V as PDF or Word document up to 25 MB.',
                     accept: '.pdf,.doc,.docx',
                 },
                 secretary: {
                     label: 'UPLOAD C.V',
-                    hint: 'Upload the secretary C.V as PDF or Word document.',
+                    hint: 'Upload the secretary C.V as PDF or Word document up to 25 MB.',
                     accept: '.pdf,.doc,.docx',
                 },
             };

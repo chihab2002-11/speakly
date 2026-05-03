@@ -51,7 +51,7 @@ function enrollResourceStudentInClass(User $student, CourseClass $class): void
     ]);
 }
 
-it('approved teacher can upload a resource file up to 20MB', function () {
+it('approved teacher can upload a resource file up to 25MB', function () {
     Storage::fake('public');
 
     $teacher = createResourceTeacher();
@@ -59,7 +59,7 @@ it('approved teacher can upload a resource file up to 20MB', function () {
     $deadline = now()->addWeek()->toDateString();
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
-        'file' => UploadedFile::fake()->create('worksheet.pdf', 20480, 'application/pdf'),
+        'file' => UploadedFile::fake()->create('worksheet.pdf', 25600, 'application/pdf'),
         'class_id' => $class->id,
         'name' => 'Worksheet Week 1',
         'category_id' => TeacherResource::CATEGORY_HOMEWORK,
@@ -76,7 +76,7 @@ it('approved teacher can upload a resource file up to 20MB', function () {
     expect($resource->class_id)->toBe($class->id);
     expect($resource->category)->toBe(TeacherResource::CATEGORY_HOMEWORK);
     expect($resource->deadline->toDateString())->toBe($deadline);
-    expect($resource->file_size)->toBe(20480 * 1024);
+    expect($resource->file_size)->toBe(25600 * 1024);
 
     Storage::disk('public')->assertExists($resource->file_path);
 });
@@ -189,14 +189,14 @@ it('non-homework resource does not save a deadline', function () {
     expect($resource->deadline)->toBeNull();
 });
 
-it('upload fails for resource files larger than 20MB', function () {
+it('upload fails for resource files larger than 25MB', function () {
     Storage::fake('public');
 
     $teacher = createResourceTeacher();
     $class = createClassForTeacher($teacher);
 
     $response = $this->actingAs($teacher)->post(route('teacher.resources.store'), [
-        'file' => UploadedFile::fake()->create('too-large.pdf', 20481, 'application/pdf'),
+        'file' => UploadedFile::fake()->create('too-large.pdf', 25601, 'application/pdf'),
         'class_id' => $class->id,
         'name' => 'Too Large Worksheet',
         'category_id' => TeacherResource::CATEGORY_HOMEWORK,

@@ -34,6 +34,10 @@ class LiveNotificationController extends Controller
         $message = $data['message'] ?? $data['body'] ?? $data['text'] ?? 'You have a new notification.';
         $url = $data['url'] ?? $data['action_url'] ?? '#';
 
+        if (in_array($data['type'] ?? null, ['teacher_group_assigned', 'teacher_group_removed'], true)) {
+            $url = route('role.dashboard', ['role' => 'teacher']);
+        }
+
         return [
             'id' => (string) $notification->id,
             'title' => $data['title'] ?? $data['type'] ?? 'Notification',

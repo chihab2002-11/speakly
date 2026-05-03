@@ -188,6 +188,42 @@ test('student registration accepts pdf upload even when browser reports a generi
     Storage::disk('public')->assertExists($student->registration_document_path);
 });
 
+test('registration accepts required documents up to 25MB', function (string $role) {
+    Storage::fake('public');
+
+    $payload = [
+        'name' => ucfirst($role).' With Large Document',
+        'email' => $role.'-large-document@example.com',
+        'date_of_birth' => '1995-02-12',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+        'requested_role' => $role,
+        'registration_document' => UploadedFile::fake()->create($role.'-document.pdf', 25600, 'application/pdf'),
+    ];
+
+    if ($role === 'student') {
+        $program = createLanguageProgramForRegistration();
+        $course = Course::factory()->create([
+            'program_id' => $program->id,
+        ]);
+
+        $payload['program_id'] = $program->id;
+        $payload['course_id'] = $course->id;
+    }
+
+    $response = $this->post(route('register.store'), $payload);
+
+    $response->assertSessionHasNoErrors()
+        ->assertRedirectToRoute('pending-approval');
+
+    $user = User::query()->where('email', $payload['email'])->first();
+
+    expect($user)->not()->toBeNull();
+    expect($user?->registration_document_size)->toBe(25600 * 1024);
+
+    Storage::disk('public')->assertExists($user->registration_document_path);
+})->with(['student', 'teacher', 'secretary']);
+
 test('teacher registration stores uploaded cv document', function () {
     Storage::fake('public');
 

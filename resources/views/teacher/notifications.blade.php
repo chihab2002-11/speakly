@@ -39,6 +39,9 @@
                 $notificationTitle = $data['title'] ?? $data['type'] ?? 'Notification';
                 $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? 'You have a new notification.';
                 $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
+                if (in_array($notificationType, ['teacher_group_assigned', 'teacher_group_removed'], true)) {
+                    $notificationUrl = route('role.dashboard', ['role' => 'teacher']);
+                }
             @endphp
             <div 
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"

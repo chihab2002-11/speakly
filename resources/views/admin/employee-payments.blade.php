@@ -6,7 +6,7 @@
         <section class="space-y-3">
             <h1 class="text-4xl font-extrabold tracking-tight md:text-5xl" style="color: #1A1B22; letter-spacing: -1.2px;">Employee payments</h1>
             <p class="max-w-3xl text-base leading-7" style="color: #444653;">
-                Track expected salary, paid amount, remaining balance, and payment status for teachers and secretaries.
+                Track expected salary, total paid amount, remaining balance, and payment status for teachers and secretaries.
             </p>
         </section>
 
@@ -108,7 +108,7 @@
                                 <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #444653;">Employee</th>
                                 <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #444653;">Role</th>
                                 <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #444653;">Expected Salary</th>
-                                <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #444653;">Amount Paid</th>
+                                <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #444653;">Add Payment</th>
                                 <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #444653;">Remaining</th>
                                 <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #444653;">Status</th>
                                 <th class="px-4 py-4 text-left text-xs font-bold uppercase tracking-[1.2px]" style="color: #444653;">Notes</th>
@@ -145,8 +145,8 @@
                                         <p class="mt-1 text-xs" style="color: #64748B;">{{ number_format($row['expected_salary']) }} DA</p>
                                     </td>
                                     <td class="px-4 py-5">
-                                        <input form="{{ $formId }}" name="amount_paid" type="number" min="0" max="100000000" step="1" value="{{ $row['amount_paid'] }}" class="w-32 rounded-lg border px-3 py-2 text-sm font-semibold" style="border-color: rgba(196, 197, 213, 0.3); color: #15803D;">
-                                        <p class="mt-1 text-xs" style="color: #15803D;">{{ number_format($row['amount_paid']) }} DA</p>
+                                        <input form="{{ $formId }}" name="amount_paid" type="number" min="0" max="100000000" step="1" value="0" class="w-32 rounded-lg border px-3 py-2 text-sm font-semibold" style="border-color: rgba(196, 197, 213, 0.3); color: #15803D;">
+                                        <p class="mt-1 text-xs" style="color: #15803D;">Total paid: {{ number_format($row['amount_paid']) }} DA</p>
                                     </td>
                                     <td class="px-4 py-5 font-bold" style="color: #B45309;">{{ number_format($row['remaining']) }} DA</td>
                                     <td class="px-4 py-5">

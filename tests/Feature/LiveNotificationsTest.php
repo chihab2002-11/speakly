@@ -41,7 +41,7 @@ function liveNotificationInstances(User $notifiable): array
         StudentAttendanceSavedNotification::class => new StudentAttendanceSavedNotification('English A1', '2026-05-03'),
         StudentGroupEnrollmentChangedNotification::class => new StudentGroupEnrollmentChangedNotification('enrolled', 1, 'Group #1', 'English A1', 'English', 1, 'Secretary Demo', 'secretary', 'student', null, null, route('student.academic')),
         TeacherAttendanceSavedNotification::class => new TeacherAttendanceSavedNotification(1, 'English A1', '2026-05-03', 3),
-        TeacherGroupAssignedNotification::class => new TeacherGroupAssignedNotification(1, 'Group #1', 'English A1', 'English', 1, 'Admin Demo', route('timetable.teacher'), 'assigned', 'admin'),
+        TeacherGroupAssignedNotification::class => new TeacherGroupAssignedNotification(1, 'Group #1', 'English A1', 'English', 1, 'Admin Demo', route('role.dashboard', ['role' => 'teacher']), 'assigned', 'admin'),
         TeacherResourceActionNotification::class => new TeacherResourceActionNotification('uploaded', 'Homework 1', 1, 'English A1'),
         TuitionPaymentRecordedNotification::class => new TuitionPaymentRecordedNotification(1, 1000, '2026-05-03', 'cash', 1, 'Secretary Demo', 'secretary', 'student', null, null, route('student.financial')),
     ];

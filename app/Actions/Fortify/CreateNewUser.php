@@ -19,6 +19,8 @@ class CreateNewUser implements CreatesNewUsers
 {
     use PasswordValidationRules, ProfileValidationRules;
 
+    private const MAX_REGISTRATION_DOCUMENT_KILOBYTES = 25600;
+
     /**
      * Validate and create a newly registered user.
      *
@@ -47,7 +49,7 @@ class CreateNewUser implements CreatesNewUsers
                             ->whereNotNull('program_id');
                     }),
                 ],
-                'registration_document' => ['nullable', 'file', 'max:10240'],
+                'registration_document' => ['nullable', 'file', 'max:'.self::MAX_REGISTRATION_DOCUMENT_KILOBYTES],
                 'password' => $this->passwordRules(),
             ],
             [

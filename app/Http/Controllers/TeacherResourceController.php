@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TeacherResourceController extends Controller
 {
-    private const MAX_UPLOAD_KILOBYTES = 20480;
+    private const MAX_UPLOAD_KILOBYTES = 25600;
 
     public function __construct(
         private RoleNotificationService $roleNotificationService,
@@ -178,7 +178,7 @@ class TeacherResourceController extends Controller
         }
 
         $validated = $request->validate([
-            'file' => ['required', 'file', 'mimes:pdf,doc,docx,zip', 'max:20480'],
+            'file' => ['required', 'file', 'mimes:pdf,doc,docx,zip', 'max:'.self::MAX_UPLOAD_KILOBYTES],
             ...$this->resourceValidationRules($teacher),
         ]);
 

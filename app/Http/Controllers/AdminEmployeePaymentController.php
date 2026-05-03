@@ -50,15 +50,17 @@ class AdminEmployeePaymentController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $employee->loadMissing('employeePayment');
+        $employee->load('employeePayment');
         $previousAmountPaid = $employee->employeePayment?->amount_paid;
+        $newPaymentAmount = (int) $validated['amount_paid'];
+        $totalAmountPaid = (int) ($previousAmountPaid ?? 0) + $newPaymentAmount;
 
         $employee->employeePayment()->updateOrCreate(
             [],
             [
                 'recorded_by' => $request->user()->id,
                 'expected_salary' => (int) $validated['expected_salary'],
-                'amount_paid' => (int) $validated['amount_paid'],
+                'amount_paid' => $totalAmountPaid,
                 'notes' => $validated['notes'] ?? null,
             ]
         );
@@ -80,7 +82,7 @@ class AdminEmployeePaymentController extends Controller
     {
         $this->ensurePayableEmployee($employee);
 
-        $employee->loadMissing(['employeePayment', 'roles:id,name']);
+        $employee->load(['employeePayment', 'roles:id,name']);
 
         $employeePayment = $employee->employeePayment ?? new EmployeePayment;
         $paymentData = $this->employeePaymentService->employeeRow($employee);
@@ -96,7 +98,7 @@ class AdminEmployeePaymentController extends Controller
     {
         $this->ensurePayableEmployee($employee);
 
-        $employee->loadMissing(['employeePayment', 'roles:id,name']);
+        $employee->load(['employeePayment', 'roles:id,name']);
 
         $employeePayment = $employee->employeePayment ?? new EmployeePayment;
         $paymentData = $this->employeePaymentService->employeeRow($employee);

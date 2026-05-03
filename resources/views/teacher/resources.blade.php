@@ -525,12 +525,12 @@
     {{-- Upload Modal --}}
     <div 
         id="uploadModal" 
-        class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+        class="fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto bg-black/50 p-3 sm:p-4"
         data-open-on-load="{{ old('resource_form') === 'upload' ? '1' : '0' }}"
         onclick="if(event.target === this) this.classList.add('hidden')"
     >
         <div 
-            class="w-full max-w-md rounded-3xl p-6"
+            class="my-4 max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-3xl p-4 sm:my-6 sm:max-h-[calc(100vh-3rem)] sm:p-6"
             style="background-color: #FFFFFF;"
             onclick="event.stopPropagation()"
         >

@@ -199,8 +199,29 @@ function showNotificationToast(notification) {
 
     window.clearTimeout(toast.dataset.liveHideTimer);
     toast.dataset.liveHideTimer = window.setTimeout(() => {
-        toast.classList.add('hidden');
+        hideNotificationToast();
     }, 5000);
+}
+
+function hideNotificationToast() {
+    const toast = document.getElementById('live-notification-toast');
+
+    if (!toast) {
+        return;
+    }
+
+    window.clearTimeout(toast.dataset.liveHideTimer);
+    toast.classList.add('hidden');
+}
+
+function bindNotificationToastClose() {
+    const closeButton = document.querySelector('[data-live-toast-close]');
+
+    if (!closeButton) {
+        return;
+    }
+
+    closeButton.addEventListener('click', hideNotificationToast);
 }
 
 const knownNotificationIds = new Set();
@@ -328,4 +349,7 @@ function startLiveNotifications() {
     window.setInterval(pollNotifications, 3000);
 }
 
-document.addEventListener('DOMContentLoaded', startLiveNotifications);
+document.addEventListener('DOMContentLoaded', () => {
+    bindNotificationToastClose();
+    startLiveNotifications();
+});
