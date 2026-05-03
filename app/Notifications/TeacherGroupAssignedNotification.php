@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\CourseClass;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Messages\DatabaseMessage;
 use Illuminate\Notifications\Notification;
@@ -18,6 +19,8 @@ class TeacherGroupAssignedNotification extends Notification
         public int $issuerId,
         public string $issuerName,
         public ?string $url = null,
+        public string $action = 'assigned',
+        public ?string $actorRole = null,
     ) {}
 
     /**
@@ -33,13 +36,22 @@ class TeacherGroupAssignedNotification extends Notification
     public function toDatabase(object $notifiable): DatabaseMessage
     {
         $programSuffix = $this->programName ? " Program: {$this->programName}." : '';
+        $isRemoved = $this->action === 'removed';
 
         return new DatabaseMessage([
-            'type' => 'teacher_group_assigned',
-            'title' => 'New group assignment',
-            'message' => "You have been assigned to teach {$this->groupName} for {$this->courseName}.{$programSuffix}",
+            'type' => $isRemoved ? 'teacher_group_removed' : 'teacher_group_assigned',
+            'title' => $isRemoved ? 'Group assignment removed' : 'New group assignment',
+            'message' => $isRemoved
+                ? "You are no longer assigned to teach {$this->groupName} for {$this->courseName}.{$programSuffix}"
+                : "You have been assigned to teach {$this->groupName} for {$this->courseName}.{$programSuffix}",
             'url' => $this->url,
-            'action' => 'assigned',
+            'action' => $this->action,
+            'actor_id' => $this->issuerId,
+            'actor_name' => $this->issuerName,
+            'actor_role' => $this->actorRole,
+            'related_model' => CourseClass::class,
+            'related_model_id' => $this->groupId,
+            'created_at' => now()->toIso8601String(),
             'group_id' => $this->groupId,
             'group_name' => $this->groupName,
             'course_name' => $this->courseName,

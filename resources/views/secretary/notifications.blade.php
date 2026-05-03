@@ -25,6 +25,12 @@
 
     <div class="overflow-hidden rounded-3xl border" style="background-color: #FFFFFF; border-color: var(--lumina-border-light);">
         @forelse($notifications as $notification)
+            @php
+                $data = (array) $notification->data;
+                $notificationTitle = $data['title'] ?? $data['type'] ?? 'Notification';
+                $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? 'You have a new notification.';
+                $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
+            @endphp
             <div
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
                 style="border-color: var(--lumina-border);"
@@ -41,10 +47,10 @@
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1">
                             <h3 class="text-base font-bold" style="color: var(--lumina-text-primary);">
-                                {{ $notification->data['title'] ?? 'Notification' }}
+                                {{ $notificationTitle }}
                             </h3>
                             <p class="mt-1 text-sm" style="color: var(--lumina-text-secondary);">
-                                {{ $notification->data['message'] ?? 'You have a new notification.' }}
+                                {{ $notificationMessage }}
                             </p>
                         </div>
 
@@ -60,9 +66,9 @@
                             {{ $notification->created_at->diffForHumans() }}
                         </span>
 
-                        @if(!empty($notification->data['url']))
+                        @if(!empty($notificationUrl))
                             <a
-                                href="{{ $notification->data['url'] }}"
+                                href="{{ $notificationUrl }}"
                                 class="text-xs font-semibold transition-colors hover:underline"
                                 style="color: var(--lumina-primary);"
                             >

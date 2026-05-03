@@ -31,6 +31,13 @@
         style="background-color: #FFFFFF; border-color: var(--lumina-border-light);"
     >
         @forelse($notifications as $notification)
+            @php
+                $data = (array) $notification->data;
+                $notificationType = $data['type'] ?? null;
+                $notificationTitle = $data['title'] ?? $data['type'] ?? 'Notification';
+                $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? 'You have a new notification.';
+                $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
+            @endphp
             <div 
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
                 style="border-color: var(--lumina-border);"
@@ -40,15 +47,15 @@
                     class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full"
                     style="background-color: {{ $notification->read_at ? '#F1F5F9' : 'var(--lumina-accent-green)' }};"
                 >
-                    @if(isset($notification->data['type']) && $notification->data['type'] === 'message')
+                    @if($notificationType === 'message')
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $notification->read_at ? '#64748B' : 'var(--lumina-primary)' }};">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
-                    @elseif(isset($notification->data['type']) && $notification->data['type'] === 'attendance')
+                    @elseif($notificationType === 'attendance')
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $notification->read_at ? '#64748B' : 'var(--lumina-primary)' }};">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                         </svg>
-                    @elseif(isset($notification->data['type']) && $notification->data['type'] === 'resource')
+                    @elseif($notificationType === 'resource')
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $notification->read_at ? '#64748B' : 'var(--lumina-primary)' }};">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
@@ -64,10 +71,10 @@
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1">
                             <h3 class="text-base font-bold" style="color: var(--lumina-text-primary);">
-                                {{ $notification->data['title'] ?? 'Notification' }}
+                                {{ $notificationTitle }}
                             </h3>
                             <p class="mt-1 text-sm" style="color: var(--lumina-text-secondary);">
-                                {{ $notification->data['message'] ?? 'You have a new notification.' }}
+                                {{ $notificationMessage }}
                             </p>
                         </div>
 
@@ -86,9 +93,9 @@
                         </span>
 
                         {{-- Action Button (if URL provided) --}}
-                        @if(!empty($notification->data['url']))
+                        @if(!empty($notificationUrl))
                             <a 
-                                href="{{ $notification->data['url'] }}"
+                                href="{{ $notificationUrl }}"
                                 class="text-xs font-semibold transition-colors hover:underline"
                                 style="color: var(--lumina-primary);"
                             >

@@ -11,6 +11,7 @@ use App\Models\LanguageProgram;
 use App\Models\Message;
 use App\Models\TuitionPayment;
 use App\Models\User;
+use App\Notifications\AccountUnapprovedNotification;
 use App\Notifications\SecretaryAnnouncementNotification;
 use App\Support\PaymentReceiptPdf;
 use App\Support\RoleNotificationService;
@@ -159,6 +160,8 @@ class SecretaryOperationsController extends Controller
             'reference' => $validated['reference'] ?? null,
             'notes' => $validated['notes'] ?? null,
         ]);
+
+        $this->roleNotificationService->notifyTuitionPaymentRecorded($payment, $request->user());
 
         $payment->loadMissing('student:id,name,email');
 
@@ -374,8 +377,10 @@ class SecretaryOperationsController extends Controller
                 ->withInput();
         }
 
-        // Load and verify group
-        $group = CourseClass::query()->withCount('students')->findOrFail($classId);
+        $group = CourseClass::query()
+            ->with(['course.program:id,name,code', 'course:id,name,code,program_id'])
+            ->withCount('students')
+            ->findOrFail($classId);
 
         // Verify class belongs to course
         if ($group->course_id !== $courseId) {
@@ -420,6 +425,8 @@ class SecretaryOperationsController extends Controller
         }
 
         $group->students()->attach($studentId, ['enrolled_at' => now()]);
+
+        $this->roleNotificationService->notifyStudentGroupEnrollmentChanged($group, $student, $request->user(), 'enrolled');
 
         return redirect()
             ->route('secretary.groups')
@@ -489,17 +496,7 @@ class SecretaryOperationsController extends Controller
 
         $group->students()->detach($studentId);
 
-        $groupName = 'Group #'.$group->id;
-        $courseName = (string) ($group->course?->name ?? 'the course');
-        $programName = (string) ($group->course?->program?->name ?? 'the program');
-
-        $student->notify(new SecretaryAnnouncementNotification(
-            title: 'Removed from group',
-            message: "You have been removed from {$groupName} for {$courseName} in {$programName}.",
-            url: route('student.academic'),
-            issuerId: $request->user()->id,
-            issuerName: (string) $request->user()->name,
-        ));
+        $this->roleNotificationService->notifyStudentGroupEnrollmentChanged($group, $student, $request->user(), 'removed');
 
         return redirect()
             ->route('secretary.groups')
@@ -848,6 +845,14 @@ class SecretaryOperationsController extends Controller
             'approved_at' => null,
             'approved_by' => null,
         ])->save();
+
+        $actor->loadMissing('roles:id,name');
+
+        $account->notify(new AccountUnapprovedNotification(
+            actorId: (int) $actor->id,
+            actorName: (string) $actor->name,
+            actorRole: $actor->roles->pluck('name')->first(),
+        ));
 
         return redirect()
             ->route('secretary.accounts')

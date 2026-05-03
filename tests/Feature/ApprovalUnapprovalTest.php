@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Notifications\AccountUnapprovedNotification;
 use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
@@ -38,6 +39,14 @@ it('admin can unapprove a student', function () {
     $student->refresh();
     expect($student->approved_at)->toBeNull();
     expect($student->hasRole('student'))->toBeTrue();
+
+    $notification = $student->notifications()->latest()->first();
+    expect($notification)->not()->toBeNull();
+    expect($notification->type)->toBe(AccountUnapprovedNotification::class);
+    expect($notification->data['type'])->toBe('account_unapproved');
+    expect($notification->data['actor_id'])->toBe($admin->id);
+    expect($notification->data['actor_role'])->toBe('admin');
+    expect($notification->data['url'])->toBe(route('pending-approval'));
 });
 
 it('admin can unapprove a teacher', function () {

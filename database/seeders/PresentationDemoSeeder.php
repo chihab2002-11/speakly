@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Notifications\ClassResourceUploadedNotification;
 use App\Notifications\EmployeePaymentRecordedNotification;
 use App\Notifications\SecretaryAnnouncementNotification;
+use App\Notifications\StudentGroupEnrollmentChangedNotification;
 use App\Notifications\TeacherGroupAssignedNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
@@ -543,6 +544,7 @@ class PresentationDemoSeeder extends Seeder
 
         $this->seedEmployeePaymentNotifications($teachers, $secretary);
         $this->seedTeacherAssignmentNotifications($teachers, $groups, $secretary);
+        $this->seedStudentGroupEnrollmentNotifications($admin, $secretary, $students, $parents, $groups);
         $this->seedResourceUploadNotifications($students, $parents, $groups);
     }
 
@@ -619,6 +621,118 @@ class PresentationDemoSeeder extends Seeder
             'issuer_id' => $secretary->id,
             'issuer_name' => $secretary->name,
         ], null, TeacherGroupAssignedNotification::class);
+    }
+
+    /**
+     * @param  array<string, User>  $students
+     * @param  array<string, User>  $parents
+     * @param  array<string, CourseClass>  $groups
+     */
+    private function seedStudentGroupEnrollmentNotifications(User $admin, User $secretary, array $students, array $parents, array $groups): void
+    {
+        $this->studentGroupEnrollmentNotification(
+            recipient: $students['lina'],
+            actor: $secretary,
+            group: $groups['english'],
+            action: 'enrolled',
+            recipientType: 'student',
+            readAt: null,
+            url: route('student.academic'),
+        );
+
+        $this->studentGroupEnrollmentNotification(
+            recipient: $parents['maya'],
+            actor: $secretary,
+            group: $groups['english'],
+            action: 'enrolled',
+            recipientType: 'parent',
+            child: $students['lina'],
+            readAt: null,
+            url: route('parent.child.academic', ['child' => $students['lina']->id]),
+        );
+
+        $this->studentGroupEnrollmentNotification(
+            recipient: $students['sara'],
+            actor: $admin,
+            group: $groups['spanish'],
+            action: 'removed',
+            recipientType: 'student',
+            readAt: now()->subHours(2),
+            url: route('student.academic'),
+        );
+
+        $this->studentGroupEnrollmentNotification(
+            recipient: $parents['amine'],
+            actor: $admin,
+            group: $groups['spanish'],
+            action: 'removed',
+            recipientType: 'parent',
+            child: $students['sara'],
+            readAt: now()->subHours(2),
+            url: route('parent.child.academic', ['child' => $students['sara']->id]),
+        );
+    }
+
+    private function studentGroupEnrollmentNotification(
+        User $recipient,
+        User $actor,
+        CourseClass $group,
+        string $action,
+        string $recipientType,
+        mixed $readAt,
+        ?string $url,
+        ?User $child = null,
+    ): void {
+        $group->loadMissing(['course.program']);
+        $actorRole = $actor->roles->first()?->name;
+        $actorLabel = trim($actor->name.($actorRole ? " ({$actorRole})" : ''));
+        $isEnrolled = $action === 'enrolled';
+        $title = $isEnrolled ? 'Enrolled in group' : 'Removed from group';
+        $groupName = 'Group #'.$group->id;
+        $courseName = (string) ($group->course?->name ?? 'the selected course');
+        $programName = $group->course?->program?->name;
+        $programSuffix = $programName ? " in {$programName}" : '';
+        $message = $recipientType === 'parent'
+            ? sprintf(
+                'Your child %s was %s %s for %s%s by %s.',
+                $child?->name ?? 'your child',
+                $isEnrolled ? 'enrolled in' : 'removed from',
+                $groupName,
+                $courseName,
+                $programSuffix,
+                $actorLabel,
+            )
+            : sprintf(
+                'You were %s %s for %s%s by %s.',
+                $isEnrolled ? 'enrolled in' : 'removed from',
+                $groupName,
+                $courseName,
+                $programSuffix,
+                $actorLabel,
+            );
+
+        $this->notification($recipient, [
+            'type' => 'student_group_enrollment_changed',
+            'title' => $title,
+            'message' => $message,
+            'url' => $url,
+            'action' => $action,
+            'actor_id' => $actor->id,
+            'actor_name' => $actor->name,
+            'actor_role' => $actorRole,
+            'issuer_id' => $actor->id,
+            'issuer_name' => $actor->name,
+            'related_model' => CourseClass::class,
+            'related_model_id' => $group->id,
+            'created_at' => now()->toIso8601String(),
+            'group_id' => $group->id,
+            'group_name' => $groupName,
+            'course_name' => $courseName,
+            'program_name' => $programName,
+            'recipient_type' => $recipientType,
+            'child_id' => $child?->id,
+            'child_name' => $child?->name,
+        ], $readAt, StudentGroupEnrollmentChangedNotification::class);
     }
 
     /**
@@ -791,6 +905,7 @@ class PresentationDemoSeeder extends Seeder
             SecretaryAnnouncementNotification::class,
             EmployeePaymentRecordedNotification::class,
             TeacherGroupAssignedNotification::class,
+            StudentGroupEnrollmentChangedNotification::class,
             ClassResourceUploadedNotification::class,
         ];
 
@@ -805,6 +920,7 @@ class PresentationDemoSeeder extends Seeder
                         'secretary_announcement',
                         'employee_payment_recorded',
                         'teacher_group_assigned',
+                        'student_group_enrollment_changed',
                         'homework_uploaded',
                         'class_resource_uploaded',
                     ], true)) {

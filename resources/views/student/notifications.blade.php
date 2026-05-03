@@ -38,9 +38,14 @@
     >
         @forelse($notifications as $notification)
             @php
+                $data = (array) $notification->data;
                 $isRead = (bool) $notification->read_at;
                 $iconBgClass = $isRead ? 'bg-slate-100' : 'bg-emerald-100';
                 $iconColorClass = $isRead ? 'text-slate-500' : 'text-emerald-700';
+                $notificationType = $data['type'] ?? null;
+                $notificationTitle = $data['title'] ?? $data['type'] ?? 'Notification';
+                $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? 'You have a new notification.';
+                $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
             @endphp
             <div 
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
@@ -50,7 +55,7 @@
                 <div 
                     class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {{ $iconBgClass }}"
                 >
-                    @if(isset($notification->data['type']) && $notification->data['type'] === 'message')
+                    @if($notificationType === 'message')
                         <svg class="h-6 w-6 {{ $iconColorClass }}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
@@ -66,10 +71,10 @@
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1">
                             <h3 class="text-base font-bold" style="color: var(--lumina-text-primary);">
-                                {{ $notification->data['title'] ?? 'Notification' }}
+                                {{ $notificationTitle }}
                             </h3>
                             <p class="mt-1 text-sm" style="color: var(--lumina-text-secondary);">
-                                {{ $notification->data['message'] ?? 'You have a new notification.' }}
+                                {{ $notificationMessage }}
                             </p>
                         </div>
 
@@ -88,14 +93,14 @@
                         </span>
 
                         {{-- Action Button (if URL provided) --}}
-                        @if(!empty($notification->data['url']))
+                        @if(!empty($notificationUrl))
                             @php
-                                $actionLabel = (isset($notification->data['type']) && $notification->data['type'] === 'attendance')
+                                $actionLabel = $notificationType === 'attendance'
                                     ? 'View Attendance'
                                     : 'View Message';
                             @endphp
                             <a 
-                                href="{{ $notification->data['url'] }}"
+                                href="{{ $notificationUrl }}"
                                 class="text-xs font-semibold transition-colors hover:underline"
                                 style="color: var(--lumina-primary);"
                             >

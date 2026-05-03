@@ -28,6 +28,13 @@
         style="background-color: #FFFFFF; border-color: rgba(190, 201, 191, 0.15);"
     >
         @forelse($notifications as $notification)
+            @php
+                $data = (array) $notification->data;
+                $notificationType = $data['type'] ?? null;
+                $notificationTitle = $data['title'] ?? $data['type'] ?? 'Notification';
+                $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? 'You have a new notification.';
+                $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
+            @endphp
             <div 
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
                 style="border-color: #E2E8F0;"
@@ -37,7 +44,7 @@
                     class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full"
                     style="background-color: {{ $notification->read_at ? '#F1F5F9' : '#D1FAE5' }};"
                 >
-                    @if(isset($notification->data['type']) && $notification->data['type'] === 'message')
+                    @if($notificationType === 'message')
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" style="color: {{ $notification->read_at ? '#64748B' : '#065F46' }};">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                         </svg>
@@ -53,10 +60,10 @@
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1">
                             <h3 class="text-base font-bold" style="color: #0F172A;">
-                                {{ $notification->data['title'] ?? 'Notification' }}
+                                {{ $notificationTitle }}
                             </h3>
                             <p class="mt-1 text-sm" style="color: #3F4941;">
-                                {{ $notification->data['message'] ?? 'You have a new notification.' }}
+                                {{ $notificationMessage }}
                             </p>
                         </div>
 
@@ -75,9 +82,9 @@
                         </span>
 
                         {{-- Action Button (if URL provided) --}}
-                        @if(!empty($notification->data['url']))
+                        @if(!empty($notificationUrl))
                             <a 
-                                href="{{ $notification->data['url'] }}"
+                                href="{{ $notificationUrl }}"
                                 class="text-xs font-semibold transition-colors hover:underline"
                                 style="color: #065F46;"
                             >

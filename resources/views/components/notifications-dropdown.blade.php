@@ -19,19 +19,25 @@
     @else
         <div class="space-y-3">
             @foreach ($notifications as $notification)
+                @php
+                    $data = (array) $notification->data;
+                    $notificationTitle = $data['title'] ?? $data['type'] ?? __('Notification');
+                    $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? '';
+                    $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
+                @endphp
                 <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700">
                     <p class="text-sm font-semibold text-zinc-900 dark:text-white">
-                        {{ $notification->data['title'] ?? __('Notification') }}
+                        {{ $notificationTitle }}
                     </p>
                     <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                        {{ $notification->data['message'] ?? '' }}
+                        {{ $notificationMessage }}
                     </p>
                     <div class="mt-2 flex items-center justify-between">
                         <span class="text-[11px] text-zinc-400 dark:text-zinc-500">
                             {{ $notification->created_at->diffForHumans() }}
                         </span>
-                        @if (! empty($notification->data['url']))
-                            <a href="{{ $notification->data['url'] }}" class="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400">
+                        @if (! empty($notificationUrl))
+                            <a href="{{ $notificationUrl }}" class="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400">
                                 {{ __('Open') }}
                             </a>
                         @endif

@@ -5,6 +5,7 @@ use App\Models\CourseClass;
 use App\Models\Room;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Notifications\ScheduleChangedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -78,6 +79,71 @@ test('admin can create schedule slot', function () {
         'room_id' => $room->id,
         'day_of_week' => 'monday',
     ]);
+});
+
+test('admin schedule changes notify assigned teacher students and linked parents only', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedAdmin();
+    $teacher = createApprovedUserWithRole('teacher');
+    $parent = createApprovedUserWithRole('parent');
+    $student = User::factory()->create([
+        'approved_at' => now(),
+        'parent_id' => $parent->id,
+        'name' => 'Scheduled Student',
+    ]);
+    $student->assignRole('student');
+    $unrelatedStudent = createApprovedUserWithRole('student');
+    $course = Course::factory()->create([
+        'name' => 'Italian A1',
+        'code' => 'A1',
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+    ]);
+    $group->students()->attach($student->id, ['enrolled_at' => now()]);
+    $room = Room::factory()->create(['name' => 'Room 10']);
+
+    $this->actingAs($admin)->post(route('admin.schedule.store'), [
+        'class_id' => $group->id,
+        'room_id' => $room->id,
+        'day_of_week' => 'monday',
+        'start_time' => '09:00',
+        'end_time' => '10:30',
+    ])->assertRedirect(route('admin.schedule.index'));
+
+    $schedule = Schedule::query()->latest('id')->firstOrFail();
+    $studentNotification = $student->fresh()->notifications()->latest()->first();
+
+    expect($teacher->fresh()->notifications()->count())->toBe(1);
+    expect($studentNotification->type)->toBe(ScheduleChangedNotification::class);
+    expect($studentNotification->data['type'])->toBe('schedule_changed');
+    expect($studentNotification->data['action'])->toBe('created');
+    expect($studentNotification->data['course_name'])->toBe('Italian A1');
+    expect($studentNotification->data['actor_role'])->toBe('admin');
+    expect($parent->fresh()->notifications()->count())->toBe(1);
+    expect($parent->fresh()->notifications()->latest()->first()->data['child_id'])->toBe($student->id);
+    expect($unrelatedStudent->fresh()->notifications()->count())->toBe(0);
+
+    $this->actingAs($admin)->patch(route('admin.schedule.update', $schedule), [
+        'class_id' => $group->id,
+        'room_id' => $room->id,
+        'day_of_week' => 'monday',
+        'start_time' => '11:00',
+        'end_time' => '12:30',
+    ])->assertRedirect(route('admin.schedule.index'));
+
+    expect($student->fresh()->notifications()->where('data->action', 'updated')->exists())->toBeTrue();
+    expect($teacher->fresh()->notifications()->count())->toBe(2);
+    expect($parent->fresh()->notifications()->count())->toBe(2);
+
+    $this->actingAs($admin)
+        ->delete(route('admin.schedule.destroy', $schedule))
+        ->assertRedirect(route('admin.schedule.index'));
+
+    expect($student->fresh()->notifications()->where('data->action', 'cancelled')->exists())->toBeTrue();
+    expect($teacher->fresh()->notifications()->count())->toBe(3);
+    expect($parent->fresh()->notifications()->count())->toBe(3);
 });
 
 test('admin cannot create room conflict schedule slot', function () {

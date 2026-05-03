@@ -6,6 +6,7 @@ use App\Models\CourseClass;
 use App\Models\Room;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Support\RoleNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -13,6 +14,10 @@ use Illuminate\View\View;
 
 class AdminScheduleController extends Controller
 {
+    public function __construct(
+        private RoleNotificationService $roleNotificationService,
+    ) {}
+
     public function index(Request $request): View
     {
         $day = strtolower((string) $request->query('day', ''));
@@ -69,13 +74,15 @@ class AdminScheduleController extends Controller
 
         $this->assertNoSchedulingConflicts($validated, $class->teacher_id !== null ? (int) $class->teacher_id : null);
 
-        Schedule::query()->create([
+        $schedule = Schedule::query()->create([
             'class_id' => $class->id,
             'room_id' => $validated['room_id'],
             'day_of_week' => $validated['day_of_week'],
             'start_time' => $validated['start_time'],
             'end_time' => $validated['end_time'],
         ]);
+
+        $this->roleNotificationService->notifyScheduleChanged($schedule, $request->user(), 'created');
 
         return redirect()
             ->route('admin.schedule.index')
@@ -104,13 +111,17 @@ class AdminScheduleController extends Controller
             'end_time' => $validated['end_time'],
         ]);
 
+        $this->roleNotificationService->notifyScheduleChanged($schedule->refresh(), $request->user(), 'updated');
+
         return redirect()
             ->route('admin.schedule.index')
             ->with('success', 'Schedule slot updated successfully.');
     }
 
-    public function destroy(Schedule $schedule): RedirectResponse
+    public function destroy(Request $request, Schedule $schedule): RedirectResponse
     {
+        $this->roleNotificationService->notifyScheduleChanged($schedule, $request->user(), 'cancelled');
+
         $schedule->delete();
 
         return redirect()

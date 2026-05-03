@@ -10,7 +10,9 @@ use App\Models\StudentTuition;
 use App\Models\TuitionPayment;
 use App\Models\User;
 use App\Notifications\SecretaryAnnouncementNotification;
+use App\Notifications\StudentGroupEnrollmentChangedNotification;
 use App\Notifications\TeacherGroupAssignedNotification;
+use App\Notifications\TuitionPaymentRecordedNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Notification;
@@ -336,6 +338,57 @@ it('records a student payment from secretary payments page', function () {
     ]);
 
     expect(TuitionPayment::query()->count())->toBe(1);
+});
+
+it('records tuition payment and notifies the student and linked parent only', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $parent = createApprovedUserWithRole('parent');
+    $unrelatedParent = createApprovedUserWithRole('parent');
+    $course = Course::factory()->create(['price' => 16000]);
+
+    $student = User::factory()->create([
+        'approved_at' => now(),
+        'parent_id' => $parent->id,
+        'name' => 'Payment Student',
+    ]);
+    $student->assignRole('student');
+    StudentTuition::factory()->create([
+        'student_id' => $student->id,
+        'course_id' => $course->id,
+        'course_price' => 16000,
+    ]);
+
+    $this->actingAs($secretary)
+        ->post(route('secretary.payments.store'), [
+            'student_id' => $student->id,
+            'amount' => 8000,
+            'method' => 'cash',
+            'reference' => 'PAY-NOTIFY-001',
+        ])
+        ->assertOk();
+
+    $payment = TuitionPayment::query()->where('reference', 'PAY-NOTIFY-001')->firstOrFail();
+    $studentNotification = $student->fresh()->notifications()->latest()->first();
+    $parentNotification = $parent->fresh()->notifications()->latest()->first();
+
+    expect($studentNotification)->not()->toBeNull();
+    expect($studentNotification->type)->toBe(TuitionPaymentRecordedNotification::class);
+    expect($studentNotification->data['type'])->toBe('tuition_payment_recorded');
+    expect($studentNotification->data['amount'])->toBe(8000);
+    expect($studentNotification->data['payment_id'])->toBe($payment->id);
+    expect($studentNotification->data['actor_id'])->toBe($secretary->id);
+    expect($studentNotification->data['actor_role'])->toBe('secretary');
+    expect($studentNotification->data['related_model'])->toBe(TuitionPayment::class);
+    expect($studentNotification->data['url'])->toBe(route('student.financial'));
+
+    expect($parentNotification)->not()->toBeNull();
+    expect($parentNotification->type)->toBe(TuitionPaymentRecordedNotification::class);
+    expect($parentNotification->data['recipient_type'])->toBe('parent');
+    expect($parentNotification->data['child_id'])->toBe($student->id);
+    expect($parentNotification->data['child_name'])->toBe('Payment Student');
+    expect($parentNotification->data['url'])->toBe(route('parent.financial'));
+    expect($unrelatedParent->fresh()->notifications()->count())->toBe(0);
 });
 
 it('does not accept online as a new secretary payment method', function () {
@@ -783,11 +836,116 @@ it('rejects duplicate enrollment in same group', function () {
         ]);
 });
 
+it('secretary enrolls student into group and sends database notifications to student and linked parent only', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $parent = createApprovedUserWithRole('parent');
+    $unrelatedStudent = createApprovedUserWithRole('student');
+    $unrelatedParent = createApprovedUserWithRole('parent');
+    $program = createLanguageProgramForSecretaryOperations([
+        'name' => 'English Program',
+    ]);
+    $course = Course::factory()->create([
+        'name' => 'English B1',
+        'code' => 'B1',
+        'program_id' => $program->id,
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'capacity' => 10,
+    ]);
+    $student = User::factory()->create([
+        'approved_at' => now(),
+        'parent_id' => $parent->id,
+        'name' => 'Linked Student',
+    ]);
+    $student->assignRole('student');
+
+    $this->actingAs($secretary)
+        ->post(route('secretary.groups.enroll'), [
+            'enroll_program_id' => $program->id,
+            'enroll_course_id' => $course->id,
+            'class_id' => $group->id,
+            'student_id' => $student->id,
+        ])
+        ->assertRedirect(route('secretary.groups'));
+
+    $this->assertDatabaseHas('notifications', [
+        'notifiable_type' => User::class,
+        'notifiable_id' => $student->id,
+        'type' => StudentGroupEnrollmentChangedNotification::class,
+    ]);
+
+    $studentNotification = $student->fresh()->notifications()->latest()->first();
+    $parentNotification = $parent->fresh()->notifications()->latest()->first();
+
+    expect($studentNotification->data['type'])->toBe('student_group_enrollment_changed');
+    expect($studentNotification->data['action'])->toBe('enrolled');
+    expect($studentNotification->data['group_id'])->toBe($group->id);
+    expect($studentNotification->data['group_name'])->toBe('Group #'.$group->id);
+    expect($studentNotification->data['course_name'])->toBe('English B1');
+    expect($studentNotification->data['actor_id'])->toBe($secretary->id);
+    expect($studentNotification->data['actor_name'])->toBe($secretary->name);
+    expect($studentNotification->data['actor_role'])->toBe('secretary');
+    expect($studentNotification->data['related_model'])->toBe(CourseClass::class);
+    expect($studentNotification->data['related_model_id'])->toBe($group->id);
+    expect($studentNotification->data['created_at'])->not()->toBeEmpty();
+    expect($studentNotification->data['url'])->toBe(route('student.academic'));
+
+    expect($parentNotification)->not()->toBeNull();
+    expect($parentNotification->type)->toBe(StudentGroupEnrollmentChangedNotification::class);
+    expect($parentNotification->data['action'])->toBe('enrolled');
+    expect($parentNotification->data['recipient_type'])->toBe('parent');
+    expect($parentNotification->data['child_id'])->toBe($student->id);
+    expect($parentNotification->data['child_name'])->toBe('Linked Student');
+    expect($parentNotification->data['url'])->toBe(route('parent.child.academic', ['child' => $student->id]));
+    expect($unrelatedStudent->fresh()->notifications()->count())->toBe(0);
+    expect($unrelatedParent->fresh()->notifications()->count())->toBe(0);
+});
+
+it('admin enrolls student through secretary group functionality and sends the same action notification', function () {
+    /** @var TestCase $this */
+    $admin = createApprovedAdminForOperations();
+    $program = createLanguageProgramForSecretaryOperations();
+    $course = Course::factory()->create([
+        'name' => 'French A2',
+        'code' => 'A2',
+        'program_id' => $program->id,
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'capacity' => 10,
+    ]);
+    $student = createApprovedUserWithRole('student');
+    $unrelatedStudent = createApprovedUserWithRole('student');
+
+    $this->actingAs($admin)
+        ->post(route('secretary.groups.enroll'), [
+            'enroll_program_id' => $program->id,
+            'enroll_course_id' => $course->id,
+            'class_id' => $group->id,
+            'student_id' => $student->id,
+        ])
+        ->assertRedirect(route('secretary.groups'));
+
+    $notification = $student->fresh()->notifications()->latest()->first();
+
+    expect($notification)->not()->toBeNull();
+    expect($notification->type)->toBe(StudentGroupEnrollmentChangedNotification::class);
+    expect($notification->data['action'])->toBe('enrolled');
+    expect($notification->data['actor_id'])->toBe($admin->id);
+    expect($notification->data['actor_name'])->toBe($admin->name);
+    expect($notification->data['actor_role'])->toBe('admin');
+    expect($notification->data['message'])->toContain('French A2');
+    expect($unrelatedStudent->fresh()->notifications()->count())->toBe(0);
+});
+
 it('secretary can remove an enrolled student from a group and notify the student', function () {
     /** @var TestCase $this */
-    Notification::fake();
-
     $secretary = createApprovedSecretaryForOperations();
+    $parent = createApprovedUserWithRole('parent');
+    $unrelatedStudent = createApprovedUserWithRole('student');
+    $unrelatedParent = createApprovedUserWithRole('parent');
     $program = createLanguageProgramForSecretaryOperations([
         'name' => 'English Program',
     ]);
@@ -801,6 +959,7 @@ it('secretary can remove an enrolled student from a group and notify the student
     ]);
     $student = User::factory()->create([
         'approved_at' => now(),
+        'parent_id' => $parent->id,
         'name' => 'Enrolled Student',
         'email' => 'enrolled.student@example.com',
     ]);
@@ -822,12 +981,26 @@ it('secretary can remove an enrolled student from a group and notify the student
         'user_id' => $student->id,
     ]);
 
-    Notification::assertSentTo($student, SecretaryAnnouncementNotification::class, function (SecretaryAnnouncementNotification $notification) use ($course): bool {
-        return $notification->title === 'Removed from group'
-            && str_contains($notification->message, 'Group #')
-            && str_contains($notification->message, $course->name)
-            && str_contains($notification->message, 'English Program');
-    });
+    $studentNotification = $student->fresh()->notifications()->latest()->first();
+    $parentNotification = $parent->fresh()->notifications()->latest()->first();
+
+    expect($studentNotification)->not()->toBeNull();
+    expect($studentNotification->type)->toBe(StudentGroupEnrollmentChangedNotification::class);
+    expect($studentNotification->data['action'])->toBe('removed');
+    expect($studentNotification->data['title'])->toBe('Removed from group');
+    expect($studentNotification->data['message'])->toContain('Group #'.$group->id);
+    expect($studentNotification->data['message'])->toContain($course->name);
+    expect($studentNotification->data['message'])->toContain('English Program');
+    expect($studentNotification->data['actor_id'])->toBe($secretary->id);
+    expect($studentNotification->data['actor_role'])->toBe('secretary');
+
+    expect($parentNotification)->not()->toBeNull();
+    expect($parentNotification->type)->toBe(StudentGroupEnrollmentChangedNotification::class);
+    expect($parentNotification->data['action'])->toBe('removed');
+    expect($parentNotification->data['recipient_type'])->toBe('parent');
+    expect($parentNotification->data['child_id'])->toBe($student->id);
+    expect($unrelatedStudent->fresh()->notifications()->count())->toBe(0);
+    expect($unrelatedParent->fresh()->notifications()->count())->toBe(0);
 });
 
 it('secretary cannot remove a student who is not enrolled in the selected group', function () {
@@ -917,7 +1090,7 @@ it('blocks mismatched program course and group combinations when removing a stud
         ]);
 });
 
-it('non secretaries cannot remove students from groups', function () {
+it('admin removes student through secretary group functionality and sends the same action notification', function () {
     /** @var TestCase $this */
     $admin = createApprovedAdminForOperations();
     $program = createLanguageProgramForSecretaryOperations();
@@ -940,7 +1113,46 @@ it('non secretaries cannot remove students from groups', function () {
             'remove_class_id' => $group->id,
             'remove_student_id' => $student->id,
         ])
+        ->assertRedirect(route('secretary.groups'));
+
+    $this->assertDatabaseMissing('class_student', [
+        'class_id' => $group->id,
+        'user_id' => $student->id,
+    ]);
+
+    $notification = $student->fresh()->notifications()->latest()->first();
+
+    expect($notification)->not()->toBeNull();
+    expect($notification->type)->toBe(StudentGroupEnrollmentChangedNotification::class);
+    expect($notification->data['action'])->toBe('removed');
+    expect($notification->data['actor_id'])->toBe($admin->id);
+    expect($notification->data['actor_name'])->toBe($admin->name);
+    expect($notification->data['actor_role'])->toBe('admin');
+});
+
+it('students cannot remove other students from groups', function () {
+    /** @var TestCase $this */
+    $actor = createApprovedUserWithRole('student');
+    $program = createLanguageProgramForSecretaryOperations();
+    $course = Course::factory()->create([
+        'program_id' => $program->id,
+    ]);
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+    ]);
+    $student = createApprovedUserWithRole('student');
+    $group->students()->attach($student->id, ['enrolled_at' => now()]);
+
+    $this->actingAs($actor)
+        ->post(route('secretary.groups.remove-student'), [
+            'remove_program_id' => $program->id,
+            'remove_course_id' => $course->id,
+            'remove_class_id' => $group->id,
+            'remove_student_id' => $student->id,
+        ])
         ->assertForbidden();
+
+    expect($student->fresh()->notifications()->count())->toBe(0);
 });
 
 it('student search endpoint returns only approved students with student role and enrollment status', function () {
@@ -1157,6 +1369,9 @@ it('notifies the assigned teacher when secretary creates a group with a teacher'
     expect($notification->data['message'])->toContain('Group #');
     expect($notification->data['message'])->toContain('English A1');
     expect($notification->data['issuer_name'])->toBe($secretary->name);
+    expect($notification->data['actor_name'])->toBe($secretary->name);
+    expect($notification->data['actor_role'])->toBe('secretary');
+    expect($notification->data['related_model'])->toBe(CourseClass::class);
     expect($notification->data['url'])->toBe(route('timetable.teacher'));
     expect($otherTeacher->fresh()->notifications()->count())->toBe(0);
 });
@@ -1183,7 +1398,7 @@ it('does not notify again when secretary updates a group without changing teache
     expect($teacher->fresh()->notifications()->count())->toBe(0);
 });
 
-it('notifies only the new teacher when secretary replaces a group teacher', function () {
+it('notifies the old and new teachers when secretary replaces a group teacher', function () {
     /** @var TestCase $this */
     $secretary = createApprovedSecretaryForOperations();
     $teacherA = createApprovedUserWithRole('teacher');
@@ -1204,9 +1419,46 @@ it('notifies only the new teacher when secretary replaces a group teacher', func
         ])
         ->assertRedirect(route('secretary.groups'));
 
-    expect($teacherA->fresh()->notifications()->count())->toBe(0);
-    expect($teacherB->fresh()->notifications()->count())->toBe(1);
+    $removedNotification = $teacherA->fresh()->notifications()->latest()->first();
+    $assignedNotification = $teacherB->fresh()->notifications()->latest()->first();
+
+    expect($removedNotification)->not()->toBeNull();
+    expect($removedNotification->type)->toBe(TeacherGroupAssignedNotification::class);
+    expect($removedNotification->data['type'])->toBe('teacher_group_removed');
+    expect($removedNotification->data['action'])->toBe('removed');
+    expect($removedNotification->data['actor_role'])->toBe('secretary');
+    expect($assignedNotification)->not()->toBeNull();
+    expect($assignedNotification->data['type'])->toBe('teacher_group_assigned');
+    expect($assignedNotification->data['action'])->toBe('assigned');
     expect($otherTeacher->fresh()->notifications()->count())->toBe(0);
+});
+
+it('notifies the old teacher when secretary removes a group teacher without replacement', function () {
+    /** @var TestCase $this */
+    $secretary = createApprovedSecretaryForOperations();
+    $teacher = createApprovedUserWithRole('teacher');
+    $course = Course::factory()->create();
+    $group = CourseClass::factory()->create([
+        'course_id' => $course->id,
+        'teacher_id' => $teacher->id,
+        'capacity' => 20,
+    ]);
+
+    $this->actingAs($secretary)
+        ->patch(route('secretary.groups.update', $group), [
+            'course_id' => $course->id,
+            'teacher_id' => '',
+            'capacity' => 20,
+        ])
+        ->assertRedirect(route('secretary.groups'));
+
+    $notification = $teacher->fresh()->notifications()->latest()->first();
+
+    expect($notification)->not()->toBeNull();
+    expect($notification->type)->toBe(TeacherGroupAssignedNotification::class);
+    expect($notification->data['type'])->toBe('teacher_group_removed');
+    expect($notification->data['action'])->toBe('removed');
+    expect($notification->data['message'])->toContain('no longer assigned');
 });
 
 it('secretary cannot delete group with schedules', function () {

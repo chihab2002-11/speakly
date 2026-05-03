@@ -7,6 +7,7 @@ use App\Models\TuitionPayment;
 use App\Models\User;
 use App\Notifications\ClassResourceUploadedNotification;
 use App\Notifications\EmployeePaymentRecordedNotification;
+use App\Notifications\StudentGroupEnrollmentChangedNotification;
 use App\Notifications\TeacherGroupAssignedNotification;
 use Carbon\CarbonImmutable;
 use Database\Seeders\PermissionSeeder;
@@ -78,6 +79,10 @@ it('seeds presentation employee payments and contextual notification flows', fun
     expect($sofia->notifications()->where('type', EmployeePaymentRecordedNotification::class)->where('data->type', 'employee_payment_recorded')->exists())->toBeTrue();
     expect($karim->notifications()->where('type', TeacherGroupAssignedNotification::class)->where('data->type', 'teacher_group_assigned')->exists())->toBeTrue();
     expect($secretary->notifications()->where('type', EmployeePaymentRecordedNotification::class)->whereNull('read_at')->exists())->toBeTrue();
+    expect($lina->notifications()->where('type', StudentGroupEnrollmentChangedNotification::class)->where('data->action', 'enrolled')->where('data->actor_role', 'secretary')->exists())->toBeTrue();
+    expect($sara->notifications()->where('type', StudentGroupEnrollmentChangedNotification::class)->where('data->action', 'removed')->where('data->actor_role', 'admin')->exists())->toBeTrue();
+    expect($maya->notifications()->where('type', StudentGroupEnrollmentChangedNotification::class)->where('data->child_name', 'Lina Benali')->exists())->toBeTrue();
+    expect($amine->notifications()->where('type', StudentGroupEnrollmentChangedNotification::class)->where('data->child_name', 'Sara Haddad')->exists())->toBeTrue();
 
     foreach ([$alex, $lina, $yacine] as $student) {
         expect($student->notifications()->where('type', ClassResourceUploadedNotification::class)->where('data->type', 'homework_uploaded')->exists())->toBeTrue();
