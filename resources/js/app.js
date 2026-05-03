@@ -74,6 +74,15 @@ function formatUnreadCount(count, compactLimit = 9) {
     return String(count);
 }
 
+function setUnreadCount(count) {
+    document.querySelectorAll('[data-live-notification-count]').forEach((badge) => {
+        const compactLimit = (badge.textContent || '').trim() === '99+' ? 99 : 9;
+
+        badge.textContent = formatUnreadCount(count, compactLimit);
+        badge.classList.toggle('hidden', count <= 0);
+    });
+}
+
 function incrementUnreadCount() {
     document.querySelectorAll('[data-live-notification-count]').forEach((badge) => {
         const compactLimit = badge.textContent.trim() === '99+' ? 99 : 9;
@@ -112,7 +121,7 @@ function notificationCardHtml(notification, readRoute) {
         : '';
 
     return `
-        <div class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50" style="border-color: var(--lumina-border, #E2E8F0);" data-live-notification-item>
+        <div class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50" style="border-color: var(--lumina-border, #E2E8F0);" data-live-notification-item data-live-notification-id="${escapeHtml(notification.id)}">
             <div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-emerald-100">
                 <svg class="h-6 w-6 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
@@ -142,7 +151,7 @@ function compactNotificationCardHtml(notification) {
         : '';
 
     return `
-        <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700" data-live-notification-item>
+        <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700" data-live-notification-item data-live-notification-id="${escapeHtml(notification.id)}">
             <p class="text-sm font-semibold text-zinc-900 dark:text-white">${escapeHtml(notification.title)}</p>
             <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">${escapeHtml(notification.message)}</p>
             <div class="mt-2 flex items-center justify-between">
@@ -194,21 +203,129 @@ function showNotificationToast(notification) {
     }, 5000);
 }
 
-function startLiveNotifications() {
-    const userId = window.AuthUser?.id;
+const knownNotificationIds = new Set();
+let notificationPollInFlight = false;
+let notificationInitialPollComplete = false;
+const notificationPollingStartedAt = Date.now();
 
-    if (!userId || !window.Echo) {
+function rememberRenderedNotifications() {
+    document.querySelectorAll('[data-live-notification-id]').forEach((item) => {
+        if (item.dataset.liveNotificationId) {
+            knownNotificationIds.add(item.dataset.liveNotificationId);
+        }
+    });
+}
+
+function rememberNotification(notification) {
+    if (notification.id) {
+        knownNotificationIds.add(String(notification.id));
+    }
+}
+
+function handleIncomingNotification(incomingNotification, options = {}) {
+    const notification = normalizeNotification(incomingNotification);
+    const notificationId = String(notification.id || '');
+
+    if (notificationId && knownNotificationIds.has(notificationId)) {
         return;
     }
 
-    window.Echo.private(`App.Models.User.${userId}`)
-        .notification((incomingNotification) => {
-            const notification = normalizeNotification(incomingNotification);
+    rememberNotification(notification);
 
-            incrementUnreadCount();
-            prependNotification(notification);
-            showNotificationToast(notification);
+    if (typeof options.unreadCount === 'number') {
+        setUnreadCount(options.unreadCount);
+    } else {
+        incrementUnreadCount();
+    }
+
+    prependNotification(notification);
+
+    if (options.showToast !== false) {
+        showNotificationToast(notification);
+    }
+}
+
+async function pollNotifications() {
+    const userId = window.AuthUser?.id;
+
+    if (!userId || notificationPollInFlight || document.hidden) {
+        return;
+    }
+
+    notificationPollInFlight = true;
+
+    try {
+        const response = await fetch('/notifications/live', {
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
         });
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data = await response.json();
+        const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+        const hasRenderedNotificationState = knownNotificationIds.size > 0;
+        const newNotifications = notifications
+            .slice()
+            .reverse()
+            .filter((notification) => {
+                if (!notification?.id || knownNotificationIds.has(String(notification.id))) {
+                    return false;
+                }
+
+                if (notificationInitialPollComplete || hasRenderedNotificationState) {
+                    return true;
+                }
+
+                const createdAt = Date.parse(notification.created_at || '');
+
+                return Number.isNaN(createdAt) || createdAt >= notificationPollingStartedAt - 1000;
+            });
+
+        setUnreadCount(Number(data.unread_count || 0));
+
+        newNotifications.forEach((notification) => {
+            handleIncomingNotification(notification, {
+                unreadCount: Number(data.unread_count || 0),
+                showToast: true,
+            });
+        });
+
+        if (!notificationInitialPollComplete) {
+            notifications.forEach((notification) => {
+                if (notification?.id) {
+                    knownNotificationIds.add(String(notification.id));
+                }
+            });
+            notificationInitialPollComplete = true;
+        }
+    } finally {
+        notificationPollInFlight = false;
+    }
+}
+
+function startLiveNotifications() {
+    const userId = window.AuthUser?.id;
+
+    if (!userId) {
+        return;
+    }
+
+    rememberRenderedNotifications();
+
+    if (window.Echo) {
+        window.Echo.private(`App.Models.User.${userId}`)
+            .notification((incomingNotification) => {
+                handleIncomingNotification(incomingNotification);
+            });
+    }
+
+    pollNotifications();
+    window.setInterval(pollNotifications, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', startLiveNotifications);

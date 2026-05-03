@@ -11,6 +11,7 @@ use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\AdminTimetableHubController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\EmployeeMyPaymentsController;
+use App\Http\Controllers\LiveNotificationController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\ParentChildPortalController;
 use App\Http\Controllers\ParentDashboardController;
@@ -873,6 +874,8 @@ Route::middleware([
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/notifications/live', [LiveNotificationController::class, 'index'])->name('notifications.live');
+
     Route::get('/notifications', function () {
         $notifications = User::query()->findOrFail((int) Auth::id())->notifications()->latest()->get();
 

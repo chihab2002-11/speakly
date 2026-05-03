@@ -81,6 +81,29 @@ it('uses a live-renderable broadcast payload for every notification class', func
     }
 });
 
+it('serves live database notifications for polling fallback', function () {
+    /** @var TestCase $this */
+    seedAuthorizationFixtures();
+
+    $user = createApprovedUserWithRole('student');
+    $user->notify(new SecretaryAnnouncementNotification(
+        'Schedule update',
+        'Your group timetable has changed.',
+        route('student.notifications'),
+        1,
+        'Secretary Demo'
+    ));
+
+    $response = $this->actingAs($user)->getJson(route('notifications.live'));
+
+    $response
+        ->assertOk()
+        ->assertJsonPath('unread_count', 1)
+        ->assertJsonPath('notifications.0.title', 'Schedule update')
+        ->assertJsonPath('notifications.0.message', 'Your group timetable has changed.')
+        ->assertJsonPath('notifications.0.type', 'secretary_announcement');
+});
+
 it('authorizes users for their own private notification channel', function () {
     /** @var TestCase $this */
     config([

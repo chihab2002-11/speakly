@@ -35,6 +35,7 @@
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
                 style="border-color: var(--lumina-border);"
                 data-live-notification-item
+                data-live-notification-id="{{ $notification->id }}"
             >
                 <div
                     class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {{ $notification->read_at ? 'bg-slate-100' : 'bg-emerald-100' }}"

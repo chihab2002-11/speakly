@@ -26,7 +26,7 @@
                     $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? '';
                     $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
                 @endphp
-                <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700" data-live-notification-item>
+                <div class="rounded-lg border border-zinc-200 p-3 dark:border-zinc-700" data-live-notification-item data-live-notification-id="{{ $notification->id }}">
                     <p class="text-sm font-semibold text-zinc-900 dark:text-white">
                         {{ $notificationTitle }}
                     </p>

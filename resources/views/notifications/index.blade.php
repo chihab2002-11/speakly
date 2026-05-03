@@ -8,7 +8,7 @@
         $notificationMessage = $data['message'] ?? $data['body'] ?? $data['text'] ?? '';
         $notificationUrl = $data['url'] ?? $data['action_url'] ?? null;
     @endphp
-    <div style="border:1px solid #ddd;padding:10px;margin:10px 0;{{ $n->read_at ? 'opacity:.7;' : '' }}" data-live-notification-item>
+    <div style="border:1px solid #ddd;padding:10px;margin:10px 0;{{ $n->read_at ? 'opacity:.7;' : '' }}" data-live-notification-item data-live-notification-id="{{ $n->id }}">
         <strong>{{ $notificationTitle }}</strong>
         <p>{{ $notificationMessage }}</p>
 

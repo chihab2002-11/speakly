@@ -53,6 +53,7 @@
                 class="flex items-start gap-4 border-b p-6 transition-colors hover:bg-gray-50 {{ $notification->read_at ? 'opacity-60' : '' }}"
                 style="border-color: var(--lumina-border);"
                 data-live-notification-item
+                data-live-notification-id="{{ $notification->id }}"
             >
                 {{-- Notification Icon --}}
                 <div 
