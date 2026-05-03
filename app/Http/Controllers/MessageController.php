@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Notifications\NewMessageNotification;
 use App\Support\DashboardRedirector;
 use Closure;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -235,6 +236,131 @@ class MessageController extends Controller
         }
 
         return $this->index($request);
+    }
+
+    public function live(Request $request, string $role): JsonResponse
+    {
+        return response()->json($this->livePayload($request));
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function livePayload(Request $request): array
+    {
+        $currentUserId = (int) $request->user()->id;
+        $search = (string) $request->query('search', '');
+        $selectedUserId = (int) $request->query('user_id', 0);
+
+        $selectedUser = $selectedUserId > 0
+            ? User::query()
+                ->whereKey($selectedUserId)
+                ->where('id', '!=', $currentUserId)
+                ->first(['id', 'name', 'email'])
+            : null;
+
+        $messages = [];
+
+        if ($selectedUser) {
+            Message::where('sender_id', $selectedUser->id)
+                ->where('receiver_id', $currentUserId)
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+
+            $messages = Message::query()
+                ->whereRaw(
+                    '(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)',
+                    [$currentUserId, $selectedUser->id, $selectedUser->id, $currentUserId]
+                )
+                ->with(['sender:id,name', 'receiver:id,name'])
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->map(fn (Message $message): array => [
+                    'id' => (int) $message->id,
+                    'sender_id' => (int) $message->sender_id,
+                    'subject' => $message->subject,
+                    'body' => ltrim((string) $message->body),
+                    'is_mine' => (int) $message->sender_id === $currentUserId,
+                    'author_name' => (int) $message->sender_id === $currentUserId
+                        ? 'You'
+                        : (string) ($message->sender?->name ?? 'User'),
+                    'author_initials' => (int) $message->sender_id === $currentUserId
+                        ? $request->user()->initials()
+                        : ($message->sender?->initials() ?: strtoupper(substr((string) ($message->sender?->name ?? '?'), 0, 1))),
+                    'created_at' => $message->created_at?->format('M j, H:i'),
+                ])
+                ->all();
+        }
+
+        return [
+            'conversations' => $this->liveConversations($currentUserId, $search),
+            'selected_user' => $selectedUser ? [
+                'id' => (int) $selectedUser->id,
+                'name' => $selectedUser->name,
+                'email' => $selectedUser->email,
+                'initials' => $selectedUser->initials(),
+            ] : null,
+            'messages' => $messages,
+        ];
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function liveConversations(int $currentUserId, string $search = ''): array
+    {
+        $conversationPartners = User::whereIn('id', function ($query) use ($currentUserId) {
+            $query->selectRaw('DISTINCT CASE
+                    WHEN sender_id = ? THEN receiver_id
+                    ELSE sender_id
+                END as user_id', [$currentUserId])
+                ->from('messages')
+                ->where(function ($q) use ($currentUserId) {
+                    $q->where('sender_id', $currentUserId)
+                        ->orWhere('receiver_id', $currentUserId);
+                });
+        })
+            ->when($search, function ($query) use ($search) {
+                return $query->whereRaw('LOWER(name) LIKE ?', ['%'.strtolower($search).'%']);
+            })
+            ->orderBy('name')
+            ->get(['id', 'name', 'email']);
+
+        $conversations = [];
+
+        foreach ($conversationPartners as $partner) {
+            $lastMessage = Message::whereRaw(
+                '(sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)',
+                [$currentUserId, $partner->id, $partner->id, $currentUserId]
+            )
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $unreadCount = Message::where('sender_id', $partner->id)
+                ->where('receiver_id', $currentUserId)
+                ->whereNull('read_at')
+                ->count();
+
+            $conversations[] = [
+                'user' => [
+                    'id' => (int) $partner->id,
+                    'name' => $partner->name,
+                    'email' => $partner->email,
+                    'initials' => $partner->initials(),
+                ],
+                'last_message' => $lastMessage ? [
+                    'sender_id' => (int) $lastMessage->sender_id,
+                    'body' => ltrim((string) $lastMessage->body),
+                    'created_at' => $lastMessage->created_at?->format('M j, H:i'),
+                    'sort_at' => $lastMessage->created_at?->timestamp ?? 0,
+                ] : null,
+                'unread_count' => $unreadCount,
+            ];
+        }
+
+        usort($conversations, fn ($a, $b) => ($b['last_message']['sort_at'] ?? 0) <=> ($a['last_message']['sort_at'] ?? 0));
+
+        return $conversations;
     }
 
     private function extractId(string $value): int

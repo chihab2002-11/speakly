@@ -24,12 +24,23 @@
     $isSecretaryContext = request()->routeIs('secretary.*') || request()->routeIs('secretary.timetable.index');
 @endphp
 
+<style>
+    .admin-sidebar-nav {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .admin-sidebar-nav::-webkit-scrollbar {
+        display: none;
+    }
+</style>
+
 <aside
     id="admin-sidebar"
-    class="fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col transition-transform duration-300 ease-in-out lg:translate-x-0"
+    class="fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col overflow-hidden transition-transform duration-300 ease-in-out lg:translate-x-0"
     style="background-color: var(--lumina-sidebar-bg);"
 >
-    <div class="flex flex-col gap-12 p-6">
+    <div class="shrink-0 p-6">
         <div class="flex items-center gap-3">
             <div class="flex h-12 w-12 items-center justify-center rounded-lg shadow-md transition-transform duration-200 hover:scale-105" style="background: linear-gradient(135deg, #2D8C5E 0%, #006A41 100%);">
                 <svg class="h-5 w-6 text-white" viewBox="0 0 22 18" fill="currentColor">
@@ -47,7 +58,7 @@
         </div>
     </div>
 
-    <nav class="flex flex-1 flex-col gap-1 pl-4 pr-0">
+    <nav class="admin-sidebar-nav flex flex-1 flex-col gap-1 overflow-y-auto overscroll-contain pl-4 pr-0 pb-4">
         @foreach($navItems as $item)
             @php
                 $isActive = $item['route'] !== null
@@ -136,47 +147,69 @@
             </div>
         @endforeach
 
-        <div class="mt-8 px-4 text-xs font-bold uppercase tracking-[1.1px]" style="color: #64748B;">Secretary Role</div>
-        @if($isSecretaryContext)
-            <div class="mx-4 mb-2 mt-2 rounded-lg border px-3 py-2 text-[11px] font-bold uppercase tracking-[1px]" style="border-color: #A7F3D0; background-color: #ECFDF5; color: #065F46;">
-                Secretary Mode
-            </div>
-        @endif
-        @foreach($secretaryItems as $item)
-            @php
-                $isSecretaryActive = $item['activeMatch']();
-            @endphp
-
-            <a
-                href="{{ route($item['route']) }}"
-                class="group relative flex items-center gap-4 px-4 py-3 text-sm transition-all duration-200 {{ $isSecretaryActive ? 'rounded-l-2xl bg-[#F3F8F5] font-bold' : 'mr-4 rounded-xl font-medium hover:bg-white/30' }}"
+        <div id="admin-secretary-section" class="mt-8 flex items-center justify-between px-4">
+            <span class="text-xs font-bold uppercase tracking-[1.1px]" style="color: #64748B;">Secretary Role</span>
+            <button
+                id="admin-secretary-toggle"
+                type="button"
+                class="mr-4 flex h-7 w-7 items-center justify-center rounded-lg transition-all hover:bg-white/30"
                 style="color: var(--lumina-primary-dark);"
+                aria-controls="admin-secretary-items"
+                aria-expanded="{{ $isSecretaryContext ? 'true' : 'false' }}"
+                title="Toggle secretary menu"
+                onclick="toggleAdminSecretaryNav()"
             >
-                <span class="flex h-5 w-5 items-center justify-center transition-transform duration-200 {{ $isSecretaryActive ? '' : 'group-hover:scale-110' }}">
-                    @switch($item['icon'])
-                        @case('user-plus')
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v6m3-3h-6m-6 8a6 6 0 1112 0H3zm6-10a4 4 0 100-8 4 4 0 000 8z"/></svg>
-                            @break
-                        @case('wallet')
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
-                            @break
-                        @case('layers')
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7l8-4 8 4-8 4-8-4zm0 5l8 4 8-4m-16 5l8 4 8-4"/></svg>
-                            @break
-                        @case('account')
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.398 0 4.655.593 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                            @break
-                        @case('bell')
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                            @break
-                    @endswitch
-                </span>
-                <span class="tracking-tight">{{ $item['name'] }}</span>
-            </a>
-        @endforeach
+                <svg data-secretary-plus class="h-4 w-4 {{ $isSecretaryContext ? 'hidden' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M12 5v14m7-7H5"/>
+                </svg>
+                <svg data-secretary-minus class="h-4 w-4 {{ $isSecretaryContext ? '' : 'hidden' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M5 12h14"/>
+                </svg>
+            </button>
+        </div>
+
+        <div id="admin-secretary-items" class="{{ $isSecretaryContext ? '' : 'hidden' }}">
+            @if($isSecretaryContext)
+                <div class="mx-4 mb-2 mt-2 rounded-lg border px-3 py-2 text-[11px] font-bold uppercase tracking-[1px]" style="border-color: #A7F3D0; background-color: #ECFDF5; color: #065F46;">
+                    Secretary Mode
+                </div>
+            @endif
+            @foreach($secretaryItems as $item)
+                @php
+                    $isSecretaryActive = $item['activeMatch']();
+                @endphp
+
+                <a
+                    href="{{ route($item['route']) }}"
+                    class="group relative flex items-center gap-4 px-4 py-3 text-sm transition-all duration-200 {{ $isSecretaryActive ? 'rounded-l-2xl bg-[#F3F8F5] font-bold' : 'mr-4 rounded-xl font-medium hover:bg-white/30' }}"
+                    style="color: var(--lumina-primary-dark);"
+                >
+                    <span class="flex h-5 w-5 items-center justify-center transition-transform duration-200 {{ $isSecretaryActive ? '' : 'group-hover:scale-110' }}">
+                        @switch($item['icon'])
+                            @case('user-plus')
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v6m3-3h-6m-6 8a6 6 0 1112 0H3zm6-10a4 4 0 100-8 4 4 0 000 8z"/></svg>
+                                @break
+                            @case('wallet')
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
+                                @break
+                            @case('layers')
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7l8-4 8 4-8 4-8-4zm0 5l8 4 8-4m-16 5l8 4 8-4"/></svg>
+                                @break
+                            @case('account')
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.398 0 4.655.593 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                @break
+                            @case('bell')
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                @break
+                        @endswitch
+                    </span>
+                    <span class="tracking-tight">{{ $item['name'] }}</span>
+                </a>
+            @endforeach
+        </div>
     </nav>
 
-    <div class="border-t p-6" style="border-color: rgba(226, 232, 240, 0.5);">
+    <div class="shrink-0 border-t p-6" style="border-color: rgba(226, 232, 240, 0.5);">
         <div class="flex flex-col gap-2">
             <a href="{{ route('support') }}" class="flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 hover:bg-white/50" style="color: var(--lumina-text-muted);">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -193,3 +226,28 @@
         </div>
     </div>
 </aside>
+
+<script>
+    function toggleAdminSecretaryNav() {
+        const section = document.getElementById('admin-secretary-section');
+        const items = document.getElementById('admin-secretary-items');
+        const toggle = document.getElementById('admin-secretary-toggle');
+
+        if (!section || !items || !toggle) {
+            return;
+        }
+
+        const opening = items.classList.contains('hidden');
+        items.classList.toggle('hidden', !opening);
+        toggle.setAttribute('aria-expanded', opening ? 'true' : 'false');
+
+        toggle.querySelector('[data-secretary-plus]')?.classList.toggle('hidden', opening);
+        toggle.querySelector('[data-secretary-minus]')?.classList.toggle('hidden', !opening);
+
+        if (opening) {
+            window.requestAnimationFrame(() => {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    }
+</script>

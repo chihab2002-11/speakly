@@ -7,11 +7,17 @@
     $messageConversationRouteParams = $messageConversationRouteParams ?? ['role' => $currentRole];
     $messageStoreRouteName = $messageStoreRouteName ?? 'role.messages.store';
     $messageStoreRouteParams = $messageStoreRouteParams ?? ['role' => $currentRole];
+    $messageLiveRouteName = $messageLiveRouteName ?? 'role.messages.live';
+    $messageLiveRouteParams = $messageLiveRouteParams ?? ['role' => $currentRole];
     $messageRecipientsRouteName = $messageRecipientsRouteName ?? 'role.messages.recipients';
     $messageRecipientsRouteParams = $messageRecipientsRouteParams ?? ['role' => $currentRole];
     $messageDescription = $messageDescription ?? 'Communicate with your school community.';
     $showNewConversation = $showNewConversation ?? true;
     $avatarInitials = static fn ($person): string => $person?->initials() ?: strtoupper(substr((string) ($person?->name ?? '?'), 0, 1));
+    $conversationUrlTemplate = route(
+        $messageConversationRouteName,
+        array_merge($messageConversationRouteParams, ['conversation' => '__CONVERSATION__'])
+    );
 @endphp
 
 <style>
@@ -67,14 +73,18 @@
 </div>
 
 <div
+    id="role-chat-root"
     class="role-chat-shell flex min-w-0 overflow-hidden rounded-3xl border shadow-sm"
     style="background-color: #FFFFFF; border-color: var(--lumina-border-light, rgba(190, 201, 191, 0.35));"
+    data-live-url="{{ route($messageLiveRouteName, $messageLiveRouteParams) }}"
+    data-conversation-url-template="{{ $conversationUrlTemplate }}"
+    data-selected-user-id="{{ $selectedUser?->id }}"
 >
     <div class="flex w-full shrink-0 flex-col border-r md:w-80 lg:w-[21rem] {{ $selectedUser ? 'hidden md:flex' : 'flex' }}" style="border-color: var(--lumina-border); background: #FBFEFC;">
         <div class="flex items-center justify-between border-b px-5 py-4" style="border-color: var(--lumina-border);">
             <div>
                 <h3 class="text-lg font-extrabold" style="color: var(--lumina-text-primary);">Conversations</h3>
-                <p class="text-xs" style="color: var(--lumina-text-muted);">
+                <p id="role-chat-conversation-count" class="text-xs" style="color: var(--lumina-text-muted);">
                     {{ count($conversations ?? []) }} active thread{{ count($conversations ?? []) === 1 ? '' : 's' }}
                 </p>
             </div>
@@ -116,7 +126,7 @@
             </form>
         </div>
 
-        <div class="flex-1 space-y-1 overflow-y-auto px-3 pb-3">
+        <div id="role-chat-conversation-list" class="flex-1 space-y-1 overflow-y-auto px-3 pb-3">
             @forelse($conversations ?? [] as $conv)
                 <a
                     href="{{ route($messageConversationRouteName, array_merge($messageConversationRouteParams, ['conversation' => $conv['user']->id])) }}"
@@ -193,7 +203,7 @@
                 </div>
 
                 <div class="role-chat-thread flex-1 overflow-y-auto px-3 py-4 md:px-5 md:py-5" id="messages-container">
-                    <div class="mx-auto flex max-w-3xl flex-col gap-3.5">
+                    <div id="role-chat-message-list" class="mx-auto flex max-w-3xl flex-col gap-3.5">
                         @forelse($selectedConversation ?? [] as $message)
                             @php
                                 $isMine = (int) $message->sender_id === (int) ($messageActor->id ?? auth()->id());
@@ -306,6 +316,220 @@
         });
     </script>
 @endif
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const root = document.getElementById('role-chat-root');
+        const conversationList = document.getElementById('role-chat-conversation-list');
+        const conversationCount = document.getElementById('role-chat-conversation-count');
+        const messageList = document.getElementById('role-chat-message-list');
+        const messagesContainer = document.getElementById('messages-container');
+        const searchInput = document.querySelector('input[name="search"]');
+
+        if (!root || !conversationList || !root.dataset.liveUrl) {
+            return;
+        }
+
+        const selectedUserId = root.dataset.selectedUserId || '';
+        const liveUrl = root.dataset.liveUrl;
+        const conversationUrlTemplate = root.dataset.conversationUrlTemplate || '';
+        let lastSignature = '';
+        let requestInFlight = false;
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function initialsFor(user) {
+            return escapeHtml(user?.initials || String(user?.name || '?').charAt(0).toUpperCase());
+        }
+
+        function conversationUrl(userId) {
+            return conversationUrlTemplate.replace('__CONVERSATION__', encodeURIComponent(userId));
+        }
+
+        function renderConversationList(conversations) {
+            const count = conversations.length;
+            if (conversationCount) {
+                conversationCount.textContent = `${count} active thread${count === 1 ? '' : 's'}`;
+            }
+
+            if (count === 0) {
+                conversationList.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-8 text-center">
+                        <p class="text-sm" style="color: var(--lumina-text-muted);">No conversations yet.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            conversationList.innerHTML = conversations.map((conversation) => {
+                const user = conversation.user || {};
+                const lastMessage = conversation.last_message || null;
+                const unreadCount = Number(conversation.unread_count || 0);
+                const isSelected = selectedUserId && Number(selectedUserId) === Number(user.id);
+                const itemClass = isSelected
+                    ? 'border-emerald-200 bg-emerald-50/80 shadow-sm'
+                    : 'border-transparent hover:border-slate-100 hover:bg-white';
+                const lastBody = lastMessage ? escapeHtml(lastMessage.body || '') : '';
+                const ownPrefix = lastMessage && Number(lastMessage.sender_id) !== Number(user.id) ? 'You: ' : '';
+
+                return `
+                    <a
+                        href="${conversationUrl(user.id)}"
+                        class="group flex items-start gap-3 rounded-2xl border p-3.5 transition-all hover:-translate-y-0.5 hover:shadow-sm ${itemClass}"
+                    >
+                        <div class="relative">
+                            <div class="role-chat-avatar flex h-12 w-12 items-center justify-center rounded-2xl" style="background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);">
+                                <span class="text-sm font-bold" style="color: var(--lumina-primary);">${initialsFor(user)}</span>
+                            </div>
+                            ${unreadCount > 0 ? `
+                                <span class="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                                    ${unreadCount}
+                                </span>
+                            ` : ''}
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="truncate text-sm font-semibold ${unreadCount > 0 ? 'font-extrabold' : ''}" style="color: var(--lumina-text-primary);">
+                                    ${escapeHtml(user.name || 'User')}
+                                </h4>
+                                ${lastMessage ? `
+                                    <span class="shrink-0 text-[10px]" style="color: var(--lumina-text-muted);">
+                                        ${escapeHtml(lastMessage.created_at || '')}
+                                    </span>
+                                ` : ''}
+                            </div>
+                            <p class="truncate text-xs" style="color: var(--lumina-text-muted);">${escapeHtml(user.email || '')}</p>
+                            ${lastMessage ? `
+                                <p class="mt-1 truncate text-xs ${unreadCount > 0 ? 'font-semibold' : ''}" style="color: var(--lumina-text-secondary);">
+                                    ${ownPrefix}${lastBody}
+                                </p>
+                            ` : ''}
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        function renderMessages(messages) {
+            if (!messageList || !messagesContainer) {
+                return;
+            }
+
+            const wasNearBottom = messagesContainer.scrollTop + messagesContainer.clientHeight >= messagesContainer.scrollHeight - 80;
+
+            if (messages.length === 0) {
+                messageList.innerHTML = `
+                    <div class="py-16 text-center">
+                        <p class="text-sm" style="color: var(--lumina-text-muted);">No messages yet. Start the conversation!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            messageList.innerHTML = messages.map((message) => {
+                const subject = message.subject
+                    ? `<p class="mb-1 ${message.is_mine ? 'text-right' : ''} text-xs font-semibold" style="color: var(--lumina-text-muted);">Re: ${escapeHtml(message.subject)}</p>`
+                    : '';
+                const body = escapeHtml(message.body || '');
+                const time = escapeHtml(message.created_at || '');
+                const authorName = escapeHtml(message.author_name || 'User');
+                const authorInitials = escapeHtml(message.author_initials || '?');
+
+                if (message.is_mine) {
+                    return `
+                        <div class="flex items-end justify-end gap-2.5">
+                            <div class="max-w-[86%] sm:max-w-[76%]">
+                                ${subject}
+                                <div class="role-chat-bubble rounded-2xl rounded-br-md border px-3.5 py-2.5" style="background: linear-gradient(135deg, #0E7A4E 0%, #047857 100%); border-color: rgba(255,255,255,0.2); color: white;">
+                                    <p class="whitespace-pre-wrap text-left text-sm leading-snug">${body}</p>
+                                </div>
+                                <p class="mt-1 text-right text-[10px]" style="color: var(--lumina-text-muted);">You · ${time}</p>
+                            </div>
+                            <div class="role-chat-avatar flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl" style="background: #D1FAE5; color: #047857;">
+                                <span class="text-xs font-black">${authorInitials}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="flex items-end justify-start gap-2.5">
+                        <div class="role-chat-avatar flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl" style="background: #E8F9F1; color: #034C3C;">
+                            <span class="text-xs font-black">${authorInitials}</span>
+                        </div>
+                        <div class="max-w-[86%] sm:max-w-[76%]">
+                            ${subject}
+                            <div class="role-chat-bubble rounded-2xl rounded-bl-md border px-3.5 py-2.5" style="background-color: #F8FAFC; border-color: #DDE7E2;">
+                                <p class="whitespace-pre-wrap text-left text-sm leading-snug" style="color: var(--lumina-text-primary);">${body}</p>
+                            </div>
+                            <p class="mt-1 text-[10px]" style="color: var(--lumina-text-muted);">${authorName} · ${time}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (wasNearBottom) {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+        }
+
+        async function refreshMessages() {
+            if (requestInFlight || document.hidden) {
+                return;
+            }
+
+            requestInFlight = true;
+
+            try {
+                const url = new URL(liveUrl, window.location.origin);
+                if (selectedUserId) {
+                    url.searchParams.set('user_id', selectedUserId);
+                }
+                if (searchInput && searchInput.value.trim() !== '') {
+                    url.searchParams.set('search', searchInput.value.trim());
+                }
+
+                const response = await fetch(url.toString(), {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                });
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const data = await response.json();
+                const signature = JSON.stringify({
+                    conversations: data.conversations,
+                    messages: data.messages,
+                });
+
+                if (signature === lastSignature) {
+                    return;
+                }
+
+                lastSignature = signature;
+                renderConversationList(data.conversations || []);
+                renderMessages(data.messages || []);
+            } finally {
+                requestInFlight = false;
+            }
+        }
+
+        refreshMessages();
+        window.setInterval(refreshMessages, 3000);
+    });
+</script>
 
 @if($showNewConversation)
     <div

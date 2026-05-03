@@ -189,3 +189,34 @@ test('user can search conversations by username', function () {
     $response->assertSee('John Carter');
     $response->assertDontSee('Alice Baker');
 });
+
+test('live endpoint returns fresh conversation data and marks open thread as read', function () {
+    createRoles();
+
+    $me = User::factory()->create(['approved_at' => now(), 'name' => 'Current User']);
+    $me->assignRole('student');
+
+    $partner = User::factory()->create(['approved_at' => now(), 'name' => 'Live Partner']);
+    $partner->assignRole('student');
+
+    $incoming = Message::create([
+        'sender_id' => $partner->id,
+        'receiver_id' => $me->id,
+        'body' => 'Live hello',
+        'read_at' => null,
+    ]);
+
+    $response = $this->actingAs($me)->getJson(route('role.messages.live', [
+        'role' => 'student',
+        'user_id' => $partner->id,
+    ]));
+
+    $response
+        ->assertOk()
+        ->assertJsonPath('selected_user.id', $partner->id)
+        ->assertJsonPath('messages.0.body', 'Live hello')
+        ->assertJsonPath('messages.0.is_mine', false)
+        ->assertJsonPath('conversations.0.user.id', $partner->id);
+
+    expect($incoming->refresh()->read_at)->not->toBeNull();
+});

@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\TeacherResource;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -136,6 +137,8 @@ class ParentChildPortalController extends Controller
                 'messageConversationRouteParams' => ['child' => $child->id],
                 'messageStoreRouteName' => 'parent.child.messages.store',
                 'messageStoreRouteParams' => ['child' => $child->id],
+                'messageLiveRouteName' => 'parent.child.messages.live',
+                'messageLiveRouteParams' => ['child' => $child->id],
             ]
         )));
     }
@@ -170,6 +173,18 @@ class ParentChildPortalController extends Controller
                 'conversation' => (int) $validated['receiver_id'],
             ])
             ->with('success', 'Message sent successfully.');
+    }
+
+    public function liveMessages(Request $request, User $child, ?int $conversation = null): JsonResponse
+    {
+        [, $child] = $this->resolveParentAndChild($request, $child);
+
+        $studentRequest = $this->buildChildRequest($request, $child);
+        if ($conversation !== null) {
+            $studentRequest->query->set('user_id', (string) $conversation);
+        }
+
+        return response()->json(app(MessageController::class)->livePayload($studentRequest));
     }
 
     public function settings(Request $request, User $child): View

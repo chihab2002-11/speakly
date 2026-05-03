@@ -168,6 +168,7 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, $supportedRolesMid
 
         Route::get('/messages', [MessageController::class, 'index'])->name('role.messages.index');
         Route::post('/messages', [MessageController::class, 'store'])->name('role.messages.store');
+        Route::get('/messages/live', [MessageController::class, 'live'])->name('role.messages.live');
         Route::patch('/messages/{message}/read', [MessageController::class, 'markAsRead'])
             ->whereNumber('message')
             ->name('role.messages.read');
@@ -350,6 +351,10 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
         Route::get('/children/{child}/messages', [ParentChildPortalController::class, 'messages'])
             ->whereNumber('child')
             ->name('child.messages');
+
+        Route::get('/children/{child}/messages/live', [ParentChildPortalController::class, 'liveMessages'])
+            ->whereNumber('child')
+            ->name('child.messages.live');
 
         Route::get('/children/{child}/messages/{conversation}', [ParentChildPortalController::class, 'messages'])
             ->whereNumber('child')
