@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\AttendanceRecord;
 use App\Models\Course;
 use App\Models\CourseClass;
+use App\Models\EmployeePayment;
 use App\Models\LanguageProgram;
 use App\Models\Message;
 use App\Models\Review;
@@ -16,6 +17,10 @@ use App\Models\StudentTuition;
 use App\Models\TeacherResource;
 use App\Models\TuitionPayment;
 use App\Models\User;
+use App\Notifications\ClassResourceUploadedNotification;
+use App\Notifications\EmployeePaymentRecordedNotification;
+use App\Notifications\SecretaryAnnouncementNotification;
+use App\Notifications\TeacherGroupAssignedNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Storage;
@@ -79,10 +84,11 @@ class PresentationDemoSeeder extends Seeder
 
         $this->seedEnrollments($groups, $students);
         $this->seedFinancials($students, $parents, $secretary);
+        $this->seedEmployeePayments($teachers, $secretary, $admin);
         $this->seedAttendance($groups, $students);
         $this->seedResources($groups, $teachers);
         $this->seedMessages($students, $parents, $teachers, $secretary, $admin);
-        $this->seedNotifications([$admin, $secretary, ...array_values($teachers), ...array_values($parents), ...array_values($students)]);
+        $this->seedNotifications($admin, $secretary, $teachers, $parents, $students, $groups);
         $this->seedReviews($students);
         $this->seedPendingApproval($courses['english']);
     }
@@ -92,14 +98,16 @@ class PresentationDemoSeeder extends Seeder
      */
     private function createUser(string $name, string $email, string $role, array $attributes = [], ?User $approver = null): User
     {
-        $user = User::query()->create(array_merge([
+        $user = User::query()->updateOrCreate(['email' => $email], array_merge([
             'name' => $name,
-            'email' => $email,
             'email_verified_at' => now(),
             'password' => $this->password,
             'requested_role' => $role,
             'approved_at' => now()->subDays(45),
             'approved_by' => $approver?->id,
+            'rejected_at' => null,
+            'rejected_by' => null,
+            'rejection_reason' => null,
         ], $attributes));
 
         $user->syncRoles([$role]);
@@ -115,20 +123,26 @@ class PresentationDemoSeeder extends Seeder
             'requested_course_id' => $requestedCourse->id,
         ], $approver);
 
-        StudentCard::query()->create([
-            'user_id' => $student->id,
-            'card_number' => 'LUM-2026-'.str_pad((string) $student->id, 4, '0', STR_PAD_LEFT),
-            'valid_from' => now()->subDays(45)->toDateString(),
-            'valid_to' => now()->addMonths(4)->toDateString(),
-            'academic_year' => now()->year.'/'.(now()->year + 1),
-            'status' => 'active',
-        ]);
+        $cardNumber = 'LUM-2026-'.str_pad((string) $student->id, 4, '0', STR_PAD_LEFT);
 
-        StudentTuition::query()->create([
-            'student_id' => $student->id,
-            'course_id' => $requestedCourse->id,
-            'course_price' => (int) $requestedCourse->price,
-        ]);
+        StudentCard::query()->updateOrCreate(
+            ['card_number' => $cardNumber],
+            [
+                'user_id' => $student->id,
+                'valid_from' => now()->subDays(45)->toDateString(),
+                'valid_to' => now()->addMonths(4)->toDateString(),
+                'academic_year' => now()->year.'/'.(now()->year + 1),
+                'status' => 'active',
+            ]
+        );
+
+        StudentTuition::query()->updateOrCreate(
+            ['student_id' => $student->id],
+            [
+                'course_id' => $requestedCourse->id,
+                'course_price' => (int) $requestedCourse->price,
+            ]
+        );
 
         return $student;
     }
@@ -195,9 +209,10 @@ class PresentationDemoSeeder extends Seeder
         ];
 
         return collect($programs)
-            ->map(fn (array $program): LanguageProgram => LanguageProgram::query()->create(array_merge($program, [
-                'is_active' => true,
-            ])))
+            ->map(fn (array $program): LanguageProgram => LanguageProgram::query()->updateOrCreate(
+                ['code' => $program['code']],
+                array_merge($program, ['is_active' => true])
+            ))
             ->all();
     }
 
@@ -216,13 +231,15 @@ class PresentationDemoSeeder extends Seeder
         ];
 
         return collect($courses)
-            ->map(fn (array $course): Course => Course::query()->create([
-                'name' => $course[0],
-                'code' => $course[1],
-                'price' => $course[2],
-                'description' => $course[3],
-                'program_id' => $course[4]->id,
-            ]))
+            ->map(fn (array $course): Course => Course::query()->updateOrCreate(
+                ['code' => $course[1]],
+                [
+                    'name' => $course[0],
+                    'price' => $course[2],
+                    'description' => $course[3],
+                    'program_id' => $course[4]->id,
+                ]
+            ))
             ->all();
     }
 
@@ -232,9 +249,9 @@ class PresentationDemoSeeder extends Seeder
     private function seedRooms(): array
     {
         return [
-            'orchid' => Room::query()->create(['name' => 'Room Orchid', 'capacity' => 24, 'location' => 'First floor']),
-            'cedar' => Room::query()->create(['name' => 'Room Cedar', 'capacity' => 30, 'location' => 'Second floor']),
-            'atlas' => Room::query()->create(['name' => 'Room Atlas', 'capacity' => 18, 'location' => 'Ground floor']),
+            'orchid' => Room::query()->updateOrCreate(['name' => 'Room Orchid'], ['capacity' => 24, 'location' => 'First floor']),
+            'cedar' => Room::query()->updateOrCreate(['name' => 'Room Cedar'], ['capacity' => 30, 'location' => 'Second floor']),
+            'atlas' => Room::query()->updateOrCreate(['name' => 'Room Atlas'], ['capacity' => 18, 'location' => 'Ground floor']),
         ];
     }
 
@@ -247,11 +264,11 @@ class PresentationDemoSeeder extends Seeder
     private function seedGroups(array $courses, array $teachers, array $rooms): array
     {
         $groups = [
-            'ielts' => CourseClass::query()->create(['course_id' => $courses['ielts']->id, 'teacher_id' => $teachers['sofia']->id, 'capacity' => 30]),
-            'english' => CourseClass::query()->create(['course_id' => $courses['english']->id, 'teacher_id' => $teachers['sofia']->id, 'capacity' => 24]),
-            'french' => CourseClass::query()->create(['course_id' => $courses['french']->id, 'teacher_id' => $teachers['karim']->id, 'capacity' => 24]),
-            'spanish' => CourseClass::query()->create(['course_id' => $courses['spanish']->id, 'teacher_id' => $teachers['karim']->id, 'capacity' => 18]),
-            'german' => CourseClass::query()->create(['course_id' => $courses['german']->id, 'teacher_id' => $teachers['nadia']->id, 'capacity' => 18]),
+            'ielts' => CourseClass::query()->updateOrCreate(['course_id' => $courses['ielts']->id], ['teacher_id' => $teachers['sofia']->id, 'capacity' => 30]),
+            'english' => CourseClass::query()->updateOrCreate(['course_id' => $courses['english']->id], ['teacher_id' => $teachers['sofia']->id, 'capacity' => 24]),
+            'french' => CourseClass::query()->updateOrCreate(['course_id' => $courses['french']->id], ['teacher_id' => $teachers['karim']->id, 'capacity' => 24]),
+            'spanish' => CourseClass::query()->updateOrCreate(['course_id' => $courses['spanish']->id], ['teacher_id' => $teachers['karim']->id, 'capacity' => 18]),
+            'german' => CourseClass::query()->updateOrCreate(['course_id' => $courses['german']->id], ['teacher_id' => $teachers['nadia']->id, 'capacity' => 18]),
         ];
 
         $slots = [
@@ -266,13 +283,17 @@ class PresentationDemoSeeder extends Seeder
         ];
 
         foreach ($slots as [$groupKey, $day, $start, $end, $roomKey]) {
-            Schedule::query()->create([
-                'class_id' => $groups[$groupKey]->id,
-                'day_of_week' => $day,
-                'start_time' => $start,
-                'end_time' => $end,
-                'room_id' => $rooms[$roomKey]->id,
-            ]);
+            Schedule::query()->updateOrCreate(
+                [
+                    'class_id' => $groups[$groupKey]->id,
+                    'day_of_week' => $day,
+                    'start_time' => $start,
+                ],
+                [
+                    'end_time' => $end,
+                    'room_id' => $rooms[$roomKey]->id,
+                ]
+            );
         }
 
         return $groups;
@@ -310,24 +331,32 @@ class PresentationDemoSeeder extends Seeder
     private function seedFinancials(array $students, array $parents, User $secretary): void
     {
         if ($this->linkedChildrenCount($students, $parents['maya']) >= 3) {
-            ScholarshipActivation::query()->create([
-                'parent_id' => $parents['maya']->id,
-                'student_id' => null,
-                'offer_key' => 'family_3_children',
-                'discount_percent' => 12,
-                'activated_at' => now()->subWeeks(2),
-                'meta' => ['reason' => 'Three linked children enrolled for the presentation demo.'],
-            ]);
+            ScholarshipActivation::query()->updateOrCreate(
+                [
+                    'parent_id' => $parents['maya']->id,
+                    'student_id' => null,
+                    'offer_key' => 'family_3_children',
+                ],
+                [
+                    'discount_percent' => 12,
+                    'activated_at' => now()->subWeeks(2),
+                    'meta' => ['reason' => 'Three linked children enrolled for the presentation demo.'],
+                ]
+            );
         }
 
-        ScholarshipActivation::query()->create([
-            'parent_id' => $students['alex']->parent_id ?? $students['alex']->id,
-            'student_id' => $students['alex']->id,
-            'offer_key' => 'multi_course_4_plus',
-            'discount_percent' => 10,
-            'activated_at' => now()->subWeek(),
-            'meta' => ['reason' => 'Alex is enrolled in four active course groups.'],
-        ]);
+        ScholarshipActivation::query()->updateOrCreate(
+            [
+                'parent_id' => $students['alex']->parent_id ?? $students['alex']->id,
+                'student_id' => $students['alex']->id,
+                'offer_key' => 'multi_course_4_plus',
+            ],
+            [
+                'discount_percent' => 10,
+                'activated_at' => now()->subWeek(),
+                'meta' => ['reason' => 'Alex is enrolled in four active course groups.'],
+            ]
+        );
 
         $payments = [
             ['alex', 42000, 'cash', 'PAY-ALEX-001', now()->subWeeks(5)],
@@ -340,16 +369,42 @@ class PresentationDemoSeeder extends Seeder
         ];
 
         foreach ($payments as [$studentKey, $amount, $method, $reference, $paidOn]) {
-            TuitionPayment::query()->create([
-                'student_id' => $students[$studentKey]->id,
-                'parent_id' => $students[$studentKey]->parent_id,
-                'recorded_by' => $secretary->id,
-                'amount' => $amount,
-                'paid_on' => $paidOn->toDateString(),
-                'method' => $method,
-                'reference' => $reference,
-                'notes' => 'Seeded presentation payment.',
-            ]);
+            TuitionPayment::query()->updateOrCreate(
+                ['reference' => $reference],
+                [
+                    'student_id' => $students[$studentKey]->id,
+                    'parent_id' => $students[$studentKey]->parent_id,
+                    'recorded_by' => $secretary->id,
+                    'amount' => $amount,
+                    'paid_on' => $paidOn->toDateString(),
+                    'method' => $method,
+                    'notes' => 'Seeded presentation payment.',
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param  array<string, User>  $teachers
+     */
+    private function seedEmployeePayments(array $teachers, User $secretary, User $admin): void
+    {
+        $payments = [
+            [$teachers['sofia'], 50000, 50000, 'Presentation demo: April salary fully paid.'],
+            [$teachers['karim'], 50000, 20000, 'Presentation demo: partial April salary payment.'],
+            [$secretary, 40000, 25000, 'Presentation demo: partial April salary payment.'],
+        ];
+
+        foreach ($payments as [$employee, $expectedSalary, $amountPaid, $notes]) {
+            EmployeePayment::query()->updateOrCreate(
+                ['employee_id' => $employee->id],
+                [
+                    'recorded_by' => $admin->id,
+                    'expected_salary' => $expectedSalary,
+                    'amount_paid' => $amountPaid,
+                    'notes' => $notes,
+                ]
+            );
         }
     }
 
@@ -380,14 +435,20 @@ class PresentationDemoSeeder extends Seeder
         ];
 
         foreach ($records as $index => [$groupKey, $studentKey, $grade, $status, $feedback]) {
-            AttendanceRecord::query()->create([
-                'class_id' => $groups[$groupKey]->id,
-                'student_id' => $students[$studentKey]->id,
-                'attendance_date' => now()->subDays(12 - $index)->toDateString(),
-                'status' => $status,
-                'grade' => $grade,
-                'feedback' => $feedback,
-            ]);
+            $attendanceDate = now()->subDays(12 - $index)->startOfDay();
+
+            AttendanceRecord::query()->updateOrCreate(
+                [
+                    'class_id' => $groups[$groupKey]->id,
+                    'student_id' => $students[$studentKey]->id,
+                    'attendance_date' => $attendanceDate,
+                ],
+                [
+                    'status' => $status,
+                    'grade' => $grade,
+                    'feedback' => $feedback,
+                ]
+            );
         }
     }
 
@@ -409,18 +470,20 @@ class PresentationDemoSeeder extends Seeder
             $path = 'teacher-resources/demo/'.$filename;
             Storage::disk('public')->put($path, "Demo resource: {$name}\nPrepared for Lumina School presentation.\n");
 
-            TeacherResource::query()->create([
-                'teacher_id' => $teachers[$teacherKey]->id,
-                'class_id' => $groups[$groupKey]->id,
-                'category' => $category,
-                'name' => $name,
-                'description' => 'Presentation-ready classroom resource.',
-                'original_filename' => $filename,
-                'file_path' => $path,
-                'mime_type' => 'application/pdf',
-                'file_size' => strlen(Storage::disk('public')->get($path)),
-                'download_count' => 2,
-            ]);
+            TeacherResource::query()->updateOrCreate(
+                ['file_path' => $path],
+                [
+                    'teacher_id' => $teachers[$teacherKey]->id,
+                    'class_id' => $groups[$groupKey]->id,
+                    'category' => $category,
+                    'name' => $name,
+                    'description' => 'Presentation-ready classroom resource.',
+                    'original_filename' => $filename,
+                    'mime_type' => 'application/pdf',
+                    'file_size' => strlen(Storage::disk('public')->get($path)),
+                    'download_count' => 2,
+                ]
+            );
         }
     }
 
@@ -440,23 +503,34 @@ class PresentationDemoSeeder extends Seeder
         ];
 
         foreach ($messages as [$sender, $receiver, $subject, $body]) {
-            Message::query()->create([
-                'sender_id' => $sender->id,
-                'receiver_id' => $receiver->id,
-                'subject' => $subject,
-                'body' => $body,
-                'read_at' => null,
-                'created_at' => now()->subDays(rand(1, 7)),
-                'updated_at' => now()->subDays(rand(0, 2)),
-            ]);
+            Message::query()->updateOrCreate(
+                [
+                    'sender_id' => $sender->id,
+                    'receiver_id' => $receiver->id,
+                    'subject' => $subject,
+                ],
+                [
+                    'body' => $body,
+                    'read_at' => null,
+                    'created_at' => now()->subDays(rand(1, 7)),
+                    'updated_at' => now()->subDays(rand(0, 2)),
+                ]
+            );
         }
     }
 
     /**
-     * @param  list<User>  $users
+     * @param  array<string, User>  $teachers
+     * @param  array<string, User>  $parents
+     * @param  array<string, User>  $students
+     * @param  array<string, CourseClass>  $groups
      */
-    private function seedNotifications(array $users): void
+    private function seedNotifications(User $admin, User $secretary, array $teachers, array $parents, array $students, array $groups): void
     {
+        $users = [$admin, $secretary, ...array_values($teachers), ...array_values($parents), ...array_values($students)];
+
+        $this->deleteDemoNotifications($users);
+
         foreach ($users as $index => $user) {
             $this->notification($user, [
                 'type' => 'secretary_announcement',
@@ -466,19 +540,278 @@ class PresentationDemoSeeder extends Seeder
                 'issuer_name' => 'Sarah Secretary',
             ], $index % 3 === 0 ? now()->subDay() : null);
         }
+
+        $this->seedEmployeePaymentNotifications($teachers, $secretary);
+        $this->seedTeacherAssignmentNotifications($teachers, $groups, $secretary);
+        $this->seedResourceUploadNotifications($students, $parents, $groups);
+    }
+
+    /**
+     * @param  array<string, User>  $teachers
+     */
+    private function seedEmployeePaymentNotifications(array $teachers, User $secretary): void
+    {
+        $this->notification($teachers['sofia'], [
+            'type' => 'employee_payment_recorded',
+            'title' => 'Salary fully paid',
+            'message' => 'You received a payment of 50,000 DZD. Your salary for this period is now fully paid.',
+            'url' => route('teacher.my-payments'),
+            'action' => 'recorded',
+            'paid_amount' => 50000,
+            'remaining_amount' => 0,
+            'full_salary' => 50000,
+            'status' => 'paid',
+        ], null, EmployeePaymentRecordedNotification::class);
+
+        $this->notification($teachers['karim'], [
+            'type' => 'employee_payment_recorded',
+            'title' => 'Payment recorded',
+            'message' => 'You received a payment of 20,000 DZD. Remaining salary: 30,000 DZD.',
+            'url' => route('teacher.my-payments'),
+            'action' => 'recorded',
+            'paid_amount' => 20000,
+            'remaining_amount' => 30000,
+            'full_salary' => 50000,
+            'status' => 'partial',
+        ], now()->subHours(6), EmployeePaymentRecordedNotification::class);
+
+        $this->notification($secretary, [
+            'type' => 'employee_payment_recorded',
+            'title' => 'Payment recorded',
+            'message' => 'You received a payment of 25,000 DZD. Remaining salary: 15,000 DZD.',
+            'url' => route('secretary.my-payments'),
+            'action' => 'recorded',
+            'paid_amount' => 25000,
+            'remaining_amount' => 15000,
+            'full_salary' => 40000,
+            'status' => 'partial',
+        ], null, EmployeePaymentRecordedNotification::class);
+    }
+
+    /**
+     * @param  array<string, User>  $teachers
+     * @param  array<string, CourseClass>  $groups
+     */
+    private function seedTeacherAssignmentNotifications(array $teachers, array $groups, User $secretary): void
+    {
+        $this->notification($teachers['sofia'], [
+            'type' => 'teacher_group_assigned',
+            'title' => 'New group assignment',
+            'message' => 'You have been assigned to teach IELTS Preparation.',
+            'url' => route('timetable.teacher'),
+            'action' => 'assigned',
+            'group_id' => $groups['ielts']->id,
+            'group_name' => 'Group #'.$groups['ielts']->id,
+            'course_name' => 'IELTS Preparation',
+            'issuer_id' => $secretary->id,
+            'issuer_name' => $secretary->name,
+        ], now()->subHours(5), TeacherGroupAssignedNotification::class);
+
+        $this->notification($teachers['karim'], [
+            'type' => 'teacher_group_assigned',
+            'title' => 'New group assignment',
+            'message' => 'You have been assigned to teach French B1 Intensive.',
+            'url' => route('timetable.teacher'),
+            'action' => 'assigned',
+            'group_id' => $groups['french']->id,
+            'group_name' => 'Group #'.$groups['french']->id,
+            'course_name' => 'French B1 Intensive',
+            'issuer_id' => $secretary->id,
+            'issuer_name' => $secretary->name,
+        ], null, TeacherGroupAssignedNotification::class);
+    }
+
+    /**
+     * @param  array<string, User>  $students
+     * @param  array<string, User>  $parents
+     * @param  array<string, CourseClass>  $groups
+     */
+    private function seedResourceUploadNotifications(array $students, array $parents, array $groups): void
+    {
+        $englishHomework = TeacherResource::query()
+            ->where('class_id', $groups['english']->id)
+            ->where('category', TeacherResource::CATEGORY_HOMEWORK)
+            ->first();
+        $ieltsResource = TeacherResource::query()
+            ->where('class_id', $groups['ielts']->id)
+            ->where('category', TeacherResource::CATEGORY_COURSE_MATERIALS)
+            ->first();
+
+        if ($englishHomework instanceof TeacherResource) {
+            foreach (['alex', 'lina', 'yacine'] as $studentKey) {
+                $this->studentResourceNotification(
+                    student: $students[$studentKey],
+                    resource: $englishHomework,
+                    group: $groups['english'],
+                    type: 'homework_uploaded',
+                    title: 'New homework uploaded',
+                    message: 'Your teacher uploaded homework for English A2 Conversation.',
+                    readAt: $studentKey === 'alex' ? null : now()->subHours(4),
+                );
+            }
+
+            $this->parentResourceNotification(
+                parent: $parents['maya'],
+                child: $students['lina'],
+                resource: $englishHomework,
+                group: $groups['english'],
+                type: 'homework_uploaded',
+                title: 'New homework for your child',
+                message: 'A homework was uploaded for your child Lina Benali in English A2 Conversation.',
+                readAt: null,
+            );
+
+            $this->parentResourceNotification(
+                parent: $parents['maya'],
+                child: $students['yacine'],
+                resource: $englishHomework,
+                group: $groups['english'],
+                type: 'homework_uploaded',
+                title: 'New homework for your child',
+                message: 'A homework was uploaded for your child Yacine Benali in English A2 Conversation.',
+                readAt: now()->subHours(3),
+            );
+        }
+
+        if (! $ieltsResource instanceof TeacherResource) {
+            return;
+        }
+
+        foreach (['alex', 'lina', 'omar', 'sara', 'nour'] as $studentKey) {
+            $this->studentResourceNotification(
+                student: $students[$studentKey],
+                resource: $ieltsResource,
+                group: $groups['ielts'],
+                type: 'class_resource_uploaded',
+                title: 'New course resource uploaded',
+                message: 'A new course resource was uploaded for IELTS Preparation.',
+                readAt: $studentKey === 'lina' ? null : now()->subHours(2),
+            );
+        }
+
+        $this->parentResourceNotification(
+            parent: $parents['maya'],
+            child: $students['lina'],
+            resource: $ieltsResource,
+            group: $groups['ielts'],
+            type: 'class_resource_uploaded',
+            title: 'New course resource for your child',
+            message: 'A new course resource was uploaded for your child Lina Benali in IELTS Preparation.',
+            readAt: now()->subHour(),
+        );
+
+        $this->parentResourceNotification(
+            parent: $parents['amine'],
+            child: $students['sara'],
+            resource: $ieltsResource,
+            group: $groups['ielts'],
+            type: 'class_resource_uploaded',
+            title: 'New course resource for your child',
+            message: 'A new course resource was uploaded for your child Sara Haddad in IELTS Preparation.',
+            readAt: null,
+        );
+    }
+
+    private function studentResourceNotification(
+        User $student,
+        TeacherResource $resource,
+        CourseClass $group,
+        string $type,
+        string $title,
+        string $message,
+        mixed $readAt,
+    ): void {
+        $this->notification($student, [
+            'type' => $type,
+            'title' => $title,
+            'message' => $message,
+            'url' => route('student.materials'),
+            'action' => 'uploaded',
+            'resource_id' => $resource->id,
+            'class_id' => $group->id,
+            'recipient_type' => 'student',
+            'course_name' => $group->course?->name,
+            'group_name' => 'Group #'.$group->id,
+            'category' => $resource->category,
+            'deadline' => $resource->deadline?->format('Y-m-d'),
+        ], $readAt, ClassResourceUploadedNotification::class);
+    }
+
+    private function parentResourceNotification(
+        User $parent,
+        User $child,
+        TeacherResource $resource,
+        CourseClass $group,
+        string $type,
+        string $title,
+        string $message,
+        mixed $readAt,
+    ): void {
+        if ((int) $child->parent_id !== (int) $parent->id) {
+            return;
+        }
+
+        $this->notification($parent, [
+            'type' => $type,
+            'title' => $title,
+            'message' => $message,
+            'url' => route('parent.child.materials', ['child' => $child->id]),
+            'action' => 'uploaded',
+            'resource_id' => $resource->id,
+            'class_id' => $group->id,
+            'recipient_type' => 'parent',
+            'course_name' => $group->course?->name,
+            'group_name' => 'Group #'.$group->id,
+            'category' => $resource->category,
+            'deadline' => $resource->deadline?->format('Y-m-d'),
+            'child_id' => $child->id,
+            'child_name' => $child->name,
+        ], $readAt, ClassResourceUploadedNotification::class);
     }
 
     /**
      * @param  array<string, mixed>  $data
      */
-    private function notification(User $user, array $data, mixed $readAt = null): void
+    private function notification(User $user, array $data, mixed $readAt = null, string $notificationClass = SecretaryAnnouncementNotification::class): void
     {
         $user->notifications()->create([
             'id' => (string) Str::uuid(),
-            'type' => 'App\\Notifications\\SecretaryAnnouncementNotification',
+            'type' => $notificationClass,
             'data' => $data,
             'read_at' => $readAt,
         ]);
+    }
+
+    /**
+     * @param  list<User>  $users
+     */
+    private function deleteDemoNotifications(array $users): void
+    {
+        $demoNotificationClasses = [
+            SecretaryAnnouncementNotification::class,
+            EmployeePaymentRecordedNotification::class,
+            TeacherGroupAssignedNotification::class,
+            ClassResourceUploadedNotification::class,
+        ];
+
+        foreach ($users as $user) {
+            $user->notifications()
+                ->whereIn('type', $demoNotificationClasses)
+                ->get()
+                ->each(function ($notification): void {
+                    $data = (array) $notification->data;
+
+                    if (in_array($data['type'] ?? null, [
+                        'secretary_announcement',
+                        'employee_payment_recorded',
+                        'teacher_group_assigned',
+                        'homework_uploaded',
+                        'class_resource_uploaded',
+                    ], true)) {
+                        $notification->delete();
+                    }
+                });
+        }
     }
 
     /**
@@ -495,16 +828,20 @@ class PresentationDemoSeeder extends Seeder
         foreach ($reviews as [$studentKey, $group, $text, $rating]) {
             $student = $students[$studentKey];
 
-            Review::query()->create([
-                'student_id' => $student->id,
-                'student_name' => $student->name,
-                'student_group' => $group,
-                'review_text' => $text,
-                'rating_score' => $rating,
-                'likes_count' => 12,
-                'dislikes_count' => 1,
-                'uploaded_at' => now()->subDays(4),
-            ]);
+            Review::query()->updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'student_group' => $group,
+                ],
+                [
+                    'student_name' => $student->name,
+                    'review_text' => $text,
+                    'rating_score' => $rating,
+                    'likes_count' => 12,
+                    'dislikes_count' => 1,
+                    'uploaded_at' => now()->subDays(4),
+                ]
+            );
         }
     }
 
@@ -513,19 +850,29 @@ class PresentationDemoSeeder extends Seeder
         $path = 'registration-documents/demo/amina-birth-certificate.txt';
         Storage::disk('public')->put($path, "Demo birth certificate placeholder for pending approval.\n");
 
-        User::query()->create([
-            'name' => 'Amina Pending',
-            'email' => 'pending.student@lumina.test',
-            'email_verified_at' => now(),
-            'password' => $this->password,
-            'requested_role' => 'student',
-            'date_of_birth' => '2011-05-22',
-            'requested_course_id' => $requestedCourse->id,
-            'registration_document_type' => 'birth_certificate',
-            'registration_document_original_filename' => 'amina-birth-certificate.txt',
-            'registration_document_path' => $path,
-            'registration_document_mime_type' => 'text/plain',
-            'registration_document_size' => strlen(Storage::disk('public')->get($path)),
-        ]);
+        $pending = User::query()->updateOrCreate(
+            ['email' => 'pending.student@lumina.test'],
+            [
+                'name' => 'Amina Pending',
+                'email_verified_at' => now(),
+                'password' => $this->password,
+                'requested_role' => 'student',
+                'date_of_birth' => '2011-05-22',
+                'parent_id' => null,
+                'requested_course_id' => $requestedCourse->id,
+                'approved_at' => null,
+                'approved_by' => null,
+                'rejected_at' => null,
+                'rejected_by' => null,
+                'rejection_reason' => null,
+                'registration_document_type' => 'birth_certificate',
+                'registration_document_original_filename' => 'amina-birth-certificate.txt',
+                'registration_document_path' => $path,
+                'registration_document_mime_type' => 'text/plain',
+                'registration_document_size' => strlen(Storage::disk('public')->get($path)),
+            ]
+        );
+
+        $pending->syncRoles([]);
     }
 }
