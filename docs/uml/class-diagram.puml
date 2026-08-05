@@ -1,163 +1,87 @@
 @startuml
-title Final Project - School Management System Overview Class Diagram
+title Final Project - Simplified Global Class Diagram
 
 left to right direction
-skinparam classAttributeIconSize 0
-skinparam linetype ortho
-skinparam shadowing false
-skinparam nodesep 70
-skinparam ranksep 70
-hide methods
 hide circle
+hide methods
+hide attributes
 
-skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
 skinparam backgroundColor white
 skinparam defaultFontName Arial
-skinparam ArrowColor #475569
-skinparam PackageBorderColor #334155
-skinparam PackageBackgroundColor #F8FAFC
-skinparam ClassBorderColor #334155
-skinparam ClassBackgroundColor white
+skinparam nodesep 75
+skinparam ranksep 75
 
-package "1) User, Roles & Approval" {
-    class User {
-        +id
-        +name
-        +email
-        +requested_role
-        +approved_at
-    }
-
-    class Role {
-        +id
-        +name
-    }
+skinparam Class {
+  BorderColor #334155
+  BackgroundColor white
+  FontColor #0F172A
 }
 
-package "2) Academic Management" {
-    class LanguageProgram {
-        +id
-        +code
-        +name
-        +is_active
-    }
-
-    class Course {
-        +id
-        +code
-        +name
-        +price
-    }
-
-    class CourseClass {
-        +id
-        +capacity
-        +teacher_id
-    }
+skinparam Arrow {
+  Color #475569
+  Thickness 1
 }
 
-package "3) Timetable & Attendance" {
-    class Schedule {
-        +id
-        +day_of_week
-        +start_time
-        +end_time
-    }
-
-    class Room {
-        +id
-        +name
-        +capacity
-        +location
-    }
-
-    class AttendanceRecord {
-        +id
-        +attendance_date
-        +status
-        +grade
-    }
-
-    class TeacherResource {
-        +id
-        +category
-        +name
-        +download_count
-    }
+package "Users & Access Control" {
+  class User
+  class Role
+  class Permission
 }
 
-package "4) Finance" {
-    class StudentTuition {
-        +id
-        +course_price
-    }
-
-    class TuitionPayment {
-        +id
-        +amount
-        +paid_on
-        +method
-    }
-
-    class ScholarshipActivation {
-        +id
-        +offer_key
-        +discount_percent
-        +activated_at
-    }
+package "Academic Management" {
+  class LanguageProgram
+  class Course
+  class CourseClass
+  class Schedule
+  class Room
 }
 
-package "5) Communication & Notifications" {
-    class Message {
-        +id
-        +subject
-        +body
-        +read_at
-    }
-
-    class Notification {
-        +id
-        +type
-        +read_at
-    }
+package "Academic Operations" {
+  class AttendanceRecord
+  class TeacherResource
+  class Review
 }
 
-User "1" -- "0..*" Role : assigned role(s)
-User "0..1" <-- "0..*" User : approved / rejected by
+package "Financial Management" {
+  class StudentTuition
+  class TuitionPayment
+  class EmployeePayment
+  class ScholarshipActivation
+}
 
-LanguageProgram "1" <-- "0..*" Course : groups courses
-Course "1" <-- "0..*" CourseClass : offered as classes
-User "0..*" -- "0..*" CourseClass : enrolls in
-User "0..1" <-- "0..*" CourseClass : taught by
+package "Communication & Notifications" {
+  class Message
+  class DatabaseNotification
+}
 
-CourseClass "1" <-- "0..*" Schedule : scheduled by
-Room "0..1" <-- "0..*" Schedule : held in
-CourseClass "1" <-- "0..*" AttendanceRecord : has attendance
-User "1" <-- "0..*" AttendanceRecord : recorded for student
-User "1" <-- "0..*" TeacherResource : uploaded by teacher
-CourseClass "1" <-- "0..*" TeacherResource : supports class
+User "*" -- "*" Role : has
+Role "*" -- "*" Permission : grants
 
-User "1" <-- "0..1" StudentTuition : tuition profile
-Course "1" <-- "0..*" StudentTuition : selected course
-StudentTuition "1" .. "0..*" TuitionPayment : settled by payments
-User "1" <-- "0..*" TuitionPayment : payment for student
-User "0..1" <-- "0..*" TuitionPayment : paid by parent
-User "1" <-- "0..*" ScholarshipActivation : activated by parent
-User "0..1" <-- "0..*" ScholarshipActivation : applied to student
+LanguageProgram "1" -- "*" Course
+Course "1" -- "*" CourseClass
+CourseClass "1" -- "*" Schedule
+Schedule "*" -- "0..1" Room
 
-User "1" <-- "0..*" Message : sends / receives
-User "1" <-- "0..*" Notification : receives
+User "1" -- "*" CourseClass : teaches
+User "*" -- "*" CourseClass : enrolls
 
-User -[hidden]-> LanguageProgram
-LanguageProgram -[hidden]-> Course
-Course -[hidden]-> CourseClass
-CourseClass -[hidden]-> Schedule
-Schedule -[hidden]-> StudentTuition
-StudentTuition -[hidden]-> Message
+CourseClass "1" -- "*" AttendanceRecord
+User "1" -- "*" AttendanceRecord
 
-note right of User
-Approval flow tracks requested_role, approved_at,
-approved_by, rejected_by, and parent-linked accounts.
-end note
+User "1" -- "*" TeacherResource
+CourseClass "1" -- "*" TeacherResource
+
+User "1" -- "0..1" StudentTuition
+Course "1" -- "*" StudentTuition
+User "1" -- "*" TuitionPayment
+User "1" -- "0..1" EmployeePayment
+User "1" -- "*" ScholarshipActivation
+
+User "1" -- "*" Message : sends/receives
+User "1" -- "*" DatabaseNotification : receives
+User "1" -- "*" Review : writes
 
 @enduml

@@ -9,6 +9,7 @@ use App\Http\Controllers\AdminLanguageProgramController;
 use App\Http\Controllers\AdminScheduleController;
 use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\AdminTimetableHubController;
+use App\Http\Controllers\AiMaterialExplanationController;
 use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\EmployeeMyPaymentsController;
 use App\Http\Controllers\LiveNotificationController;
@@ -242,6 +243,9 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:student'])
         Route::get('/materials/{resource}/print', [StudentMaterialsController::class, 'print'])
             ->whereNumber('resource')
             ->name('materials.print');
+        Route::post('/materials/{resource}/ai-explain', AiMaterialExplanationController::class)
+            ->whereNumber('resource')
+            ->name('materials.ai-explain');
 
         Route::get('/settings', [StudentSettingsController::class, 'edit'])->name('settings');
         Route::post('/settings', [StudentSettingsController::class, 'updateProfile'])->name('settings.update');

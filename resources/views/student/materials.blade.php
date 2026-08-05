@@ -55,8 +55,24 @@
         .mat-btn.download:hover { background: #1a6b4a; }
         .mat-btn.print { background: #f3f4f6; color: #374151; border: 1.5px solid #e5e7eb; }
         .mat-btn.print:hover { background: #e5e7eb; }
+        .mat-btn.ai { background: #e0e7ff; color: #3730a3; }
+        .mat-btn.ai:hover { background: #c7d2fe; }
         .mat-empty { grid-column: 1 / -1; padding: 48px; text-align: center; color: #9ca3af; font-size: 14px; font-weight: 500; }
+        #ai-output h1, #ai-output h2, #ai-output h3 { margin: 1em 0 .5em; font-weight: 700; color: #1f2937; }
+        #ai-output h1 { font-size: 1.5rem; }
+        #ai-output h2 { font-size: 1.25rem; }
+        #ai-output h3 { font-size: 1.125rem; }
+        #ai-output p { margin: .75em 0; }
+        #ai-output ul, #ai-output ol { margin: .75em 0; padding-left: 1.5rem; }
+        #ai-output ul { list-style: disc; }
+        #ai-output ol { list-style: decimal; }
+        #ai-output li { margin: .25em 0; }
+        #ai-output strong { font-weight: 700; color: #111827; }
+        #ai-output code { border-radius: 4px; background: #f3f4f6; padding: .125rem .25rem; }
     </style>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 
     <div class="mb-8 flex flex-col gap-2">
         <h1 class="font-inter text-3xl font-extrabold tracking-tight md:text-4xl" style="color: var(--lumina-text-primary); letter-spacing: -0.9px;">Learning Materials</h1>
@@ -108,6 +124,31 @@
         <div class="mat-grid" id="materialsGrid"></div>
     </div>
 
+    <div id="ai-explainer-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+        <div class="w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+                <h3 id="ai-explainer-title" class="text-lg font-semibold text-gray-900">Material</h3>
+                <button id="ai-explainer-close" type="button" class="rounded-md px-2 py-1 text-sm font-semibold text-gray-500 hover:bg-gray-100 hover:text-gray-700">Close</button>
+            </div>
+
+            <div class="px-6 py-6">
+                <div id="ai-loading" class="mb-4 hidden items-center gap-3 text-indigo-600">
+                    <svg class="h-5 w-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span class="animate-pulse text-sm font-medium">Reading material and generating explanation...</span>
+                </div>
+
+                <div id="ai-scroll-container" class="max-h-[60vh] overflow-y-auto rounded-lg border border-gray-100 bg-gray-50/50 p-4 pr-2">
+                    <div id="ai-output" class="prose prose-sm prose-indigo max-w-none text-gray-800">
+                        <p class="text-gray-500">Preparing your explanation...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <textarea id="studentMaterialsData" hidden>{{ base64_encode(json_encode($materials ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)) }}</textarea>
     <script>
         const MATERIALS = (() => {
@@ -142,6 +183,87 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#039;');
+        }
+
+        async function openAiExplainer(url, materialName = 'Material') {
+            const modal = document.getElementById('ai-explainer-modal');
+            const titleEl = document.getElementById('ai-explainer-title');
+            const outputEl = document.getElementById('ai-output');
+
+            console.log('Button clicked', { url, materialName, modal, outputEl });
+
+            if (!modal || !outputEl || !url) {
+                return;
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            titleEl.textContent = materialName;
+            outputEl.innerHTML = '<p class="text-gray-500">Preparing your explanation...</p>';
+
+            let fullMarkdown = '';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'text/plain',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                    },
+                });
+
+                if (!response.ok) {
+                    const error = await response.json().catch(() => ({}));
+                    throw new Error(error.message || 'The explanation could not be generated.');
+                }
+
+                if (!response.body) {
+                    throw new Error('Your browser does not support streamed explanations.');
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+
+                    if (done) {
+                        break;
+                    }
+
+                    fullMarkdown += decoder.decode(value, { stream: true });
+                    outputEl.innerHTML = renderAiMarkdown(fullMarkdown);
+                    outputEl.scrollTop = outputEl.scrollHeight;
+                }
+
+                fullMarkdown += decoder.decode();
+                outputEl.innerHTML = renderAiMarkdown(fullMarkdown);
+            } catch (error) {
+                outputEl.innerHTML = `<p class="text-red-600">${escapeHtml(error.message || 'Unable to generate an explanation.')}</p>`;
+            }
+        }
+
+        function renderAiMarkdown(markdown) {
+            if (typeof marked === 'undefined' || typeof marked.parse !== 'function') {
+                return `<pre class="whitespace-pre-wrap">${escapeHtml(markdown)}</pre>`;
+            }
+
+            const rendered = marked.parse(markdown);
+
+            return typeof DOMPurify === 'undefined'
+                ? rendered
+                : DOMPurify.sanitize(rendered);
+        }
+
+        function closeAiExplainer() {
+            const modal = document.getElementById('ai-explainer-modal');
+
+            if (!modal) {
+                return;
+            }
+
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         function openPrintForMaterial(url) {
@@ -295,6 +417,7 @@
                         <div class="mat-actions">
                             <a class="mat-btn download" href="${escapeHtml(item.downloadUrl)}">Download</a>
                             <button class="mat-btn print js-print-material" type="button" data-print-url="${escapeHtml(item.printUrl)}">Print</button>
+                            <button class="mat-btn ai js-ai-material" type="button" data-ai-url="${escapeHtml(item.aiExplainUrl)}" data-material-name="${escapeHtml(item.resourceName)}">Explain</button>
                         </div>
                     </div>
                 `; }).join('')}
@@ -303,6 +426,12 @@
             grid.querySelectorAll('.js-print-material').forEach(button => {
                 button.addEventListener('click', () => {
                     openPrintForMaterial(button.dataset.printUrl || '');
+                });
+            });
+
+            grid.querySelectorAll('.js-ai-material').forEach(button => {
+                button.addEventListener('click', () => {
+                    openAiExplainer(button.dataset.aiUrl || '', button.dataset.materialName || 'Material');
                 });
             });
         }
@@ -327,5 +456,18 @@
         fillClassFilter();
         renderMaterials();
         markMaterialsAsSeen();
+
+        document.getElementById('ai-explainer-close')?.addEventListener('click', closeAiExplainer);
+        document.getElementById('ai-explainer-modal')?.addEventListener('click', (event) => {
+            if (event.target.id === 'ai-explainer-modal') {
+                closeAiExplainer();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                closeAiExplainer();
+            }
+        });
     </script>
 </x-dynamic-component>

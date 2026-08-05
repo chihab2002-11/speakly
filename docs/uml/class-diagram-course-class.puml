@@ -1,65 +1,82 @@
 @startuml
-title Course Structure Diagram - School Management System
+title Student Enrollment Relationship Using User Role
 
-left to right direction
+top to bottom direction
 hide circle
+hide methods
 
 skinparam classAttributeIconSize 0
-skinparam linetype ortho
 skinparam shadowing false
+skinparam linetype ortho
 skinparam backgroundColor white
 skinparam defaultFontName Arial
-skinparam ArrowColor #475569
-skinparam ClassBorderColor #334155
-skinparam ClassBackgroundColor white
-skinparam NoteBackgroundColor #FEF9C3
-skinparam NoteBorderColor #A16207
+skinparam nodesep 70
+skinparam ranksep 70
 
-class Course {
-  -id: bigint
-  -program_id: bigint
-  -code: string
-  -name: string
-  -description: text
-  -price: decimal
-  -is_active: boolean
+skinparam Class {
+  BorderColor #334155
+  BackgroundColor #FFFFFF
+  FontColor #0F172A
+  HeaderBackgroundColor #E2E8F0
+  FontSize 13
+}
 
-  --
-  +languageProgram()
-  +classes()
-  +students()
-  +reviews()
+skinparam Arrow {
+  Color #475569
+  Thickness 1.2
+  FontColor #1E293B
+  FontSize 12
+}
+
+skinparam Note {
+  BackgroundColor #FFF7ED
+  BorderColor #F97316
+  FontColor #7C2D12
+  FontSize 12
+}
+
+class User {
+  +id: bigint
+  +name: string
+  +email: string
+  +requested_role: string
+  +approved_at: datetime?
+}
+
+class ClassStudent {
+  +student_id: bigint
+  +class_id: bigint
+  +created_at: timestamp
+  +updated_at: timestamp
 }
 
 class CourseClass {
-  -id: bigint
-  -course_id: bigint
-  -teacher_id: bigint
-  -capacity: integer
-
-  --
-  +course()
-  +teacher()
-  +students()
-  +schedules()
-  +teacherResources()
-  +attendanceRecords()
+  +id: bigint
+  +course_id: bigint
+  +teacher_id: bigint?
+  +capacity: integer
 }
 
-Course "1" -- "0..*" CourseClass : contains
+User "1" -- "0..*" ClassStudent : student role enrolls
+ClassStudent "0..*" -- "1" CourseClass : linked to class
 
-note bottom of Course
-Course represents the learning offer,
-such as a language level or subject.
+note right of User
+  Students are not stored in a
+  separate Student model.
 
-Example: English A1, French B2.
+  A student is a User with
+  the student role assigned
+  through Spatie.
 end note
 
-note bottom of CourseClass
-CourseClass represents a concrete group
-created for a course.
+note right of ClassStudent
+  Pivot table between users
+  with the student role and
+  course classes.
 
-Example: English A1 - Group 1.
+  Each record means that one
+  student user is enrolled in
+  one course class.
 end note
 
 @enduml

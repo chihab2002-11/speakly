@@ -1,7 +1,7 @@
 @startuml
 title Final Project - Simplified Global Class Diagram
 
-top to bottom direction
+left to right direction
 hide circle
 hide methods
 hide attributes
@@ -11,10 +11,9 @@ skinparam shadowing false
 skinparam linetype ortho
 skinparam backgroundColor white
 skinparam defaultFontName Arial
-skinparam nodesep 30
-skinparam ranksep 50
-
 skinparam packageStyle rectangle
+skinparam nodesep 45
+skinparam ranksep 55
 
 skinparam Package {
   BorderColor #CBD5E1
@@ -29,76 +28,80 @@ skinparam Class {
   BackgroundColor #FFFFFF
   FontColor #0F172A
   HeaderBackgroundColor #E2E8F0
-  FontSize 12
+  FontSize 11
   FontStyle bold
 }
 
 skinparam Arrow {
-  Color #94A3B8
+  Color #64748B
   Thickness 1
   FontColor #334155
-  FontSize 10
-  FontStyle bold
+  FontSize 9
 }
 
-package "Users & Access Control" {
+package "Users & Access" {
   class User
   class Role
   class Permission
+
+  User "*" -- "*" Role : roles
+  Role "*" -- "*" Permission : permissions
 }
 
-package "Academic Management" {
+package "Academic" {
   class LanguageProgram
   class Course
   class CourseClass
+
+  LanguageProgram "1" -- "*" Course
+  Course "1" -- "*" CourseClass
 }
 
-package "Timetable & Attendance" {
+package "Timetable" {
   class Schedule
   class Room
   class AttendanceRecord
   class TeacherResource
+
+  CourseClass "1" -- "*" Schedule
+  Schedule "*" -- "0..1" Room
+  CourseClass "1" -- "*" AttendanceRecord
+  CourseClass "1" -- "*" TeacherResource
 }
 
-package "Financial Management" {
+package "Finance" {
   class StudentTuition
   class TuitionPayment
   class EmployeePayment
   class ScholarshipActivation
+
+  StudentTuition "1" .. "*" TuitionPayment
 }
 
-package "Communication & Feedback" {
+package "Communication" {
   class Message
   class DatabaseNotification
   class Review
 }
 
-' Access control
-User "*" -- "*" Role
-Role "*" -- "*" Permission
+' Keep packages aligned horizontally
+User -[hidden]-> LanguageProgram
+LanguageProgram -[hidden]-> Schedule
+Schedule -[hidden]-> StudentTuition
+StudentTuition -[hidden]-> Message
 
-' Academic structure
-LanguageProgram "1" -- "*" Course
-Course "1" -- "*" CourseClass
+' Important cross-module links only
 User "1" -- "*" CourseClass : teaches
 User "*" -- "*" CourseClass : enrolls
 
-' Timetable
-CourseClass "1" -- "*" Schedule
-Schedule "*" -- "0..1" Room
-CourseClass "1" -- "*" AttendanceRecord
-CourseClass "1" -- "*" TeacherResource
+User "1" -- "0..1" StudentTuition : tuition
+Course "1" -- "*" StudentTuition : price
 
-' Finance
-User "1" -- "0..1" StudentTuition
-Course "1" -- "*" StudentTuition
-StudentTuition "1" .. "*" TuitionPayment
-User "1" -- "0..1" EmployeePayment
-User "1" -- "*" ScholarshipActivation
+User "1" -- "0..1" EmployeePayment : salary
+User "1" -- "*" ScholarshipActivation : discounts
 
-' Communication
-User "1" -- "*" Message
-User "1" -- "*" DatabaseNotification
-User "1" -- "*" Review
+User "1" -- "*" Message : messages
+User "1" -- "*" DatabaseNotification : notifications
+User "1" -- "*" Review : reviews
 
 @enduml

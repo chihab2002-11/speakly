@@ -59,6 +59,7 @@ class StudentMaterialsController extends Controller
                     'isNew' => (bool) ($resource->created_at?->gte(now()->subDay()) ?? false),
                     'downloadUrl' => route('student.materials.download', ['resource' => $resource->id]),
                     'printUrl' => route('student.materials.print', ['resource' => $resource->id]),
+                    'aiExplainUrl' => route('student.materials.ai-explain', ['resource' => $resource->id]),
                 ];
             })
             ->values()

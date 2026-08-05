@@ -1,9 +1,33 @@
 @startuml
+title Final Project - Message Class Diagram
+
 left to right direction
-skinparam classAttributeIconSize 0
-skinparam linetype ortho
-skinparam shadowing false
 hide circle
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+skinparam backgroundColor white
+skinparam defaultFontName Arial
+
+skinparam class {
+  BorderColor #9CA3AF
+  BackgroundColor white
+  FontColor #111827
+  HeaderBackgroundColor white
+}
+
+skinparam note {
+  BackgroundColor #ECFDF5
+  BorderColor #86EFAC
+  FontColor #111827
+}
+
+skinparam arrow {
+  Color #4B5563
+  Thickness 1.2
+  FontColor #111827
+}
 
 class Message {
   +id: bigint
@@ -12,11 +36,33 @@ class Message {
   +subject: string
   +body: text
   +read_at: datetime
+  --
+  +sender()
+  +receiver()
 }
 
-class User
+class User {
+  +id: bigint
+  +name: string
+  +email: string
+  +requested_role: string
+}
 
-Message "0..*" -- "1" User : sender
-Message "0..*" -- "1" User : receiver
+Message "*" --> "1" User : sender
+Message "*" --> "1" User : receiver
+
+note bottom of User
+  All actors are represented as
+  User records with different roles.
+end note
+
+note bottom of Message
+  Stores communication between
+  system users.
+
+  The sender() and receiver()
+  methods define the links to
+  the User model.
+end note
 
 @enduml
