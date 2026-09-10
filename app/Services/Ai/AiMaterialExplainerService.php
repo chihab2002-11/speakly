@@ -22,7 +22,7 @@ class AiMaterialExplainerService implements AiProviderInterface
     public function streamMaterialExplanation(TeacherResource $resource, string $textContent): Generator
     {
         try {
-            $response = Http::connectTimeout(3)
+            $response = Http::connectTimeout(30)
                 ->timeout(120)
                 ->acceptJson()
                 ->withOptions(['stream' => true])

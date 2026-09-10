@@ -6,6 +6,7 @@ use Database\Factories\TeacherResourceFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TeacherResource extends Model
 {
@@ -64,5 +65,10 @@ class TeacherResource extends Model
     public function courseClass(): BelongsTo
     {
         return $this->belongsTo(CourseClass::class, 'class_id');
+    }
+
+    public function aiAnalysis(): HasOne
+    {
+        return $this->hasOne(ResourceAiAnalysis::class, 'teacher_resource_id');
     }
 }

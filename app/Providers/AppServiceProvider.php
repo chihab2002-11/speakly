@@ -18,7 +18,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(AiProviderInterface::class, AiMaterialExplainerService::class);
+        $this->app->bind(AiProviderInterface::class, fn () => new AiMaterialExplainerService(
+            endpoint: (string) config('services.ollama.base_url', 'http://127.0.0.1:11434'),
+            model: (string) config('services.ollama.model', 'qwen3:4b'),
+        ));
     }
 
     /**
