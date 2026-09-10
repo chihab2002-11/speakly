@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('resource_ai_analyses', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('teacher_resource_id')->constrained()->cascadeOnDelete();
+            $table->enum('status', ['pending', 'processing', 'completed', 'failed'])->default('pending');
+            $table->longText('content')->nullable();
+            $table->text('error_message')->nullable();
             $table->timestamps();
         });
     }
