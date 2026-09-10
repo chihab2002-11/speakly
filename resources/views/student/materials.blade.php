@@ -189,17 +189,29 @@
             const modal = document.getElementById('ai-explainer-modal');
             const titleEl = document.getElementById('ai-explainer-title');
             const outputEl = document.getElementById('ai-output');
+            const loadingEl = document.getElementById('ai-loading');
+            const scrollContainer = document.getElementById('ai-scroll-container');
 
-            console.log('Button clicked', { url, materialName, modal, outputEl });
-
-            if (!modal || !outputEl || !url) {
+            if (!modal || !outputEl) {
                 return;
             }
 
+            modal.style.display = 'flex';
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             titleEl.textContent = materialName;
             outputEl.innerHTML = '<p class="text-gray-500">Preparing your explanation...</p>';
+
+            if (!url) {
+                outputEl.innerHTML = '<p class="text-red-600 font-semibold">Unable to generate explanation: Missing request URL.</p>';
+                return;
+            }
+
+            if (loadingEl) {
+                loadingEl.style.display = 'flex';
+                loadingEl.classList.remove('hidden');
+                loadingEl.classList.add('flex');
+            }
 
             let fullMarkdown = '';
 
@@ -214,7 +226,7 @@
 
                 if (!response.ok) {
                     const error = await response.json().catch(() => ({}));
-                    throw new Error(error.message || 'The explanation could not be generated.');
+                    throw new Error(error.message || `Server error (${response.status}): The explanation could not be generated.`);
                 }
 
                 if (!response.body) {
@@ -231,15 +243,32 @@
                         break;
                     }
 
+                    if (loadingEl) {
+                        loadingEl.style.display = 'none';
+                        loadingEl.classList.add('hidden');
+                        loadingEl.classList.remove('flex');
+                    }
+
                     fullMarkdown += decoder.decode(value, { stream: true });
                     outputEl.innerHTML = renderAiMarkdown(fullMarkdown);
-                    outputEl.scrollTop = outputEl.scrollHeight;
+                    if (scrollContainer) {
+                        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                    }
                 }
 
                 fullMarkdown += decoder.decode();
                 outputEl.innerHTML = renderAiMarkdown(fullMarkdown);
+                if (scrollContainer) {
+                    scrollContainer.scrollTop = scrollContainer.scrollHeight;
+                }
             } catch (error) {
-                outputEl.innerHTML = `<p class="text-red-600">${escapeHtml(error.message || 'Unable to generate an explanation.')}</p>`;
+                outputEl.innerHTML = `<p class="text-red-600 font-semibold">${escapeHtml(error.message || 'Unable to generate an explanation.')}</p>`;
+            } finally {
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                    loadingEl.classList.add('hidden');
+                    loadingEl.classList.remove('flex');
+                }
             }
         }
 
@@ -262,6 +291,7 @@
                 return;
             }
 
+            modal.style.display = 'none';
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
@@ -467,6 +497,14 @@
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 closeAiExplainer();
+            }
+        });
+
+        document.addEventListener('click', (event) => {
+            const aiButton = event.target.closest('.js-ai-material');
+            if (aiButton) {
+                event.preventDefault();
+                openAiExplainer(aiButton.dataset.aiUrl || '', aiButton.dataset.materialName || 'Material');
             }
         });
     </script>

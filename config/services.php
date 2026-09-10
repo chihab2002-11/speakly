@@ -36,7 +36,8 @@ return [
     ],
 
     'ollama' => [
-        'url' => env('OLLAMA_GENERATE_URL', 'http://localhost:11434/api/generate'),
+        'base_url' => env('OLLAMA_BASE_URL', 'http://127.0.0.1:11434'),
+        'url' => env('OLLAMA_GENERATE_URL'),
         'model' => env('OLLAMA_MODEL', 'qwen3:4b'),
     ],
 

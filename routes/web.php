@@ -352,6 +352,10 @@ Route::middleware(['auth', 'verified', EnsureApproved::class, 'role:parent'])
             ->whereNumber('child')
             ->whereNumber('resource')
             ->name('child.materials.print');
+        Route::post('/children/{child}/materials/{resource}/ai-explain', [ParentChildPortalController::class, 'explainMaterial'])
+            ->whereNumber('child')
+            ->whereNumber('resource')
+            ->name('child.materials.ai-explain');
 
         Route::get('/children/{child}/messages', [ParentChildPortalController::class, 'messages'])
             ->whereNumber('child')

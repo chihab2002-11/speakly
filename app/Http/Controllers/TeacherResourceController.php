@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Jobs\GenerateResourceAiExplanation;
 
 class TeacherResourceController extends Controller
 {
@@ -217,7 +218,7 @@ class TeacherResourceController extends Controller
         ));
 
         $this->roleNotificationService->notifyClassResourceUploaded($resource);
-
+        GenerateResourceAiExplanation::dispatch($resource);
         return redirect()
             ->route('teacher.resources')
             ->with('success', 'Resource uploaded successfully.');

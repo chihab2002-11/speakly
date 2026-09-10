@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\TeacherResource;
 use App\Models\User;
 use App\Notifications\NewMessageNotification;
+use App\Services\Ai\AiProviderInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -86,6 +87,11 @@ class ParentChildPortalController extends Controller
                         'child' => $child->id,
                         'resource' => $resourceId,
                     ]);
+
+                    $material['aiExplainUrl'] = route('parent.child.materials.ai-explain', [
+                        'child' => $child->id,
+                        'resource' => $resourceId,
+                    ]);
                 }
 
                 return $material;
@@ -114,6 +120,15 @@ class ParentChildPortalController extends Controller
         $studentRequest = $this->buildChildRequest($request, $child);
 
         return app(StudentMaterialsController::class)->print($studentRequest, $resource);
+    }
+
+    public function explainMaterial(Request $request, User $child, TeacherResource $resource, AiProviderInterface $aiProvider): StreamedResponse|JsonResponse
+    {
+        [, $child] = $this->resolveParentAndChild($request, $child);
+
+        $studentRequest = $this->buildChildRequest($request, $child);
+
+        return app(AiMaterialExplanationController::class)->__invoke($studentRequest, $resource, $aiProvider);
     }
 
     public function messages(Request $request, User $child, ?int $conversation = null): View

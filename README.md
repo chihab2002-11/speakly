@@ -1,445 +1,642 @@
-# Speakly / School Management System
+# 🎓 Lumina Academy — AI-Powered School Management System
 
-Speakly is a Laravel-based school management system designed for a language school or educational institution. It centralizes academic, administrative, financial, and communication workflows into role-based dashboards for admins, secretaries, teachers, students, and parents.
+> A modern, AI-powered School Management System built with **Laravel 12**, **Livewire**, **Tailwind CSS 4**, **MySQL**, and a **local Large Language Model (Ollama + Qwen3)** to streamline academic, administrative, financial, and learning workflows for educational institutions.
 
-The project was built as a final-year computer science project and demonstrates MVC architecture, authentication, role-based access control, database design, Blade/Tailwind interfaces, testing, and deployment preparation.
+![Laravel](https://img.shields.io/badge/Laravel-12-red)
+![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4-38BDF8)
+![Livewire](https://img.shields.io/badge/Livewire-3-purple)
+![License](https://img.shields.io/badge/License-MIT-green)
 
-## Project Overview
+---
 
-Many small schools manage students, schedules, tuition payments, attendance, learning materials, and communication manually or across disconnected tools. This system solves that by providing one web platform where each user role only sees the tools relevant to them.
+# Table of Contents
 
-The application supports:
+* [Overview](#overview)
+* [Why Lumina Academy?](#why-lumina-academy)
+* [Key Features](#key-features)
+* [AI Material Explainer](#ai-material-explainer)
+* [User Roles](#user-roles)
+* [Technology Stack](#technology-stack)
+* [Project Architecture](#project-architecture)
+* [Database Overview](#database-overview)
+* [Project Structure](#project-structure)
+* [Screenshots](#screenshots)
+* [Installation](#installation)
+* [Running the Project](#running-the-project)
+* [Testing](#testing)
+* [API Endpoints](#api-endpoints)
+* [Future Improvements](#future-improvements)
+* [License](#license)
+* [Author](#author)
 
-- Centralized registration and account approval.
-- Role-based access for admin, secretary, teacher, student, and parent users.
-- Language program, course, group, room, and schedule management.
-- Student enrollment, attendance, homework/resources, messages, and notifications.
-- Parent-child access so parents can follow linked children.
-- Student and parent financial views, tuition payments, scholarship/discount workflows, and employee payment tracking.
+---
 
-## Main Features
+# Overview
 
-### Admin
+**Lumina Academy** is a complete web-based School Management System developed as a **Bachelor's Final Year Project**.
 
-- Admin dashboard and role-scoped navigation.
-- Account approval/rejection workflow for new users.
-- Employee management for teachers and secretaries.
-- Employee payment management with teacher/secretary payment records.
-- Language program and course management.
-- Classroom and schedule management.
-- Timetable hub for administration.
-- Notification center and messaging.
-- Spatie permission-backed authorization for protected operations.
+The application centralizes every major school operation into one platform, including:
 
-### Secretary
+* Student registration
+* Course management
+* Scheduling
+* Attendance
+* Financial management
+* Homework & learning resources
+* Messaging
+* Notifications
+* Parent monitoring
+* AI-assisted learning
 
-- Secretary dashboard.
-- Registration management and account operations.
-- Student payment recording and financial tracking.
-- Group/class management.
-- Teacher assignment to groups.
-- Student enrollment and removal from groups.
-- Student and teacher search endpoints for group operations.
-- Timetable browsing.
-- Publish notifications to selected audiences.
-- Messaging, notifications, settings, and secretary payment page.
+Unlike traditional school management systems, Lumina Academy integrates a **local AI assistant** powered by **Ollama** running **Qwen3**, allowing students to automatically generate summaries, vocabulary lists, and quizzes from teacher-uploaded learning materials without sending educational data to external AI providers.
 
-### Teacher
+---
 
-- Teacher dashboard with class/resource/message information.
-- Teacher timetable.
-- Attendance and evaluation recording for assigned classes.
-- Upload and manage homework and course resources.
-- Resource download tracking.
-- Messaging and notifications.
-- Teacher "My Payments" page and PDF receipt view.
+# Why Lumina Academy?
 
-### Student
+Many language schools still manage daily operations using spreadsheets, paper records, messaging applications, or disconnected software.
 
-- Student dashboard.
-- Academic page with attendance/evaluation information.
-- Timetable and enrolled class context.
-- Learning materials page for teacher-uploaded resources/homework.
-- Financial page for eligible students.
-- Tuition payment receipt PDF route.
-- Scholarship/discount activation where eligible.
-- Messaging, notifications, profile settings, and password management.
+This creates problems such as:
 
-### Parent
+* Duplicate data
+* Poor communication
+* Difficult attendance tracking
+* Manual tuition management
+* Limited student engagement
+* No intelligent learning assistance
 
-- Parent dashboard for linked children.
-- Parent financial page with child invoices, payment history, and receipts.
-- Child portal for dashboard, academic information, materials, messages, settings, password, and notifications.
-- Scholarship/discount activation for eligible children.
-- Parent-specific messaging and notification center.
+Lumina Academy solves these issues through a centralized platform where every user accesses only the tools relevant to their role while benefiting from real-time communication and AI-powered educational features.
 
-### Public Visitor
+---
 
-- Public landing page showing active language programs.
-- Course/program display with registration entry point.
-- Review/testimonial display and visitor review voting.
+# Key Features
 
-## Technology Stack
+## Academic Management
 
-### Backend
+* Language Programs
+* Courses
+* Student Enrollment
+* Group Management
+* Timetables
+* Attendance
+* Homework
+* Course Materials
+* Classroom Management
+* Teacher Assignment
 
-- PHP `^8.2` from `composer.json`; Docker deployment uses PHP `8.4`.
-- Laravel `12`.
-- MySQL database.
-- Eloquent ORM models and relationships.
-- Blade templates and Laravel controllers.
-- Laravel validation, middleware, notifications, sessions, cache, and migrations.
-- Database-backed notifications, cache, sessions, and queue configuration.
+---
 
-### Authentication and Authorization
+## Financial Management
 
-- Laravel Fortify for authentication, registration, password reset, email verification, and two-factor authentication.
-- Laravel Sanctum for API authentication.
-- Spatie Laravel Permission for roles and permissions.
-- Custom approval middleware that blocks unapproved accounts from protected dashboards.
+* Tuition Payments
+* Scholarships & Discounts
+* Parent Payment Tracking
+* Student Financial Dashboard
+* Employee Payments
+* Payment History
+* Receipt Generation (PDF)
 
-### Frontend
+---
 
-- Blade views grouped by role.
-- Tailwind CSS `4`.
-- Flux UI and Livewire components for starter-kit/auth/settings UI.
-- Vite for asset bundling.
-- JavaScript entry point in `resources/js/app.js`.
+## Communication
 
-### Testing
+* Private Messaging
+* Notifications
+* Real-Time Updates using Laravel Reverb
+* Parent–Teacher Communication
 
-- Pest `4` and PHPUnit `12`.
-- Laravel feature tests and model factories.
-- Tests cover authentication, authorization, approvals, dashboards, financial pages, notifications, employee payments, secretary operations, teacher attendance/resources, timetables, messaging, deployment checks, and seeders.
+---
 
-### Deployment
+## Authentication & Security
 
-- Root `Dockerfile` with multi-stage Composer and Node/Vite build.
-- `docker-entrypoint.sh` waits for the database, runs migrations, clears caches, and starts Laravel through PHP's built-in server.
-- `RAILWAY_DEPLOYMENT.md` documents Railway deployment with MySQL environment variables.
+* Laravel Fortify
+* Laravel Sanctum
+* Role-Based Access Control
+* Spatie Permissions
+* Protected Routes
+* Account Approval Workflow
 
-## Important Packages
+---
 
-### Composer
+## AI Features
 
-| Package | Purpose |
-| --- | --- |
-| `laravel/framework` | Main Laravel application framework. |
-| `laravel/fortify` | Authentication backend features. |
-| `laravel/reverb` | First-party WebSocket server for live notifications. |
-| `laravel/sanctum` | API token authentication for API routes. |
-| `spatie/laravel-permission` | Role and permission management. |
-| `livewire/livewire` | Livewire support used by the starter kit/settings UI. |
-| `livewire/flux` | Flux UI Blade components. |
-| `laravel/tinker` | Local application debugging. |
-| `pestphp/pest` | Testing framework. |
-| `pestphp/pest-plugin-laravel` | Pest integration for Laravel tests. |
-| `laravel/pint` | PHP code formatting. |
-| `laravel/sail` | Local Docker development option. |
-| `laravel/pail` | Log tailing during development. |
-| `laravel/boost` | Laravel development tooling. |
+* Automatic PDF text extraction
+* Local LLM processing
+* Resource summaries
+* Vocabulary extraction
+* Quiz generation
+* Privacy-friendly AI
+* No API costs
 
-### npm
+---
 
-| Package | Purpose |
-| --- | --- |
-| `vite` | Frontend asset bundling. |
-| `laravel-vite-plugin` | Laravel/Vite integration. |
-| `tailwindcss` | Utility-first CSS framework. |
-| `@tailwindcss/vite` | Tailwind CSS Vite integration. |
-| `axios` | HTTP client library available to frontend scripts. |
-| `laravel-echo` | Frontend listener for Laravel broadcast notifications. |
-| `pusher-js` | Pusher protocol client used by Laravel Echo with Reverb. |
-| `concurrently` | Runs local development processes together through Composer scripts. |
-| `autoprefixer` | CSS post-processing support. |
+# AI Material Explainer
 
-## System Requirements
+One of Lumina Academy's flagship features is the **AI Material Explainer**, designed to help students better understand uploaded learning resources.
 
-- PHP `8.2` or newer.
-- Composer.
-- Node.js and npm.
-- MySQL.
-- Git.
-- PHP extensions required by the application/deployment include PDO MySQL, mbstring, XML, and Zip.
+## Workflow
 
-## Installation
+```text
+Teacher uploads PDF
+        │
+        ▼
+smalot/pdfparser extracts text
+        │
+        ▼
+AI Service Layer
+        │
+        ▼
+Ollama
+(Qwen3:4b)
+        │
+        ▼
+AI generates:
 
-The commands below are Windows/PowerShell friendly.
+• Summary
+• Vocabulary
+• Quiz Questions
+        │
+        ▼
+Student opens AI Explainer
+```
 
-```powershell
+### Current Features
+
+* PDF text extraction
+* AI-generated summaries
+* Vocabulary extraction
+* Quiz generation
+* Streaming responses
+
+### Planned AI Features
+
+* Personal Study Coach
+* AI Lesson Planner
+* Exam Preparation Assistant
+* Writing Feedback
+* Learning Risk Prediction
+* Personalized Revision Plans
+
+---
+
+# User Roles
+
+## Administrator
+
+* Dashboard
+* User Approval
+* Employee Management
+* Program Management
+* Course Management
+* Classroom Management
+* Timetable Management
+* Employee Payments
+* Notifications
+* Messaging
+* System Administration
+
+---
+
+## Secretary
+
+* Registration Management
+* Student Enrollment
+* Group Management
+* Teacher Assignment
+* Tuition Payments
+* Financial Tracking
+* Notifications
+* Messaging
+* Timetable
+* Student Search
+
+---
+
+## Teacher
+
+* Dashboard
+* Timetable
+* Attendance
+* Student Evaluation
+* Homework
+* Learning Resources
+* AI Processing
+* Messaging
+* Notifications
+* Payment History
+
+---
+
+## Student
+
+* Dashboard
+* Academic Progress
+* Attendance
+* Timetable
+* Learning Materials
+* AI Material Explainer
+* Financial Dashboard
+* Scholarship Management
+* Messaging
+* Notifications
+* Profile Settings
+
+---
+
+## Parent
+
+* Linked Children Dashboard
+* Financial Monitoring
+* Payment History
+* Academic Monitoring
+* Messaging
+* Notifications
+* Child Resources
+* Scholarship Activation
+
+---
+
+## Visitor
+
+* Landing Page
+* Browse Programs
+* Browse Courses
+* Registration
+* Reviews
+* Testimonials
+
+---
+
+# Technology Stack
+
+## Backend
+
+* PHP 8.2+
+* Laravel 12
+* MySQL / MariaDB
+* Eloquent ORM
+* Laravel Fortify
+* Laravel Sanctum
+* Laravel Reverb
+* Spatie Laravel Permission
+* smalot/pdfparser
+* Ollama
+* Qwen3:4b
+
+---
+
+## Frontend
+
+* Blade
+* Tailwind CSS 4
+* Livewire
+* Flux UI
+* Vite
+* Laravel Echo
+* Axios
+
+---
+
+## Development Tools
+
+* Composer
+* npm
+* Pest
+* PHPUnit
+* Laravel Pint
+* Git
+
+---
+
+# Important Packages
+
+## Composer
+
+| Package                   | Purpose                 |
+| ------------------------- | ----------------------- |
+| laravel/framework         | Laravel Framework       |
+| laravel/fortify           | Authentication          |
+| laravel/sanctum           | API Authentication      |
+| laravel/reverb            | Real-Time Communication |
+| spatie/laravel-permission | Roles & Permissions     |
+| smalot/pdfparser          | PDF Text Extraction     |
+| livewire/livewire         | Interactive Components  |
+| livewire/flux             | UI Components           |
+| pestphp/pest              | Testing                 |
+| laravel/pint              | Code Formatting         |
+
+---
+
+## npm
+
+| Package           | Purpose              |
+| ----------------- | -------------------- |
+| vite              | Asset Bundling       |
+| @tailwindcss/vite | Tailwind Integration |
+| laravel-echo      | Real-Time Client     |
+| pusher-js         | Reverb Support       |
+| axios             | HTTP Client          |
+
+---
+
+# Project Architecture
+
+```text
+Browser
+    │
+Blade + Livewire
+    │
+Controllers
+    │
+Application Services
+    │
+Business Logic
+    │
+Models (Eloquent)
+    │
+MySQL Database
+```
+
+### AI Architecture
+
+```text
+Student
+    │
+AI Material Explainer
+    │
+AI Controller
+    │
+AI Service
+    │
+Ollama Provider
+    │
+Qwen3:4b
+```
+
+---
+
+# Database Overview
+
+Core entities include:
+
+* Users
+* Roles
+* Permissions
+* Programs
+* Courses
+* Groups
+* Classrooms
+* Timetables
+* Attendance
+* Evaluations
+* Homework
+* Learning Resources
+* Messages
+* Notifications
+* Payments
+* Scholarships
+* Parents
+* Students
+* Teachers
+* Secretaries
+
+---
+
+# Project Structure
+
+```text
+app
+├── Http
+├── Models
+├── Policies
+├── Providers
+├── Services
+├── Support
+├── Jobs
+├── Notifications
+
+database
+├── migrations
+├── seeders
+
+resources
+├── views
+│   ├── admin
+│   ├── secretary
+│   ├── teacher
+│   ├── student
+│   ├── parent
+│   ├── visitor
+│   ├── layouts
+│   └── components
+
+routes
+├── web.php
+├── api.php
+
+tests
+├── Feature
+├── Unit
+```
+
+---
+
+# Screenshots
+
+> *(Replace with your own screenshots.)*
+
+| Landing Page              | Student Dashboard                      |
+| ------------------------- | -------------------------------------- |
+| ![](docs/images/home.png) | ![](docs/images/student-dashboard.png) |
+
+| Teacher Dashboard                      | AI Material Explainer             |
+| -------------------------------------- | --------------------------------- |
+| ![](docs/images/teacher-dashboard.png) | ![](docs/images/ai-explainer.png) |
+
+| Financial Dashboard          | Timetable                      |
+| ---------------------------- | ------------------------------ |
+| ![](docs/images/finance.png) | ![](docs/images/timetable.png) |
+
+---
+
+# System Requirements
+
+* PHP 8.2+
+* Composer
+* Node.js
+* npm
+* MySQL or MariaDB
+* Git
+* Ollama
+* PHP Extensions:
+
+  * pdo_mysql
+  * mbstring
+  * xml
+  * zip
+
+---
+
+# Installation
+
+```bash
+# Clone repository
 git clone <repository-url>
-cd final-project
+
+cd lumina-academy
+
+# Install PHP dependencies
 composer install
+
+# Install JavaScript dependencies
 npm install
-Copy-Item .env.example .env
+
+# Create environment file
+cp .env.example .env
+
+# Generate application key
 php artisan key:generate
-```
 
-Configure the database connection in `.env`:
+# Configure database credentials inside .env
 
-```dotenv
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=speakly
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-Run migrations and seeders:
-
-```powershell
+# Run migrations
 php artisan migrate
+
+# Seed demo data (optional)
 php artisan db:seed
-```
 
-The default database seeder already calls the presentation demo seeder. You can also rerun it directly:
-
-```powershell
-php artisan db:seed --class=PresentationDemoSeeder
-```
-
-Build or serve frontend assets:
-
-```powershell
+# Build frontend assets
 npm run build
 ```
 
-For active development:
+---
 
-```powershell
-npm run dev
+# Running the Project
+
+## Development
+
+```bash
 php artisan serve
 ```
 
-The `.env.example` uses `APP_URL=http://final-project.test`, which is suitable for a local Laravel Herd-style domain if configured. `php artisan serve` also works for standard local development.
+```bash
+npm run dev
+```
 
-## Live Notifications
+---
 
-The application stores notifications in the database as before and also broadcasts them live through Laravel Reverb and Laravel Echo. If Reverb is not running, users can still refresh the page and see database notifications normally.
+## Start Reverb
 
-For local real-time testing, run these processes in separate terminals:
-
-```powershell
-php artisan serve
+```bash
 php artisan reverb:start
-npm run dev
-php artisan queue:work
 ```
 
-`php artisan queue:work` is needed when queued jobs are used. The default `.env.example` uses `QUEUE_CONNECTION=database` and `BROADCAST_CONNECTION=reverb`.
+---
 
-Required Reverb environment variables:
+## Start Ollama
 
-```dotenv
-BROADCAST_CONNECTION=reverb
-REVERB_APP_ID=
-REVERB_APP_KEY=
-REVERB_APP_SECRET=
-REVERB_HOST=127.0.0.1
-REVERB_PORT=8080
-REVERB_SCHEME=http
-VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
-VITE_REVERB_HOST="${REVERB_HOST}"
-VITE_REVERB_PORT="${REVERB_PORT}"
-VITE_REVERB_SCHEME="${REVERB_SCHEME}"
+```bash
+ollama serve
 ```
 
-Generate real app credentials for each environment and do not commit secrets. Production deployments, including Railway, need a separate WebSocket/Reverb process or service configuration alongside the Laravel web process.
+Run the model:
 
-## Session Expiration
-
-When a browser session expires or a CSRF token is no longer valid, web users are redirected to the login/register page with the message: "Your session has expired. Please log in again." JSON/API requests receive a JSON `419` response with the same message. CSRF protection remains enabled.
-
-## Environment Variables
-
-Important `.env` values:
-
-| Variable | Purpose |
-| --- | --- |
-| `APP_NAME` | Application name displayed by Laravel. |
-| `APP_ENV` | Environment, for example `local` or `production`. |
-| `APP_KEY` | Required Laravel encryption key. Generate with `php artisan key:generate`. |
-| `APP_DEBUG` | Enables detailed errors in local development. Keep false in production. |
-| `APP_URL` | Base URL used by route and asset generation. |
-| `DB_CONNECTION` | Database driver, currently MySQL in `.env.example`. |
-| `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` | MySQL connection settings. |
-| `SESSION_DRIVER` | Session storage driver; `.env.example` uses `database`. |
-| `CACHE_STORE` | Cache storage driver; `.env.example` uses `database`. |
-| `QUEUE_CONNECTION` | Queue driver; `.env.example` uses `database`. |
-| `MAIL_MAILER`, `MAIL_HOST`, `MAIL_PORT`, `MAIL_FROM_ADDRESS` | Mail configuration for notification/email features. Local default is log mail. |
-| `FILESYSTEM_DISK` | Storage disk used by uploaded files. |
-| `VITE_APP_NAME` | App name exposed to Vite-built assets. |
-
-Do not commit real secrets or production `.env` files.
-
-## Demo Data and Login Accounts
-
-`PresentationDemoSeeder` creates a presentation-ready scenario with users, roles, programs, courses, groups, rooms, schedules, enrollments, attendance, tuition payments, employee payments, notifications, messages, reviews, teacher resources, and a pending approval account.
-
-The seeder is designed to be safe to rerun on an existing database. It uses stable demo identifiers and refreshes only known demo notification data for known demo users.
-
-Password for all demo accounts:
-
-```text
-password
+```bash
+ollama run qwen3:4b
 ```
 
-| Role | Name | Email | Status |
-| --- | --- | --- | --- |
-| Admin | Admin Demo | `admin@lumina.test` | Approved |
-| Secretary | Sarah Secretary | `secretary@lumina.test` | Approved |
-| Teacher | Sofia Rossi | `teacher.sofia@lumina.test` | Approved |
-| Teacher | Karim Haddad | `teacher.karim@lumina.test` | Approved |
-| Teacher | Nadia Klein | `teacher.nadia@lumina.test` | Approved |
-| Parent | Maya Benali | `parent.maya@lumina.test` | Approved |
-| Parent | Amine Haddad | `parent.amine@lumina.test` | Approved |
-| Student | Alex Benali | `student.alex@lumina.test` | Approved |
-| Student | Lina Benali | `student.lina@lumina.test` | Approved |
-| Student | Yacine Benali | `student.yacine@lumina.test` | Approved |
-| Student | Omar Haddad | `student.omar@lumina.test` | Approved |
-| Student | Sara Haddad | `student.sara@lumina.test` | Approved |
-| Student | Nour Bensaid | `student.nour@lumina.test` | Approved |
-| Student | Amina Pending | `pending.student@lumina.test` | Pending approval |
+---
 
-Demo highlights include:
+# Testing
 
-- English, French, Spanish, German, and IELTS course data.
-- Teacher assignments to groups.
-- Student enrollments across multiple groups.
-- Parent-child links only for underage linked students.
-- Tuition payments and scholarship/discount examples.
-- Employee payment records for Sofia, Karim, and Sarah.
-- Attendance and resource/homework data.
-- Realistic notifications for payments, group assignments, homework/resources, and welcome messages.
+The project uses **Pest** and **PHPUnit**.
 
-## Testing
+Run all tests:
 
-Run the full test suite:
-
-```powershell
+```bash
 php artisan test
 ```
 
-Compact output:
+Example test coverage:
 
-```powershell
-php artisan test --compact
+* Authentication
+* Authorization
+* Enrollment
+* Attendance
+* Financial Workflows
+* API Endpoints
+* AI Services
+
+---
+
+# API Endpoints
+
+## Authentication
+
+```
+POST /api/login
+POST /api/logout
+GET  /api/me
 ```
 
-Useful focused test filters:
+---
 
-```powershell
-php artisan test --filter=Notification --compact
-php artisan test --filter=EmployeePayment --compact
-php artisan test --filter=TeacherResource --compact
-php artisan test --filter=Financial --compact
-php artisan test --filter=PresentationDemoSeeder --compact
+## Student
+
+```
+GET /api/student/timetable
 ```
 
-The project includes feature tests for:
+---
 
-- Authentication, registration, email verification, password reset, and two-factor authentication.
-- Approval and unapproval flows.
-- Role dashboard access.
-- Admin language programs, courses, classrooms, schedules, employees, and employee payments.
-- Secretary registrations, payments, groups, accounts, and timetables.
-- Teacher attendance, resources, notifications, dashboard data, settings, and timetables.
-- Student/parent financial pages and scholarships.
-- Messaging and conversation authorization.
-- API authentication and timetable endpoints.
-- Presentation and workflow seeders.
-- Docker startup/deployment behavior.
+## Parent
 
-## Useful Commands
-
-```powershell
-php artisan optimize:clear
-php artisan migrate
-php artisan migrate:fresh --seed
-php artisan db:seed --class=PresentationDemoSeeder
-php artisan route:list
-php artisan test --compact
-npm run dev
-npm run build
-vendor\bin\pint --dirty
+```
+GET /api/parent/timetable
 ```
 
-Composer also includes:
+---
 
-```powershell
-composer run dev
-composer run test
+## Admin
+
+```
+GET /api/admin/timetables
 ```
 
-## Deployment
+---
 
-### Docker
+# Future Improvements
 
-The root `Dockerfile` builds the application in stages:
+* AI Study Coach
+* AI Chat Assistant
+* OCR Support for Scanned PDFs
+* AI Lesson Recommendations
+* Mobile Application
+* Multi-School Support
+* Analytics Dashboard
+* AI Learning Risk Prediction
+* Speech Recognition
+* Voice-Based Learning
 
-1. Installs Composer dependencies.
-2. Builds frontend assets with Node and Vite.
-3. Produces a PHP `8.4-cli` runtime image.
-4. Copies built assets into `public/build`.
-5. Exposes port `8080`.
+---
 
-The entrypoint script:
+# License
 
-- Waits for database connectivity.
-- Runs `php artisan migrate --force`.
-- Clears optimization caches.
-- Starts Laravel with:
+This project is licensed under the **MIT License**.
 
-```bash
-php -S 0.0.0.0:${PORT:-8080} -t public
-```
+---
 
-### Railway
+# Author
 
-`RAILWAY_DEPLOYMENT.md` documents Railway deployment. Required practical steps include:
+**Chihab Hamdane**
 
-- Add a Railway web service from this repository.
-- Add a Railway MySQL database.
-- Set production environment variables in Railway.
-- Generate and set `APP_KEY`.
-- Run migrations and seeders with `php artisan migrate --seed --force`.
-- Run `php artisan storage:link`.
-- Run `php artisan optimize:clear` after environment changes.
-- Keep `APP_DEBUG=false` in production.
+Bachelor's in Computer Science (Information Systems)
 
-## Project Structure
+Backend Developer • Laravel Developer • AI Enthusiast
 
-```text
-app/Http/Controllers      Role dashboards, admin, secretary, teacher, student, parent, approval, messaging, and API controllers
-app/Models                Eloquent models for users, courses, classes, schedules, payments, resources, notifications, and reviews
-app/Notifications         Database notification classes
-app/Support               Financial, dashboard, payment receipt, notification, and helper services
-database/migrations       Database schema
-database/seeders          Roles, permissions, presentation data, and demo workflows
-database/factories        Test data factories
-resources/views           Blade templates grouped by role and feature
-resources/css             Tailwind CSS and project theme variables
-resources/js              JavaScript entry point
-routes/web.php            Web routes and role-protected pages
-routes/api.php            Sanctum-protected API routes
-tests/Feature             Laravel/Pest feature tests
-tests/Unit                Unit and deployment tests
-public/build              Vite build output after `npm run build`
-```
+GitHub: *(add your profile)*
 
-## Screenshots
+LinkedIn: *(add your profile)*
 
-Screenshots can be added here for dashboards, timetables, payments, resources, and notifications.
-
-## Academic Context
-
-This project was developed as a final-year/final project to demonstrate full-stack web development using Laravel. It highlights MVC design, relational database modeling, role-based access control, authentication, server-rendered UI, file uploads, notifications, financial workflows, automated tests, and deployment preparation.
-
-## Author
-
-- Hamdane Chihab
-
-## License
-
-No standalone license file is included in this repository. This project is intended for academic use.
+Email: *(add your email)*
